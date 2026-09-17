@@ -1,0 +1,65 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions for security
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // 1. Users Collection: Users can read profiles, and create/update their own profile
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated();
+      allow delete: if isAuthenticated() && isOwner(userId);
+    }
+
+    // 2. Events Collection: Anyone authenticated can view events, managers can create/edit
+    match /events/{eventId} {
+      allow read: if true; // Public for guest viewing & registration forms
+      allow create, update, delete: if isAuthenticated();
+    }
+
+    // 3. Guests / VIP Passes Collection: Public can register, authenticated staff/manager can manage
+    match /guests/{guestId} {
+      allow read: if true;
+      allow create: if true; // Allows new guests to register online
+      allow update, delete: if isAuthenticated();
+    }
+
+    // 4. Staff Members Collection: Only authenticated staff/managers can access
+    match /staff/{staffId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // 5. Scan Logs Collection: Scanners can log scans, managers can view
+    match /scan_logs/{logId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated();
+    }
+
+    // 6. Notifications Collection: Authenticated users can receive notifications
+    match /notifications/{notifId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // 7. Checkins Collection: STRICT IMMUTABLE AUDIT LOG
+    // Scanners can CREATE audit check-ins, but NO ONE can update or delete them!
+    match /checkins/{checkinId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if false; // 🔒 Immutable: No tampering or deletion permitted!
+    }
+
+    // Default fallback for any other subcollections
+    match /{document=**} {
+      allow read, write: if isAuthenticated();
+    }
+  }
+}

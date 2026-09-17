@@ -1,0 +1,8 @@
+{
+  "appId": "com.eventpass.app",
+  "appName": "EventPass",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}
