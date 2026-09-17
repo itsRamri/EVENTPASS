@@ -998,8 +998,8 @@ input:checked + .slider:before {
 /* Toast Notifications */
 .toast-container {
   position: fixed;
-  top: 24px;
-  right: 24px;
+  top: max(38px, calc(env(safe-area-inset-top, 28px) + 14px));
+  right: max(16px, env(safe-area-inset-right, 16px));
   left: auto;
   max-width: 380px;
   width: min(380px, calc(100vw - 32px));
@@ -1008,6 +1008,16 @@ input:checked + .slider:before {
   flex-direction: column;
   gap: 0.5rem;
   pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .toast-container {
+    top: max(44px, calc(env(safe-area-inset-top, 32px) + 14px));
+    left: 16px;
+    right: 16px;
+    width: calc(100vw - 32px);
+    max-width: 100%;
+  }
 }
 
 .toast {

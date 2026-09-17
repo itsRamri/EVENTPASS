@@ -135,8 +135,12 @@
    ========================================================================== */
 @media (max-width: 768px) {
   .top-nav {
-    height: 62px;
-    padding: 0 1rem;
+    height: auto !important;
+    min-height: 64px;
+    padding-top: max(28px, env(safe-area-inset-top, 28px)) !important;
+    padding-bottom: 10px !important;
+    padding-left: max(1rem, env(safe-area-inset-left, 1rem)) !important;
+    padding-right: max(1rem, env(safe-area-inset-right, 1rem)) !important;
     gap: 0.5rem;
   }
 
@@ -157,10 +161,16 @@
   }
 
   .bottom-nav {
-    height: calc(64px + var(--safe-bottom));
-    padding-bottom: var(--safe-bottom);
-    padding-left: 0.25rem;
-    padding-right: 0.25rem;
+    height: auto !important;
+    min-height: 64px !important;
+    padding-top: 6px !important;
+    padding-bottom: max(14px, env(safe-area-inset-bottom, 14px)) !important;
+    padding-left: max(0.35rem, env(safe-area-inset-left, 0.35rem)) !important;
+    padding-right: max(0.35rem, env(safe-area-inset-right, 0.35rem)) !important;
+  }
+
+  .app-wrapper {
+    padding-bottom: calc(78px + max(14px, env(safe-area-inset-bottom, 14px))) !important;
   }
 
   .nav-item {

@@ -386,7 +386,8 @@ export const AuthView: React.FC = () => {
       alignItems: 'center',
       justifyContent: 'center',
       background: 'linear-gradient(135deg, #DFE7F2 0%, #EDF2F7 50%, #E2E8F0 100%)',
-      padding: 'clamp(1rem, 4vw, 1.5rem)',
+      padding: 'max(36px, calc(env(safe-area-inset-top, 28px) + 16px)) clamp(1rem, 4vw, 1.5rem) max(28px, calc(env(safe-area-inset-bottom, 16px) + 16px))',
+      boxSizing: 'border-box',
       fontFamily: 'var(--font-family)',
       position: 'relative',
       overflowX: 'hidden'
