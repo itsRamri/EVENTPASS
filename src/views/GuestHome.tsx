@@ -15,7 +15,8 @@ import {
   Search,
   KeyRound,
   Send,
-  Camera
+  Camera,
+  User
 } from 'lucide-react';
 
 import { compressImageFile, readFileAsDataUrl } from '../utils/image';
@@ -314,12 +315,32 @@ export const GuestHome: React.FC = () => {
   return (
     <div className="animate-fade">
       {/* Top Banner */}
-      <div className="page-header">
-        <div className="welcome-greeting">
-          <img src={user.avatar} className="welcome-avatar" alt={user.name} />
+      <div className="page-header" style={{ marginBottom: '1.5rem' }}>
+        <div className="welcome-greeting" style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+          <div 
+            style={{ 
+              width: 46, 
+              height: 46, 
+              borderRadius: 'var(--radius-md)', 
+              background: 'linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)', 
+              border: '2px solid #38BDF8', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              color: '#2563EB',
+              flexShrink: 0,
+              boxShadow: '0 4px 12px rgba(56, 189, 248, 0.2)'
+            }}
+          >
+            <User size={24} strokeWidth={2.3} />
+          </div>
           <div className="greeting-text">
-            <h1>Welcome, {user.name}</h1>
-            <p>From Registration to Check-in — Simple, Secure, Seamless.</p>
+            <h1 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+              Welcome, {user.name}
+            </h1>
+            <p style={{ color: '#64748B', fontSize: '0.85rem', margin: '0.2rem 0 0' }}>
+              From Registration to Check-in — Simple, Secure, Seamless.
+            </p>
           </div>
         </div>
       </div>

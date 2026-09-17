@@ -401,7 +401,7 @@ export const GuestManagement: React.FC = () => {
       <div 
         className="glass-panel" 
         style={{ 
-          padding: '1.15rem 1.5rem', 
+          padding: '1.15rem 1.25rem', 
           marginBottom: '1.5rem',
           display: 'flex',
           justifyContent: 'space-between',
@@ -409,11 +409,13 @@ export const GuestManagement: React.FC = () => {
           flexWrap: 'wrap',
           gap: '1rem',
           background: '#FFFFFF',
-          border: '1px solid #E2E8F0'
+          border: '1px solid #E2E8F0',
+          maxWidth: '100%',
+          boxSizing: 'border-box'
         }}
       >
         {/* Status Filter Tabs */}
-        <div className="filter-tabs" style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap' }}>
+        <div className="filter-tabs" style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap', maxWidth: '100%' }}>
           <button 
             className={`filter-btn ${statusTab === 'all' ? 'active' : ''}`}
             onClick={() => setStatusTab('all')}
@@ -458,12 +460,12 @@ export const GuestManagement: React.FC = () => {
         </div>
 
         {/* Event Selector Dropdown */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1E293B' }}>Event:</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', maxWidth: '100%' }}>
+          <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1E293B', whiteSpace: 'nowrap' }}>Event:</span>
           <select 
             value={selectedEventId || 'all'} 
             onChange={e => setSelectedEventId(e.target.value === 'all' ? null : e.target.value)}
-            style={{ padding: '0.45rem 0.85rem', fontSize: '0.85rem', borderRadius: 'var(--radius-md)', fontWeight: 700, color: '#0F172A', border: '1px solid #CBD5E1' }}
+            style={{ padding: '0.45rem 0.85rem', fontSize: '0.85rem', borderRadius: 'var(--radius-md)', fontWeight: 700, color: '#0F172A', border: '1px solid #CBD5E1', maxWidth: '100%', boxSizing: 'border-box' }}
           >
             <option value="all">All Events ({events.length})</option>
             {events.map(ev => (
@@ -474,22 +476,22 @@ export const GuestManagement: React.FC = () => {
       </div>
 
       {/* Search Bar */}
-      <div className="glass-panel" style={{ padding: '0.85rem 1.25rem', marginBottom: '1.5rem', background: '#FFFFFF', border: '1px solid #E2E8F0', boxSizing: 'border-box' }}>
-        <div style={{ position: 'relative', width: '100%' }}>
+      <div className="glass-panel" style={{ padding: '0.85rem 1.25rem', marginBottom: '1.5rem', background: '#FFFFFF', border: '1px solid #E2E8F0', boxSizing: 'border-box', maxWidth: '100%' }}>
+        <div style={{ position: 'relative', width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
           <Search size={18} style={{ position: 'absolute', left: '0.95rem', top: '50%', transform: 'translateY(-50%)', color: '#64748B', pointerEvents: 'none' }} />
           <input 
             type="text" 
             placeholder="Search by attendee name, email, mobile, or token code..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            style={{ width: '100%', padding: '0.75rem 1rem 0.75rem 2.85rem', borderRadius: 'var(--radius-md)', color: '#0F172A', fontWeight: 600, border: '1.5px solid #CBD5E1', background: '#FFFFFF', boxSizing: 'border-box' }}
+            style={{ width: '100%', maxWidth: '100%', padding: '0.75rem 1rem 0.75rem 2.85rem', borderRadius: 'var(--radius-md)', color: '#0F172A', fontWeight: 600, border: '1.5px solid #CBD5E1', background: '#FFFFFF', boxSizing: 'border-box' }}
           />
         </div>
       </div>
 
       {/* Guests Cards / Table */}
       {filteredGuests.length === 0 ? (
-        <div className="glass-panel empty-state" style={{ padding: '3rem 2rem', textAlign: 'center', background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+        <div className="glass-panel empty-state" style={{ padding: '3rem 2rem', textAlign: 'center', background: '#FFFFFF', border: '1px solid #E2E8F0', boxSizing: 'border-box', maxWidth: '100%' }}>
           <div className="empty-icon-wrap" style={{ width: 64, height: 64, margin: '0 auto 1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: 'rgba(74, 123, 247, 0.1)', color: 'var(--accent-primary)' }}>
             <Users size={32} />
           </div>
@@ -506,7 +508,7 @@ export const GuestManagement: React.FC = () => {
           </button>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
           {filteredGuests.map(g => {
             const evt = events.find(e => e.id === g.eventId) || { name: 'Campus Event' };
             const isInvited = g.status === 'invited';
@@ -517,18 +519,21 @@ export const GuestManagement: React.FC = () => {
             return (
               <div 
                 key={g.id} 
-                className="glass-panel" 
+                className="glass-panel guest-item-card" 
                 style={{ 
-                  padding: '1.25rem 1.5rem', 
+                  padding: '1.15rem 1.25rem', 
                   display: 'flex', 
                   alignItems: 'center', 
                   justifyContent: 'space-between', 
-                  gap: '1.25rem', 
+                  gap: '1rem', 
                   flexWrap: 'wrap',
                   background: isCheckedIn ? '#F8FAFC' : '#FFFFFF',
                   border: isCheckedIn ? '1px solid #CBD5E1' : '1px solid #E2E8F0',
                   borderRadius: 'var(--radius-lg)',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                  maxWidth: '100%',
+                  boxSizing: 'border-box',
+                  overflow: 'hidden'
                 }}
               >
                 {/* Left: Attendee Avatar & Primary Info */}
