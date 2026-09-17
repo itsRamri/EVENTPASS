@@ -139,23 +139,6 @@ export const ManagerDashboard: React.FC = () => {
                 <span 
                   style={{ 
                     fontSize: '0.725rem', 
-                    fontWeight: 800, 
-                    letterSpacing: '0.04em', 
-                    color: '#2563EB', 
-                    background: '#EFF6FF', 
-                    padding: '0.2rem 0.6rem', 
-                    borderRadius: '999px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.3rem',
-                    border: '1px solid #DBEAFE'
-                  }}
-                >
-                  <Sparkles size={12} color="#2563EB" /> EVENT DIRECTOR & MANAGER
-                </span>
-                <span 
-                  style={{ 
-                    fontSize: '0.725rem', 
                     fontWeight: 700, 
                     color: '#64748B', 
                     background: '#F1F5F9', 
@@ -168,11 +151,8 @@ export const ManagerDashboard: React.FC = () => {
                 </span>
               </div>
               <h1 style={{ fontSize: 'clamp(1.3rem, 3.5vw, 1.65rem)', fontWeight: 800, color: '#0F172A', margin: 0, lineHeight: 1.25, wordBreak: 'break-word' }}>
-                {timeGreeting}, {user.name || 'Director'} 👋
+                {timeGreeting}, {user.name} 👋
               </h1>
-              <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', color: '#64748B', fontWeight: 500 }}>
-                Live event operations, admission gauge and instant gate verification
-              </p>
             </div>
           </div>
 
