@@ -460,7 +460,7 @@ export const AuthView: React.FC = () => {
               Enter your registered email and password to access your account
             </p>
 
-            <form onSubmit={handleSignIn} style={{ display: 'grid', gap: '1.15rem', textAlign: 'left' }}>
+            <form onSubmit={handleSignIn} style={{ display: 'grid', gap: '1.15rem', textAlign: 'left' }} autoComplete="off">
               {/* Email Address */}
               <div>
                 <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', marginBottom: '0.35rem', display: 'block' }}>
@@ -475,8 +475,12 @@ export const AuthView: React.FC = () => {
                     className="auth-input-field"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
-                    placeholder="name@college.edu or user@eventpass.io"
+                    placeholder="user@eventpass.io"
                     required
+                    autoComplete="off"
+                    data-lpignore="true"
+                    data-form-type="other"
+                    spellCheck={false}
                   />
                 </div>
               </div>
@@ -506,6 +510,9 @@ export const AuthView: React.FC = () => {
                     onChange={e => setPassword(e.target.value)}
                     placeholder="••••••••"
                     required
+                    autoComplete="off"
+                    data-lpignore="true"
+                    data-form-type="other"
                   />
                   <button
                     type="button"
@@ -589,7 +596,7 @@ export const AuthView: React.FC = () => {
               Register your credentials to access campus events and passes
             </p>
 
-            <form onSubmit={handleSignUp} style={{ display: 'grid', gap: '1.05rem', textAlign: 'left' }}>
+            <form onSubmit={handleSignUp} style={{ display: 'grid', gap: '1.05rem', textAlign: 'left' }} autoComplete="off">
               {/* Profile Photo Upload */}
               <div style={{ textAlign: 'center', marginBottom: '0.25rem' }}>
                 <input 
@@ -714,8 +721,12 @@ export const AuthView: React.FC = () => {
                     className="auth-input-field"
                     value={fullName}
                     onChange={e => setFullName(e.target.value)}
-                    placeholder="e.g. Shubham Kumar"
+                    placeholder="Shubham Kumar"
                     required
+                    autoComplete="off"
+                    data-lpignore="true"
+                    data-form-type="other"
+                    spellCheck={false}
                   />
                 </div>
               </div>
@@ -734,8 +745,12 @@ export const AuthView: React.FC = () => {
                     className="auth-input-field"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
-                    placeholder="student@college.edu or name@gmail.com"
+                    placeholder="user@eventpass.io"
                     required
+                    autoComplete="off"
+                    data-lpignore="true"
+                    data-form-type="other"
+                    spellCheck={false}
                   />
                 </div>
               </div>
@@ -754,7 +769,10 @@ export const AuthView: React.FC = () => {
                     className="auth-input-field"
                     value={mobile}
                     onChange={e => setMobile(e.target.value)}
-                    placeholder="+91 98765 43210"
+                    placeholder="98765 43210"
+                    autoComplete="off"
+                    data-lpignore="true"
+                    data-form-type="other"
                   />
                 </div>
               </div>
@@ -773,9 +791,12 @@ export const AuthView: React.FC = () => {
                     className="auth-input-field"
                     value={password}
                     onChange={e => setPassword(e.target.value)}
-                    placeholder="Min. 6 characters"
+                    placeholder="••••••••"
                     required
                     minLength={6}
+                    autoComplete="off"
+                    data-lpignore="true"
+                    data-form-type="other"
                   />
                   <button
                     type="button"
@@ -801,8 +822,11 @@ export const AuthView: React.FC = () => {
                     className="auth-input-field"
                     value={confirmPassword}
                     onChange={e => setConfirmPassword(e.target.value)}
-                    placeholder="Re-enter password"
+                    placeholder="••••••••"
                     required
+                    autoComplete="off"
+                    data-lpignore="true"
+                    data-form-type="other"
                   />
                 </div>
               </div>

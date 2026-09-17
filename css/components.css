@@ -36,10 +36,12 @@ input[type="number"] {
 
 .auth-input-field {
   width: 100% !important;
-  padding: 0.85rem 2.85rem 0.85rem 3rem !important; /* 3rem (48px) ensures zero overlap with 20px icon at 14px */
+  padding: 0.85rem 2.75rem 0.85rem 3.25rem !important; /* 3.25rem (52px) completely clears icon */
   border-radius: 14px !important;
   border: 1.5px solid rgba(255, 255, 255, 0.85) !important;
-  background: #EDF2F7 !important;
+  background-color: #EDF2F7 !important;
+  background-image: none !important;
+  background-repeat: no-repeat !important;
   box-shadow: inset 3px 3px 6px #cad3e2, inset -3px -3px 6px #ffffff !important;
   color: #0F172A !important;
   font-weight: 600 !important;
@@ -49,9 +51,22 @@ input[type="number"] {
   transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
 }
 
+/* Prevent browser extensions and autofill from breaking background / injecting repeating patterns */
+.auth-input-field:-webkit-autofill,
+.auth-input-field:-webkit-autofill:hover, 
+.auth-input-field:-webkit-autofill:focus, 
+.auth-input-field:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 40px #EDF2F7 inset !important;
+  -webkit-text-fill-color: #0F172A !important;
+  background-image: none !important;
+  background-color: #EDF2F7 !important;
+}
+
 .auth-input-field:focus {
   border-color: #38BDF8 !important;
   box-shadow: inset 2px 2px 4px #cad3e2, inset -2px -2px 4px #ffffff, 0 0 0 3px rgba(56, 189, 248, 0.25) !important;
+  background-color: #EDF2F7 !important;
+  background-image: none !important;
 }
 
 .auth-input-field::placeholder {
