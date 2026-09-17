@@ -477,14 +477,16 @@ export const GuestManagement: React.FC = () => {
 
       {/* Search Bar */}
       <div className="glass-panel" style={{ padding: '0.85rem 1.25rem', marginBottom: '1.5rem', background: '#FFFFFF', border: '1px solid #E2E8F0', boxSizing: 'border-box', maxWidth: '100%' }}>
-        <div style={{ position: 'relative', width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
-          <Search size={18} style={{ position: 'absolute', left: '0.95rem', top: '50%', transform: 'translateY(-50%)', color: '#64748B', pointerEvents: 'none' }} />
+        <div className="search-input-container">
+          <div className="search-input-icon">
+            <Search size={18} />
+          </div>
           <input 
             type="text" 
-            placeholder="Search by attendee name, email, mobile, or token code..."
+            className="search-input-box"
+            placeholder="Search attendees by name, email, or mobile..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            style={{ width: '100%', maxWidth: '100%', padding: '0.75rem 1rem 0.75rem 2.85rem', borderRadius: 'var(--radius-md)', color: '#0F172A', fontWeight: 600, border: '1.5px solid #CBD5E1', background: '#FFFFFF', boxSizing: 'border-box' }}
           />
         </div>
       </div>

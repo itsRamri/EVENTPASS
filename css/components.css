@@ -90,6 +90,52 @@ input[type="number"] {
   z-index: 3;
 }
 
+/* Global Search Input Bar Component */
+.search-input-container {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.search-input-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748B;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.search-input-box {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 0.75rem 1rem 0.75rem 3rem !important; /* 3rem guarantees full clearance from icon */
+  border-radius: var(--radius-md) !important;
+  border: 1.5px solid #CBD5E1 !important;
+  background-color: #FFFFFF !important;
+  color: #0F172A !important;
+  font-weight: 600 !important;
+  font-size: 0.9rem !important;
+  box-sizing: border-box !important;
+  outline: none !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.search-input-box:focus {
+  border-color: #2563EB !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+}
+
+.search-input-box::placeholder {
+  color: #94A3B8 !important;
+  font-weight: 500 !important;
+}
+
 /* Main Container & Layout */
 #app {
   display: flex;
