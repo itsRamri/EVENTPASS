@@ -5,6 +5,9 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -13,7 +16,7 @@ jobs:
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js (v22 required by Capacitor CLI)
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -27,9 +30,6 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-
       - name: Build Web App & Sync Capacitor
         run: npm run build:android
 
@@ -39,18 +39,42 @@ jobs:
       - name: Build Android APK (Debug & Release)
         run: |
           cd android
-          ./gradlew assembleDebug assembleRelease
+          ./gradlew assembleDebug assembleRelease --no-daemon
+
+      - name: Rename APKs for Easy Direct Download
+        run: |
+          mkdir -p apk-output
+          cp android/app/build/outputs/apk/debug/app-debug.apk apk-output/EventPass-Debug.apk
+          cp android/app/build/outputs/apk/release/app-release.apk apk-output/EventPass-Release.apk
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
-        if: always()
         with:
           name: EventPass-Debug-APK
-          path: android/app/build/outputs/apk/debug/*.apk
+          path: apk-output/EventPass-Debug.apk
 
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
-        if: always()
         with:
           name: EventPass-Release-APK
-          path: android/app/build/outputs/apk/release/*.apk
+          path: apk-output/EventPass-Release.apk
+
+      - name: Create / Update GitHub Release (Direct Download Link)
+        uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main'
+        with:
+          tag_name: v1.0.0
+          name: "EventPass Android App v1.0.0 (Latest Release)"
+          body: |
+            ## 📱 EventPass Android Application
+            
+            Download the signed APK directly to your phone below:
+            - **[EventPass-Release.apk](https://github.com/${{ github.repository }}/releases/download/v1.0.0/EventPass-Release.apk)** (Recommended)
+            - **[EventPass-Debug.apk](https://github.com/${{ github.repository }}/releases/download/v1.0.0/EventPass-Debug.apk)**
+          files: |
+            apk-output/EventPass-Release.apk
+            apk-output/EventPass-Debug.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
