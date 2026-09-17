@@ -35,6 +35,7 @@ export const AuthView: React.FC = () => {
   const [newPassword, setNewPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [mobile, setMobile] = useState('');
+  const [countryCode, setCountryCode] = useState('+91');
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [role, setRole] = useState<UserRole>('manager');
   const [showPassword, setShowPassword] = useState(false);
@@ -144,7 +145,7 @@ export const AuthView: React.FC = () => {
     e.preventDefault();
     const cleanName = fullName.trim();
     const cleanEmail = email.trim();
-    const cleanMobile = mobile.trim();
+    const digitsOnly = mobile.replace(/\D/g, '');
 
     if (!cleanName) {
       showToast('Please enter your full name', 'warning');
@@ -152,6 +153,11 @@ export const AuthView: React.FC = () => {
     }
     if (!cleanEmail || !cleanEmail.includes('@')) {
       showToast('Please enter a valid email address', 'warning');
+      return;
+    }
+    if (!digitsOnly || digitsOnly.length < 10) {
+      sound.play('error');
+      showToast('Please enter a valid 10-digit mobile number', 'warning');
       return;
     }
     if (!password || password.length < 6) {
@@ -164,6 +170,7 @@ export const AuthView: React.FC = () => {
       return;
     }
 
+    const cleanMobile = `${countryCode} ${digitsOnly}`;
     setIsLoading(true);
 
     const defaultAvatar = role === 'guest' 
@@ -608,26 +615,67 @@ export const AuthView: React.FC = () => {
                 </div>
               </div>
 
-              {/* Mobile Number */}
+              {/* Mobile Number with Country Code Dropdown */}
               <div>
                 <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', marginBottom: '0.35rem', display: 'block' }}>
-                  Mobile / WhatsApp Number
+                  Mobile / WhatsApp Number (10 Digits)
                 </label>
-                <div className="auth-input-container">
-                  <span className="auth-input-icon">
-                    <Phone size={18} />
-                  </span>
-                  <input
-                    type="tel"
-                    className="auth-input-field"
-                    value={mobile}
-                    onChange={e => setMobile(e.target.value)}
-                    placeholder="98765 43210"
-                    autoComplete="off"
-                    data-lpignore="true"
-                    data-form-type="other"
-                  />
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <select
+                    value={countryCode}
+                    onChange={e => setCountryCode(e.target.value)}
+                    style={{
+                      height: '46px',
+                      padding: '0 0.5rem',
+                      borderRadius: '14px',
+                      border: '1.5px solid rgba(255, 255, 255, 0.85)',
+                      background: '#EDF2F7',
+                      boxShadow: 'inset 3px 3px 6px #cad3e2, inset -3px -3px 6px #ffffff',
+                      color: '#0F172A',
+                      fontWeight: 700,
+                      fontSize: '0.88rem',
+                      outline: 'none',
+                      cursor: 'pointer',
+                      flexShrink: 0
+                    }}
+                  >
+                    <option value="+91">🇮🇳 +91</option>
+                    <option value="+1">🇺🇸 +1</option>
+                    <option value="+44">🇬🇧 +44</option>
+                    <option value="+971">🇦🇪 +971</option>
+                    <option value="+966">🇸🇦 +966</option>
+                    <option value="+65">🇸🇬 +65</option>
+                    <option value="+61">🇦🇺 +61</option>
+                    <option value="+880">🇧🇩 +880</option>
+                    <option value="+977">🇳🇵 +977</option>
+                  </select>
+
+                  <div className="auth-input-container" style={{ flex: 1 }}>
+                    <span className="auth-input-icon">
+                      <Phone size={18} />
+                    </span>
+                    <input
+                      type="tel"
+                      className="auth-input-field"
+                      value={mobile}
+                      onChange={e => {
+                        const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                        setMobile(val);
+                      }}
+                      placeholder="9876543210"
+                      required
+                      maxLength={10}
+                      autoComplete="off"
+                      data-lpignore="true"
+                      data-form-type="other"
+                    />
+                  </div>
                 </div>
+                {mobile.length > 0 && mobile.length < 10 && (
+                  <span style={{ fontSize: '0.72rem', color: '#EF4444', fontWeight: 600, marginTop: '4px', display: 'block' }}>
+                    * Enter {10 - mobile.length} more digit{10 - mobile.length > 1 ? 's' : ''} (10 digits required)
+                  </span>
+                )}
               </div>
 
               {/* Password */}
