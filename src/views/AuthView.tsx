@@ -239,9 +239,7 @@ export const AuthView: React.FC = () => {
         mobile: mobile.trim() || '+91 98765 00945',
         role: role,
         status: 'active',
-        avatar: finalAvatar,
-        college: 'National Institute of Technology',
-        branch: 'Computer Science & Eng.'
+        avatar: finalAvatar
       };
 
       setIsLoading(false);
@@ -369,9 +367,7 @@ export const AuthView: React.FC = () => {
       mobile: '+91 98765 00945',
       role: acc ? acc.role : role,
       status: 'active',
-      avatar: acc ? acc.avatar : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-      college: 'National Institute of Technology',
-      branch: 'Computer Science & Eng.'
+      avatar: acc ? acc.avatar : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
     };
 
     login(userProfile);

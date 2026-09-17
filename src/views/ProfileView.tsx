@@ -1,6 +1,6 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
-import { User, Mail, Phone, School, BookOpen, ShieldCheck, Lock, LogOut } from 'lucide-react';
+import { User, Mail, Phone, ShieldCheck, Lock, LogOut } from 'lucide-react';
 
 export const ProfileView: React.FC = () => {
   const { user, logout } = useApp();
@@ -97,30 +97,6 @@ export const ProfileView: React.FC = () => {
               </div>
             </div>
           </div>
-
-          {/* College / Institute */}
-          {user.college && (
-            <div style={{ background: 'var(--bg-tertiary)', padding: '0.85rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
-              <div style={{ fontSize: '0.725rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                <School size={13} color="var(--accent-secondary)" /> College / University
-              </div>
-              <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                {user.college}
-              </div>
-            </div>
-          )}
-
-          {/* Department / Branch */}
-          {user.branch && (
-            <div style={{ background: 'var(--bg-tertiary)', padding: '0.85rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
-              <div style={{ fontSize: '0.725rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                <BookOpen size={13} color="var(--accent-secondary)" /> Department / Branch
-              </div>
-              <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                {user.branch}
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
