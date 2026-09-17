@@ -358,9 +358,11 @@
   }
 
   /* Form Elements */
-  input, select, textarea {
-    font-size: 0.88rem !important;
-    padding: 0.65rem 0.8rem !important;
+  input:not(.auth-input-field):not(.auth-otp-box), 
+  select, 
+  textarea {
+    font-size: 0.88rem;
+    padding: 0.65rem 0.8rem;
   }
 
   /* Buttons */

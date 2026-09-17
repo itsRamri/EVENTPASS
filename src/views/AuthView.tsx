@@ -466,28 +466,17 @@ export const AuthView: React.FC = () => {
                 <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', marginBottom: '0.35rem', display: 'block' }}>
                   Email Address
                 </label>
-                <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#64748B' }}>
+                <div className="auth-input-container">
+                  <span className="auth-input-icon">
                     <Mail size={18} />
                   </span>
                   <input
                     type="email"
+                    className="auth-input-field"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     placeholder="name@college.edu or user@eventpass.io"
                     required
-                    style={{
-                      width: '100%',
-                      padding: '0.85rem 1rem 0.85rem 2.75rem',
-                      borderRadius: '14px',
-                      border: '1px solid rgba(255,255,255,0.8)',
-                      background: '#EDF2F7',
-                      boxShadow: 'inset 3px 3px 6px #cad3e2, inset -3px -3px 6px #ffffff',
-                      color: '#0F172A',
-                      fontWeight: 700,
-                      fontSize: '0.95rem',
-                      outline: 'none'
-                    }}
                   />
                 </div>
               </div>
@@ -506,33 +495,22 @@ export const AuthView: React.FC = () => {
                     Forgot Password?
                   </button>
                 </div>
-                <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#64748B' }}>
+                <div className="auth-input-container">
+                  <span className="auth-input-icon">
                     <Lock size={18} />
                   </span>
                   <input
                     type={showPassword ? 'text' : 'password'}
+                    className="auth-input-field"
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     placeholder="••••••••"
                     required
-                    style={{
-                      width: '100%',
-                      padding: '0.85rem 2.75rem 0.85rem 2.75rem',
-                      borderRadius: '14px',
-                      border: '1px solid rgba(255,255,255,0.8)',
-                      background: '#EDF2F7',
-                      boxShadow: 'inset 3px 3px 6px #cad3e2, inset -3px -3px 6px #ffffff',
-                      color: '#0F172A',
-                      fontWeight: 700,
-                      fontSize: '0.95rem',
-                      outline: 'none'
-                    }}
                   />
                   <button
                     type="button"
+                    className="auth-password-toggle"
                     onClick={() => setShowPassword(!showPassword)}
-                    style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#64748B', cursor: 'pointer' }}
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
@@ -727,28 +705,17 @@ export const AuthView: React.FC = () => {
                 <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', marginBottom: '0.35rem', display: 'block' }}>
                   Full Legal Name
                 </label>
-                <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#64748B' }}>
+                <div className="auth-input-container">
+                  <span className="auth-input-icon">
                     <User size={18} />
                   </span>
                   <input
                     type="text"
+                    className="auth-input-field"
                     value={fullName}
                     onChange={e => setFullName(e.target.value)}
                     placeholder="e.g. Shubham Kumar"
                     required
-                    style={{
-                      width: '100%',
-                      padding: '0.85rem 1rem 0.85rem 2.75rem',
-                      borderRadius: '14px',
-                      border: '1px solid rgba(255,255,255,0.8)',
-                      background: '#EDF2F7',
-                      boxShadow: 'inset 3px 3px 6px #cad3e2, inset -3px -3px 6px #ffffff',
-                      color: '#0F172A',
-                      fontWeight: 700,
-                      fontSize: '0.95rem',
-                      outline: 'none'
-                    }}
                   />
                 </div>
               </div>
@@ -758,28 +725,17 @@ export const AuthView: React.FC = () => {
                 <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', marginBottom: '0.35rem', display: 'block' }}>
                   Email Address
                 </label>
-                <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#64748B' }}>
+                <div className="auth-input-container">
+                  <span className="auth-input-icon">
                     <Mail size={18} />
                   </span>
                   <input
                     type="email"
+                    className="auth-input-field"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     placeholder="student@college.edu or name@gmail.com"
                     required
-                    style={{
-                      width: '100%',
-                      padding: '0.85rem 1rem 0.85rem 2.75rem',
-                      borderRadius: '14px',
-                      border: '1px solid rgba(255,255,255,0.8)',
-                      background: '#EDF2F7',
-                      boxShadow: 'inset 3px 3px 6px #cad3e2, inset -3px -3px 6px #ffffff',
-                      color: '#0F172A',
-                      fontWeight: 700,
-                      fontSize: '0.95rem',
-                      outline: 'none'
-                    }}
                   />
                 </div>
               </div>
@@ -789,27 +745,16 @@ export const AuthView: React.FC = () => {
                 <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', marginBottom: '0.35rem', display: 'block' }}>
                   Mobile / WhatsApp Number
                 </label>
-                <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#64748B' }}>
+                <div className="auth-input-container">
+                  <span className="auth-input-icon">
                     <Phone size={18} />
                   </span>
                   <input
                     type="tel"
+                    className="auth-input-field"
                     value={mobile}
                     onChange={e => setMobile(e.target.value)}
                     placeholder="+91 98765 43210"
-                    style={{
-                      width: '100%',
-                      padding: '0.85rem 1rem 0.85rem 2.75rem',
-                      borderRadius: '14px',
-                      border: '1px solid rgba(255,255,255,0.8)',
-                      background: '#EDF2F7',
-                      boxShadow: 'inset 3px 3px 6px #cad3e2, inset -3px -3px 6px #ffffff',
-                      color: '#0F172A',
-                      fontWeight: 700,
-                      fontSize: '0.95rem',
-                      outline: 'none'
-                    }}
                   />
                 </div>
               </div>
@@ -819,34 +764,23 @@ export const AuthView: React.FC = () => {
                 <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', marginBottom: '0.35rem', display: 'block' }}>
                   Create Password
                 </label>
-                <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#64748B' }}>
+                <div className="auth-input-container">
+                  <span className="auth-input-icon">
                     <Lock size={18} />
                   </span>
                   <input
                     type={showPassword ? 'text' : 'password'}
+                    className="auth-input-field"
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     placeholder="Min. 6 characters"
                     required
                     minLength={6}
-                    style={{
-                      width: '100%',
-                      padding: '0.85rem 2.75rem 0.85rem 2.75rem',
-                      borderRadius: '14px',
-                      border: '1px solid rgba(255,255,255,0.8)',
-                      background: '#EDF2F7',
-                      boxShadow: 'inset 3px 3px 6px #cad3e2, inset -3px -3px 6px #ffffff',
-                      color: '#0F172A',
-                      fontWeight: 700,
-                      fontSize: '0.95rem',
-                      outline: 'none'
-                    }}
                   />
                   <button
                     type="button"
+                    className="auth-password-toggle"
                     onClick={() => setShowPassword(!showPassword)}
-                    style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#64748B', cursor: 'pointer' }}
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
@@ -858,28 +792,17 @@ export const AuthView: React.FC = () => {
                 <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', marginBottom: '0.35rem', display: 'block' }}>
                   Confirm Password
                 </label>
-                <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#64748B' }}>
+                <div className="auth-input-container">
+                  <span className="auth-input-icon">
                     <Lock size={18} />
                   </span>
                   <input
                     type="password"
+                    className="auth-input-field"
                     value={confirmPassword}
                     onChange={e => setConfirmPassword(e.target.value)}
                     placeholder="Re-enter password"
                     required
-                    style={{
-                      width: '100%',
-                      padding: '0.85rem 1rem 0.85rem 2.75rem',
-                      borderRadius: '14px',
-                      border: '1px solid rgba(255,255,255,0.8)',
-                      background: '#EDF2F7',
-                      boxShadow: 'inset 3px 3px 6px #cad3e2, inset -3px -3px 6px #ffffff',
-                      color: '#0F172A',
-                      fontWeight: 700,
-                      fontSize: '0.95rem',
-                      outline: 'none'
-                    }}
                   />
                 </div>
               </div>
@@ -964,28 +887,17 @@ export const AuthView: React.FC = () => {
                     <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', marginBottom: '0.35rem', display: 'block' }}>
                       Registered Email Address
                     </label>
-                    <div style={{ position: 'relative' }}>
-                      <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#64748B' }}>
+                    <div className="auth-input-container">
+                      <span className="auth-input-icon">
                         <Mail size={18} />
                       </span>
                       <input
                         type="email"
+                        className="auth-input-field"
                         value={email}
                         onChange={e => setEmail(e.target.value)}
                         placeholder="user@eventpass.io"
                         required
-                        style={{
-                          width: '100%',
-                          padding: '0.85rem 1rem 0.85rem 2.75rem',
-                          borderRadius: '14px',
-                          border: '1px solid rgba(255,255,255,0.8)',
-                          background: '#EDF2F7',
-                          boxShadow: 'inset 3px 3px 6px #cad3e2, inset -3px -3px 6px #ffffff',
-                          color: '#0F172A',
-                          fontWeight: 700,
-                          fontSize: '0.95rem',
-                          outline: 'none'
-                        }}
                       />
                     </div>
                   </div>
