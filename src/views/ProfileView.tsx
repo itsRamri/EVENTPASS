@@ -1,26 +1,36 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
-import { User, Mail, Phone, ShieldCheck, Lock, LogOut } from 'lucide-react';
+import { User, Mail, Phone, ShieldCheck, Lock, LogOut, CheckCircle2 } from 'lucide-react';
 
 export const ProfileView: React.FC = () => {
   const { user, logout } = useApp();
 
   return (
-    <div className="animate-fade" style={{ maxWidth: 640, margin: '0 auto' }}>
+    <div className="animate-fade" style={{ maxWidth: 640, margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
       <div className="page-header" style={{ marginBottom: '1.25rem' }}>
         <div>
-          <h1>Account Profile</h1>
-          <p>Official verified registration & identity details</p>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0F172A' }}>Account Profile</h1>
+          <p style={{ color: '#64748B', fontSize: '0.875rem' }}>Official verified registration & identity details</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span className="badge badge-approved" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-            <ShieldCheck size={13} /> VERIFIED ACCOUNT
+          <span className="badge badge-approved" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', background: '#DCFCE7', color: '#166534', border: '1px solid #86EFAC', fontWeight: 700 }}>
+            <ShieldCheck size={14} color="#16A34A" /> VERIFIED ACCOUNT
           </span>
         </div>
       </div>
 
       {/* Main Profile Summary Card */}
-      <div className="glass-panel" style={{ padding: '2rem 1.5rem', marginBottom: '1.25rem', textAlign: 'center' }}>
+      <div 
+        style={{ 
+          background: '#FFFFFF',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid #E2E8F0',
+          boxShadow: '0 4px 16px rgba(15, 23, 42, 0.05)',
+          padding: '2rem 1.5rem', 
+          marginBottom: '1.25rem', 
+          textAlign: 'center' 
+        }}
+      >
         <div 
           style={{ 
             width: 84, 
@@ -39,60 +49,95 @@ export const ProfileView: React.FC = () => {
           <User size={42} strokeWidth={2.3} />
         </div>
 
-        <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
+        <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.25rem' }}>
           {user.name}
         </h2>
-        <p style={{ color: 'var(--accent-secondary)', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.75rem' }}>
+        <p style={{ color: '#2563EB', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.85rem' }}>
           {user.email}
         </p>
 
         <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-          <span className="badge badge-approved">✓ Active Event Member</span>
-          <span className="badge badge-checkedin" style={{ textTransform: 'none', fontSize: '0.75rem' }}>
+          <span className="badge badge-approved" style={{ background: '#EFF6FF', color: '#1E40AF', border: '1px solid #BFDBFE', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+            <CheckCircle2 size={13} color="#2563EB" /> Active Event Member
+          </span>
+          <span className="badge badge-checkedin" style={{ textTransform: 'none', fontSize: '0.75rem', background: '#F1F5F9', color: '#475569', border: '1px solid #CBD5E1', fontWeight: 600 }}>
             🔒 Verified Profile
           </span>
         </div>
       </div>
 
-      {/* Read-Only Profile Details */}
-      <div className="glass-panel" style={{ padding: '1.5rem', marginBottom: '1.25rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border-subtle)' }}>
-          <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <User size={18} color="var(--accent-primary)" />
+      {/* High-Contrast Profile Details Section */}
+      <div 
+        style={{ 
+          background: '#FFFFFF',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid #E2E8F0',
+          boxShadow: '0 4px 16px rgba(15, 23, 42, 0.05)',
+          padding: '1.5rem', 
+          marginBottom: '1.5rem' 
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem', paddingBottom: '0.75rem', borderBottom: '1.5px solid #F1F5F9' }}>
+          <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+            <User size={18} color="#2563EB" />
             Profile Information
           </h3>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+          <span style={{ fontSize: '0.75rem', color: '#64748B', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontWeight: 600, background: '#F8FAFC', padding: '0.25rem 0.5rem', borderRadius: 6, border: '1px solid #E2E8F0' }}>
             <Lock size={12} /> Non-editable
           </span>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
-          {/* Full Name */}
-          <div style={{ background: 'var(--bg-tertiary)', padding: '0.85rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
-            <div style={{ fontSize: '0.725rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '0.25rem' }}>
-              Full Name
+          {/* Full Name Field Card */}
+          <div 
+            style={{ 
+              background: '#F8FAFC', 
+              padding: '1rem 1.15rem', 
+              borderRadius: 'var(--radius-md)', 
+              border: '1.5px solid #E2E8F0',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+            }}
+          >
+            <div style={{ fontSize: '0.725rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <User size={13} color="#2563EB" /> Full Name
             </div>
-            <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+            <div style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A', wordBreak: 'break-word' }}>
               {user.name}
             </div>
           </div>
 
           {/* Email & Mobile Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.85rem' }}>
-            <div style={{ background: 'var(--bg-tertiary)', padding: '0.85rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
-              <div style={{ fontSize: '0.725rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                <Mail size={13} color="var(--accent-secondary)" /> Email Address
+            <div 
+              style={{ 
+                background: '#F8FAFC', 
+                padding: '1rem 1.15rem', 
+                borderRadius: 'var(--radius-md)', 
+                border: '1.5px solid #E2E8F0',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+              }}
+            >
+              <div style={{ fontSize: '0.725rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <Mail size={13} color="#2563EB" /> Email Address
               </div>
-              <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)', wordBreak: 'break-all' }}>
+              <div style={{ fontSize: '0.925rem', fontWeight: 700, color: '#0F172A', wordBreak: 'break-all' }}>
                 {user.email}
               </div>
             </div>
 
-            <div style={{ background: 'var(--bg-tertiary)', padding: '0.85rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
-              <div style={{ fontSize: '0.725rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                <Phone size={13} color="var(--accent-secondary)" /> Mobile Number
+            <div 
+              style={{ 
+                background: '#F8FAFC', 
+                padding: '1rem 1.15rem', 
+                borderRadius: 'var(--radius-md)', 
+                border: '1.5px solid #E2E8F0',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+              }}
+            >
+              <div style={{ fontSize: '0.725rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <Phone size={13} color="#2563EB" /> Mobile Number
               </div>
-              <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+              <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0F172A' }}>
                 {user.mobile || '+91 98765 43210'}
               </div>
             </div>
@@ -103,8 +148,20 @@ export const ProfileView: React.FC = () => {
       {/* Logout Button */}
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2rem' }}>
         <button 
-          className="btn btn-secondary" 
-          style={{ color: '#EF4444', fontWeight: 700, padding: '0.65rem 1.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+          className="btn" 
+          style={{ 
+            background: '#FEE2E2',
+            color: '#DC2626', 
+            border: '1.5px solid #FCA5A5',
+            fontWeight: 800, 
+            padding: '0.75rem 1.75rem', 
+            display: 'inline-flex', 
+            alignItems: 'center', 
+            gap: '0.5rem',
+            borderRadius: 'var(--radius-md)',
+            boxShadow: '0 2px 6px rgba(220, 38, 38, 0.1)',
+            cursor: 'pointer'
+          }}
           onClick={logout}
         >
           <LogOut size={16} /> Log Out of Account

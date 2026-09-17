@@ -474,15 +474,15 @@ export const GuestManagement: React.FC = () => {
       </div>
 
       {/* Search Bar */}
-      <div className="glass-panel" style={{ padding: '0.85rem 1.25rem', marginBottom: '1.5rem', background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
-        <div style={{ position: 'relative' }}>
-          <Search size={18} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: '#64748B' }} />
+      <div className="glass-panel" style={{ padding: '0.85rem 1.25rem', marginBottom: '1.5rem', background: '#FFFFFF', border: '1px solid #E2E8F0', boxSizing: 'border-box' }}>
+        <div style={{ position: 'relative', width: '100%' }}>
+          <Search size={18} style={{ position: 'absolute', left: '0.95rem', top: '50%', transform: 'translateY(-50%)', color: '#64748B', pointerEvents: 'none' }} />
           <input 
             type="text" 
-            placeholder="Search by attendee name, email, mobile, college or token code..."
+            placeholder="Search by attendee name, email, mobile, or token code..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            style={{ width: '100%', paddingLeft: '2.5rem', borderRadius: 'var(--radius-md)', color: '#0F172A', fontWeight: 600, border: '1px solid #CBD5E1' }}
+            style={{ width: '100%', padding: '0.75rem 1rem 0.75rem 2.85rem', borderRadius: 'var(--radius-md)', color: '#0F172A', fontWeight: 600, border: '1.5px solid #CBD5E1', background: '#FFFFFF', boxSizing: 'border-box' }}
           />
         </div>
       </div>
