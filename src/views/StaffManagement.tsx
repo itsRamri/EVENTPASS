@@ -196,7 +196,7 @@ export const StaffManagement: React.FC = () => {
 
       {/* Staff Members List */}
       {filteredStaff.length === 0 ? (
-        <div className="glass-panel empty-state" style={{ padding: '3.5rem 2rem', textAlign: 'center', background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+        <div className="glass-panel empty-state" style={{ padding: '3.5rem 2rem', textAlign: 'center', background: '#FFFFFF', border: '1px solid #E2E8F0', maxWidth: '100%', boxSizing: 'border-box' }}>
           <div className="empty-icon-wrap" style={{ width: 64, height: 64, margin: '0 auto 1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: 'rgba(74, 123, 247, 0.1)', color: 'var(--accent-primary)' }}>
             <ShieldCheck size={32} />
           </div>
@@ -209,7 +209,7 @@ export const StaffManagement: React.FC = () => {
           </button>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem', width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
           {filteredStaff.map(s => {
             const assignedEvt = events.find(e => e.id === s.assignedEventId) || { name: 'All Event Gates' };
             const p: StaffPermissions = s.permissions || {
@@ -223,24 +223,27 @@ export const StaffManagement: React.FC = () => {
             return (
               <div 
                 key={s.id} 
-                className="glass-panel" 
+                className="glass-panel staff-item-card" 
                 style={{ 
-                  padding: '1.5rem', 
+                  padding: '1.25rem 1.35rem', 
                   background: '#FFFFFF', 
                   border: '1.5px solid #E2E8F0',
                   borderRadius: 'var(--radius-lg)',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+                  maxWidth: '100%',
+                  boxSizing: 'border-box',
+                  overflow: 'hidden'
                 }}
               >
                 {/* Header Row */}
-                <div className="flex-between" style={{ marginBottom: '1.15rem', flexWrap: 'wrap', gap: '0.85rem' }}>
+                <div className="flex-between" style={{ marginBottom: '1.15rem', flexWrap: 'wrap', gap: '0.85rem', width: '100%' }}>
                   {/* Staff Info */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', minWidth: '260px' }}>
-                    <div style={{ position: 'relative' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flex: '1 1 220px', minWidth: 0, maxWidth: '100%' }}>
+                    <div style={{ position: 'relative', flexShrink: 0 }}>
                       <div 
                         style={{ 
-                          width: 50, 
-                          height: 50, 
+                          width: 48, 
+                          height: 48, 
                           borderRadius: 'var(--radius-md)', 
                           background: '#EFF6FF', 
                           border: '2px solid #BFDBFE', 
@@ -249,7 +252,7 @@ export const StaffManagement: React.FC = () => {
                           justifyContent: 'center', 
                           fontWeight: 900, 
                           color: '#1D4ED8', 
-                          fontSize: '1.3rem' 
+                          fontSize: '1.25rem' 
                         }}
                       >
                         {s.name.charAt(0)}
@@ -267,9 +270,9 @@ export const StaffManagement: React.FC = () => {
                         }} 
                       />
                     </div>
-                    <div>
+                    <div style={{ flex: '1 1 auto', minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                        <span style={{ fontWeight: 800, fontSize: '1.15rem', color: '#0F172A' }}>
+                        <span style={{ fontWeight: 800, fontSize: '1.1rem', color: '#0F172A', wordBreak: 'break-word' }}>
                           {s.name}
                         </span>
                         <span 
@@ -286,7 +289,7 @@ export const StaffManagement: React.FC = () => {
                           {s.status === 'active' ? '✓ ACTIVE SCANNER' : '✕ INACTIVE'}
                         </span>
                       </div>
-                      <div style={{ fontSize: '0.85rem', color: '#334155', fontWeight: 600, marginTop: '0.15rem' }}>
+                      <div style={{ fontSize: '0.85rem', color: '#334155', fontWeight: 600, marginTop: '0.15rem', wordBreak: 'break-all' }}>
                         {s.email} {s.phone ? `• ${s.phone}` : ''} {s.designation ? `(${s.designation})` : ''}
                       </div>
                     </div>
@@ -492,15 +495,14 @@ export const StaffManagement: React.FC = () => {
       {/* Add Staff / Direct Scanner Access Modal */}
       {isAddStaffModalOpen && (
         <div className="modal-overlay active" onClick={() => setIsAddStaffModalOpen(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 500 }}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 'min(500px, calc(100vw - 1.5rem))', width: '100%', boxSizing: 'border-box' }}>
             <div className="modal-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                <div style={{ width: 38, height: 38, borderRadius: 'var(--radius-sm)', background: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563EB', border: '1px solid #BFDBFE' }}>
+                <div style={{ width: 38, height: 38, borderRadius: 'var(--radius-sm)', background: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563EB', border: '1px solid #BFDBFE', flexShrink: 0 }}>
                   <ShieldCheck size={22} />
                 </div>
                 <div>
                   <h2 style={{ color: '#0F172A', fontWeight: 800, fontSize: '1.2rem', margin: 0 }}>Direct Scanner Access Invite</h2>
-                  <p style={{ fontSize: '0.78rem', color: '#475569', fontWeight: 600, marginTop: 2, margin: 0 }}>No forms required • Staff gets instant access & notification</p>
                 </div>
               </div>
               <button type="button" className="icon-btn" onClick={() => setIsAddStaffModalOpen(false)}>✕</button>
@@ -556,11 +558,11 @@ export const StaffManagement: React.FC = () => {
                     </label>
                     <textarea 
                       rows={3}
-                      placeholder="Example: security@event.com, gate1@event.com"
+                      placeholder="Example: security@event.com"
                       value={staffEmailInput}
                       onChange={e => setStaffEmailInput(e.target.value)}
                       required
-                      style={{ color: '#0F172A', fontWeight: 600, border: '1.5px solid #94A3B8', borderRadius: 'var(--radius-sm)', padding: '0.65rem', fontSize: '0.875rem', width: '100%' }}
+                      style={{ color: '#0F172A', fontWeight: 600, border: '1.5px solid #94A3B8', borderRadius: 'var(--radius-sm)', padding: '0.65rem', fontSize: '0.875rem', width: '100%', boxSizing: 'border-box' }}
                     />
                     <div className="form-hint" style={{ color: '#64748B', fontSize: '0.775rem' }}>
                       Staff will receive an instant invitation notification with scanner authorization.
@@ -573,11 +575,11 @@ export const StaffManagement: React.FC = () => {
                     </label>
                     <textarea 
                       rows={3}
-                      placeholder="Example: +91 98765 43210, 9811122233"
+                      placeholder="Example: +91 98765 43210"
                       value={staffPhoneInput}
                       onChange={e => setStaffPhoneInput(e.target.value)}
                       required
-                      style={{ color: '#0F172A', fontWeight: 600, border: '1.5px solid #94A3B8', borderRadius: 'var(--radius-sm)', padding: '0.65rem', fontSize: '0.875rem', width: '100%' }}
+                      style={{ color: '#0F172A', fontWeight: 600, border: '1.5px solid #94A3B8', borderRadius: 'var(--radius-sm)', padding: '0.65rem', fontSize: '0.875rem', width: '100%', boxSizing: 'border-box' }}
                     />
                     <div className="form-hint" style={{ color: '#64748B', fontSize: '0.775rem' }}>
                       Staff will receive instant mobile access for gate scanning.

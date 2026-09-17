@@ -419,7 +419,7 @@ export const GuestHome: React.FC = () => {
         <form onSubmit={handleJoinByEventId} style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap' }}>
           <input 
             type="text" 
-            placeholder="e.g. evt_fresher_2026 or evt_hackathon_x"
+            placeholder="e.g. evt_fresher_2026"
             value={inputEventId}
             onChange={e => setInputEventId(e.target.value)}
             style={{ flex: 1, minWidth: 220, fontFamily: 'var(--font-mono)' }}
