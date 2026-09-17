@@ -1,6 +1,7 @@
 import { 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
+  updateProfile,
   signOut, 
   sendPasswordResetEmail,
   onAuthStateChanged,
@@ -68,9 +69,25 @@ export const firebaseSignIn = async (
 
     // Try to get profile from Firestore first
     const existingProfile = await getUserProfileFromFirestore(fbUser.uid, fbUser.email || email);
-    if (existingProfile) {
-      return existingProfile;
-    }
+    
+    // Check localStorage saved accounts for exact registered name
+    let savedName = '';
+    let savedMobile = '';
+    try {
+      const savedAccounts = localStorage.getItem('ep_accounts_db');
+      if (savedAccounts) {
+        const accounts = JSON.parse(savedAccounts);
+        const match = accounts.find((a: any) => a.email && a.email.toLowerCase() === email.toLowerCase().trim());
+        if (match) {
+          savedName = match.name || '';
+          savedMobile = match.mobile || '';
+        }
+      }
+    } catch (e) {}
+
+    const resolvedName = (existingProfile && existingProfile.name && existingProfile.name !== email.split('@')[0])
+      ? existingProfile.name
+      : (savedName || fbUser.displayName || email.split('@')[0]);
 
     const defaultAvatar = preferredRole === 'guest' 
       ? 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80'
@@ -80,14 +97,12 @@ export const firebaseSignIn = async (
 
     const userProfile: UserProfile = {
       id: fbUser.uid,
-      name: fbUser.displayName || email.split('@')[0],
-      email: fbUser.email || email,
-      mobile: '',
-      role: preferredRole,
+      name: resolvedName,
+      email: fbUser.email || email.trim(),
+      mobile: existingProfile?.mobile || savedMobile || '',
+      role: existingProfile?.role || preferredRole,
       status: 'active',
-      avatar: fbUser.photoURL || defaultAvatar,
-      college: '',
-      branch: ''
+      avatar: existingProfile?.avatar || fbUser.photoURL || defaultAvatar
     };
 
     // 2. Sync to Firestore in the background without making user wait
@@ -124,6 +139,9 @@ export const firebaseSignUp = async (
     const res = await withTimeout(createUserWithEmailAndPassword(auth, email.trim(), pass), 2500);
     const fbUser = res.user;
 
+    // Update Firebase Auth profile displayName
+    await updateProfile(fbUser, { displayName: name.trim() }).catch(() => {});
+
     const defaultAvatar = role === 'guest' 
       ? 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80'
       : role === 'scanner'
@@ -140,9 +158,7 @@ export const firebaseSignUp = async (
       mobile: mobile.trim(),
       role: role,
       status: 'active',
-      avatar: finalAvatar,
-      college: college.trim(),
-      branch: branch.trim()
+      avatar: finalAvatar
     };
 
     // 2. Write full user data to Firestore `users` table immediately

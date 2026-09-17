@@ -92,23 +92,23 @@ export const AuthView: React.FC = () => {
     const accounts = getAccounts();
     const existing = accounts.find(a => a.email.toLowerCase() === email.toLowerCase().trim());
 
+    const defaultAvatar = role === 'guest' 
+      ? 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80'
+      : role === 'scanner'
+      ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
+      : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
+
     // 1. If known local account and password matches
     if (existing) {
       if (existing.password === password) {
         const userProfile: UserProfile = {
           id: `usr_${Date.now()}`,
-          name: existing.name,
+          name: existing.name || email.split('@')[0],
           email: existing.email,
           mobile: existing.mobile || '',
           role: existing.role || role,
           status: 'active',
-          avatar: existing.avatar || (role === 'guest' 
-            ? 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80'
-            : role === 'scanner'
-            ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
-            : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'),
-          college: 'National Institute of Technology',
-          branch: 'Computer Science & Engineering'
+          avatar: existing.avatar || defaultAvatar
         };
 
         // Async background Firebase check
@@ -139,39 +139,18 @@ export const AuthView: React.FC = () => {
     }
   };
 
-  // Handle Avatar Image Upload from Device
-  const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      showToast('Please select a valid image file (JPG, PNG, WebP)', 'warning');
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      showToast('Image size should be under 5MB', 'warning');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const result = event.target?.result as string;
-      setAvatarPreview(result);
-      sound.play('success');
-      showToast('Profile photo selected! It will be saved with your account.', 'success');
-    };
-    reader.readAsDataURL(file);
-  };
-
   // Handle Sign Up (Firebase Auth Registration + Local Fallback)
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fullName.trim()) {
+    const cleanName = fullName.trim();
+    const cleanEmail = email.trim();
+    const cleanMobile = mobile.trim();
+
+    if (!cleanName) {
       showToast('Please enter your full name', 'warning');
       return;
     }
-    if (!email || !email.includes('@')) {
+    if (!cleanEmail || !cleanEmail.includes('@')) {
       showToast('Please enter a valid email address', 'warning');
       return;
     }
@@ -187,17 +166,32 @@ export const AuthView: React.FC = () => {
 
     setIsLoading(true);
 
+    const defaultAvatar = role === 'guest' 
+      ? 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80'
+      : role === 'scanner'
+      ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
+      : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
+
+    // Store account locally first
+    const accounts = getAccounts();
+    const newAcc: StoredAccount = {
+      name: cleanName,
+      email: cleanEmail,
+      password: password,
+      role: role,
+      mobile: cleanMobile,
+      avatar: defaultAvatar
+    };
+    saveAccounts([...accounts.filter(a => a.email.toLowerCase() !== cleanEmail.toLowerCase()), newAcc]);
+
     try {
-      // 1. Attempt Real Firebase Registration and sync to Firestore with custom uploaded avatar
+      // 1. Attempt Real Firebase Registration and sync to Firestore
       const profile = await firebaseSignUp(
-        email.trim(), 
+        cleanEmail, 
         password, 
-        fullName, 
+        cleanName, 
         role, 
-        mobile.trim() || '+91 98765 00945',
-        'National Institute of Technology',
-        'Computer Science & Engineering',
-        avatarPreview || undefined
+        cleanMobile
       );
       setIsLoading(false);
       login(profile);
@@ -205,41 +199,14 @@ export const AuthView: React.FC = () => {
     } catch (fbErr: any) {
       console.log('Firebase signup notice (fallback to local):', fbErr?.message);
 
-      const accounts = getAccounts();
-      const existing = accounts.find(a => a.email.toLowerCase() === email.toLowerCase().trim());
-      if (existing) {
-        setIsLoading(false);
-        showToast('An account with this email already exists. Please sign in.', 'warning');
-        setAuthMode('signin');
-        return;
-      }
-
-      const defaultAvatar = role === 'guest' 
-        ? 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80'
-        : role === 'scanner'
-        ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
-        : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
-
-      const finalAvatar = avatarPreview || defaultAvatar;
-
-      const newAcc: StoredAccount = {
-        name: fullName.trim(),
-        email: email.trim(),
-        password: password,
-        role: role,
-        mobile: mobile.trim() || '+91 98765 00945',
-        avatar: finalAvatar
-      };
-      saveAccounts([...accounts, newAcc]);
-
       const userProfile: UserProfile = {
         id: `usr_${Date.now()}`,
-        name: fullName.trim(),
-        email: email.trim(),
-        mobile: mobile.trim() || '+91 98765 00945',
+        name: cleanName,
+        email: cleanEmail,
+        mobile: cleanMobile,
         role: role,
         status: 'active',
-        avatar: finalAvatar
+        avatar: defaultAvatar
       };
 
       setIsLoading(false);
