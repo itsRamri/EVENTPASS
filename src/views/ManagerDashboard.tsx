@@ -10,9 +10,7 @@ import {
   Trash2, 
   Copy, 
   UserPlus, 
-  QrCode, 
   Sparkles, 
-  ShieldCheck, 
   User
 } from 'lucide-react';
 import { EventItem } from '../types';
@@ -157,38 +155,23 @@ export const ManagerDashboard: React.FC = () => {
           </div>
 
           {/* Action Quick Launch Buttons */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(135px, 1fr))', gap: '0.5rem', flex: '1 1 320px', width: '100%' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'nowrap', flexShrink: 0 }}>
             <button 
               className="btn btn-primary" 
-              onClick={() => navigate('scanner')}
-              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', fontWeight: 800, padding: '0.65rem 1rem', width: '100%' }}
-            >
-              <QrCode size={18} /> Live Scanner
-            </button>
-            <button 
-              className="btn btn-secondary" 
               onClick={() => {
                 setEditingEvent(null);
                 navigate('create_event');
               }}
-              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', fontWeight: 700, padding: '0.65rem 1rem', width: '100%' }}
+              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', fontWeight: 800, padding: '0.65rem 1.15rem', whiteSpace: 'nowrap' }}
             >
-              <Plus size={18} /> + New Event
+              <Plus size={18} /> Create Event
             </button>
             <button 
               className="btn btn-secondary" 
               onClick={() => navigate('guests')}
-              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', fontWeight: 700, padding: '0.65rem 1rem', width: '100%' }}
+              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', fontWeight: 700, padding: '0.65rem 1.1rem', whiteSpace: 'nowrap' }}
             >
               <Users size={16} /> Guest Passes
-            </button>
-            <button 
-              className="btn btn-secondary" 
-              onClick={() => navigate('staff')}
-              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', fontWeight: 700, padding: '0.65rem 1rem', width: '100%' }}
-              title="Manage Scanner Access & Staff"
-            >
-              <ShieldCheck size={16} /> Staff Access
             </button>
           </div>
         </div>
@@ -251,7 +234,7 @@ export const ManagerDashboard: React.FC = () => {
 
           <div>
             <div style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800 }}>
-              Live Gate Admission
+              Live Check-in Status
             </div>
             <div style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0F172A', marginTop: '0.15rem' }}>
               {checkedInCount} <span style={{ fontSize: '0.85rem', color: '#64748B', fontWeight: 600 }}>/ {totalGuests} Guests</span>
@@ -262,32 +245,6 @@ export const ManagerDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Total Registered Stats Card */}
-        <div 
-          className="glass-panel"
-          style={{
-            padding: '1.25rem',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            background: '#FFFFFF',
-            border: '1px solid #E2E8F0',
-            borderRadius: 'var(--radius-lg)'
-          }}
-        >
-          <div className="flex-between">
-            <span style={{ fontSize: '0.75rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>Total Attendees</span>
-            <span style={{ background: '#EFF6FF', color: '#2563EB', padding: '0.2rem 0.5rem', borderRadius: 'var(--radius-sm)', fontSize: '0.7rem', fontWeight: 800 }}>
-              PASSES
-            </span>
-          </div>
-          <div style={{ fontSize: '1.75rem', fontWeight: 900, color: '#0F172A', marginTop: '0.35rem' }}>
-            {totalGuests}
-          </div>
-          <div style={{ fontSize: '0.75rem', color: '#64748B', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: 4 }}>
-            <span>Across all active events & registrations</span>
-          </div>
-        </div>
 
         {/* Active Events & Limit Card */}
         <div 
@@ -338,7 +295,7 @@ export const ManagerDashboard: React.FC = () => {
               navigate('create_event');
             }}
           >
-            + Create New Event
+            Create Event
           </button>
         </div>
       ) : (

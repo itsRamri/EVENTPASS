@@ -7,7 +7,7 @@ import {
   firebaseSignUp, 
   firebaseResetPassword 
 } from '../services/authService';
-import { Sparkles, Mail, Lock, Eye, EyeOff, User, CheckCircle2, Loader2, Phone, Camera, Upload, Trash2 } from 'lucide-react';
+import { Sparkles, Mail, Lock, Eye, EyeOff, User, ArrowLeft, Loader2 } from 'lucide-react';
 
 interface StoredAccount {
   name: string;
@@ -17,8 +17,6 @@ interface StoredAccount {
   avatar?: string;
   mobile?: string;
 }
-
-const DEFAULT_ACCOUNTS: StoredAccount[] = [];
 
 export const AuthView: React.FC = () => {
   const { login, showToast } = useApp();
@@ -36,13 +34,10 @@ export const AuthView: React.FC = () => {
   const [fullName, setFullName] = useState('');
   const [mobile, setMobile] = useState('');
   const [countryCode, setCountryCode] = useState('+91');
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [role, setRole] = useState<UserRole>('manager');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  // File input ref for Avatar upload
-  const avatarInputRef = useRef<HTMLInputElement | null>(null);
 
   // OTP State (6 Digits)
   const [otpDigits, setOtpDigits] = useState<string[]>(['', '', '', '', '', '']);
@@ -348,104 +343,95 @@ export const AuthView: React.FC = () => {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      width: '100%',
-      maxWidth: '100vw',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'linear-gradient(135deg, #DFE7F2 0%, #EDF2F7 50%, #E2E8F0 100%)',
-      padding: 'max(36px, calc(env(safe-area-inset-top, 28px) + 16px)) clamp(1rem, 4vw, 1.5rem) max(28px, calc(env(safe-area-inset-bottom, 16px) + 16px))',
-      boxSizing: 'border-box',
-      fontFamily: 'var(--font-family)',
-      position: 'relative',
-      overflowX: 'hidden'
-    }}>
-      {/* Ambient background glows */}
-      <div style={{
-        position: 'absolute',
-        top: '-10%',
-        left: '-10%',
-        width: '500px',
-        height: '500px',
-        borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(147, 197, 253, 0.45) 0%, rgba(255,255,255,0) 70%)',
-        filter: 'blur(40px)',
-        pointerEvents: 'none'
-      }} />
-      <div style={{
-        position: 'absolute',
-        bottom: '-10%',
-        right: '-10%',
-        width: '500px',
-        height: '500px',
-        borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(199, 210, 254, 0.45) 0%, rgba(255,255,255,0) 70%)',
-        filter: 'blur(40px)',
-        pointerEvents: 'none'
-      }} />
+    <div className="embossed-auth-wrapper">
+      {/* Custom Embossed Form Card */}
+      <div className="embossed-auth-card">
 
-      {/* Main Embossed Neumorphic Card */}
-      <div 
-        className="auth-card-responsive" 
-        style={{
-          width: '100%',
-          maxWidth: 440,
-          background: '#EDF2F7',
-          borderRadius: '28px',
-          padding: 'clamp(1.5rem, 5vw, 2.5rem) clamp(1rem, 4vw, 2rem)',
-          boxShadow: '14px 14px 32px #cad3e2, -14px -14px 32px #ffffff',
-          border: '1.5px solid rgba(255, 255, 255, 0.85)',
-          position: 'relative',
-          zIndex: 10,
-          textAlign: 'center'
-        }}
-      >
-
-        {/* Top Recessed Dome with 3D Lock & Key */}
-        <div style={{
-          width: 80,
-          height: 80,
-          borderRadius: '50%',
-          background: '#EDF2F7',
-          boxShadow: 'inset 4px 4px 8px #cad3e2, inset -4px -4px 8px #ffffff',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          margin: '0 auto 1.5rem',
-          fontSize: '2.25rem',
-          border: '1px solid rgba(255, 255, 255, 0.6)'
-        }}>
-          🔐
+        {/* Official EventPass Logo from public folder */}
+        <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
+          <div className="embossed-logo-well" style={{
+            width: '82px',
+            height: '82px',
+            margin: '0 auto 0.6rem',
+            padding: '4px',
+            boxSizing: 'border-box',
+            overflow: 'hidden',
+            background: '#FFFFFF'
+          }}>
+            <img 
+              src="/logo.png" 
+              alt="EventPass Logo" 
+              style={{ 
+                width: '100%', 
+                height: '100%', 
+                objectFit: 'contain',
+                borderRadius: '50%'
+              }} 
+            />
+          </div>
+          <div style={{
+            fontSize: '1.35rem',
+            fontWeight: 900,
+            color: '#0F172A',
+            letterSpacing: '-0.02em',
+            lineHeight: 1.2
+          }}>
+            Event Pass
+          </div>
         </div>
 
-        {/* ================= 1. SIGN IN (PASSWORD BASED) ================= */}
+        {/* Dynamic Header */}
+        <div style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
+          <h1 style={{
+            fontSize: '1.6rem',
+            fontWeight: 800,
+            color: '#0F172A',
+            letterSpacing: '-0.02em',
+            margin: '0 0 0.4rem',
+            textAlign: 'center'
+          }}>
+            {authMode === 'forgot'
+              ? (forgotStep === 'otp' ? 'Verify Your OTP' : forgotStep === 'new_password' ? 'Set New Password' : 'Reset Password')
+              : (authMode === 'signin' ? 'Login' : 'Sign Up')}
+          </h1>
+          <p style={{
+            fontSize: '0.86rem',
+            color: '#64748B',
+            margin: 0,
+            fontWeight: 500,
+            textAlign: 'center',
+            lineHeight: 1.45
+          }}>
+            {authMode === 'forgot'
+              ? (forgotStep === 'otp' ? "We've sent a 6-digit verification code to" : forgotStep === 'new_password' ? 'Enter your new password below' : 'Enter your email to receive recovery instructions')
+              : (authMode === 'signin' ? 'Sign in to access your digital passes' : 'Create an account to get started')}
+          </p>
+          {authMode === 'forgot' && forgotStep === 'otp' && (
+            <div style={{ fontWeight: 700, color: '#0F172A', fontSize: '0.92rem', marginTop: '0.35rem' }}>
+              {mobile ? `${countryCode} ${mobile}` : email ? email : '+91 XXXXX 00945'}
+            </div>
+          )}
+        </div>
+
+        {/* ================= 1. LOGIN (SIGN IN) FORM ================= */}
         {authMode === 'signin' && (
           <div className="animate-fade">
-            <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#1E293B', marginBottom: '0.35rem' }}>
-              Sign In to EventPass
-            </h2>
-            <p style={{ fontSize: '0.85rem', color: '#64748B', marginBottom: '1.6rem', fontWeight: 500 }}>
-              Enter your registered email and password to access your account
-            </p>
-
-            <form onSubmit={handleSignIn} style={{ display: 'grid', gap: '1.15rem', textAlign: 'left' }} autoComplete="off">
-              {/* Email Address */}
+            <form onSubmit={handleSignIn} style={{ display: 'grid', gap: '1rem' }} autoComplete="off">
+              {/* Username / Email Field */}
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', marginBottom: '0.35rem', display: 'block' }}>
-                  Email Address
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#374151', marginBottom: '0.35rem', display: 'block' }}>
+                  Username or Email
                 </label>
                 <div className="auth-input-container">
                   <span className="auth-input-icon">
-                    <Mail size={18} />
+                    <User size={17} color="#6B7280" />
                   </span>
                   <input
                     type="email"
                     className="auth-input-field"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
-                    placeholder="user@eventpass.io"
+                    placeholder="Enter email or username"
                     required
                     autoComplete="off"
                     data-lpignore="true"
@@ -455,23 +441,14 @@ export const AuthView: React.FC = () => {
                 </div>
               </div>
 
-              {/* Password */}
+              {/* Password Field */}
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
-                  <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase' }}>
-                    Password
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => { setAuthMode('forgot'); setForgotStep('request'); }}
-                    style={{ background: 'none', border: 'none', color: '#0284C7', fontSize: '0.775rem', fontWeight: 700, cursor: 'pointer' }}
-                  >
-                    Forgot Password?
-                  </button>
-                </div>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#374151', marginBottom: '0.35rem', display: 'block' }}>
+                  Password
+                </label>
                 <div className="auth-input-container">
                   <span className="auth-input-icon">
-                    <Lock size={18} />
+                    <Lock size={17} color="#6B7280" />
                   </span>
                   <input
                     type={showPassword ? 'text' : 'password'}
@@ -488,100 +465,90 @@ export const AuthView: React.FC = () => {
                     type="button"
                     className="auth-password-toggle"
                     onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    {showPassword ? <EyeOff size={17} color="#6B7280" /> : <Eye size={17} color="#6B7280" />}
+                  </button>
+                </div>
+
+                {/* Forgot Password Link right below password */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.45rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => { sound.play('click'); setAuthMode('forgot'); setForgotStep('request'); }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#0072FF',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      padding: 0
+                    }}
+                  >
+                    Forgot password?
                   </button>
                 </div>
               </div>
 
-              {/* Embossed Sign In Button */}
+              {/* Sign In Button */}
               <button
                 type="submit"
                 disabled={isLoading}
-                style={{
-                  marginTop: '0.5rem',
-                  width: '100%',
-                  padding: '1rem',
-                  borderRadius: '18px',
-                  background: '#EDF2F7',
-                  border: '1px solid rgba(255,255,255,0.8)',
-                  boxShadow: '6px 6px 14px #cad3e2, -6px -6px 14px #ffffff',
-                  color: '#0284C7',
-                  fontWeight: 800,
-                  fontSize: '0.95rem',
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  cursor: isLoading ? 'not-allowed' : 'pointer',
-                  opacity: isLoading ? 0.75 : 1,
-                  transition: 'all 0.2s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.5rem'
-                }}
-                onMouseDown={e => { if (!isLoading) e.currentTarget.style.boxShadow = 'inset 3px 3px 6px #cad3e2, inset -3px -3px 6px #ffffff'; }}
-                onMouseUp={e => { if (!isLoading) e.currentTarget.style.boxShadow = '6px 6px 14px #cad3e2, -6px -6px 14px #ffffff'; }}
+                className="embossed-action-btn"
+                style={{ marginTop: '0.35rem' }}
               >
                 {isLoading ? (
                   <>
-                    <Loader2 size={18} className="animate-spin" /> Please wait...
+                    <Loader2 size={17} className="animate-spin" /> SIGNING IN...
                   </>
                 ) : (
-                  <>
-                    <Sparkles size={18} /> Sign In
-                  </>
+                  'SIGN IN'
                 )}
               </button>
             </form>
 
-            {/* Bottom Toggle Option */}
-            <div style={{ marginTop: '1.75rem', fontSize: '0.875rem', color: '#64748B', fontWeight: 600 }}>
+            {/* Don't have an account? Sign Up Link */}
+            <div style={{ marginTop: '1.4rem', fontSize: '0.86rem', color: '#6B7280', textAlign: 'center' }}>
               Don't have an account?{' '}
               <button
                 type="button"
-                onClick={() => setAuthMode('signup')}
+                onClick={() => { sound.play('click'); setAuthMode('signup'); }}
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#0284C7',
+                  color: '#0072FF',
                   fontWeight: 800,
                   cursor: 'pointer',
-                  fontSize: '0.875rem',
-                  textDecoration: 'underline'
+                  fontSize: '0.86rem',
+                  padding: 0
                 }}
               >
-                Sign Up / Register
+                Sign Up
               </button>
             </div>
           </div>
         )}
 
-        {/* ================= 2. SIGN UP (PASSWORD BASED) ================= */}
+        {/* ================= 2. SIGN UP FORM ================= */}
         {authMode === 'signup' && (
           <div className="animate-fade">
-            <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#1E293B', marginBottom: '0.35rem' }}>
-              Create an Account
-            </h2>
-            <p style={{ fontSize: '0.85rem', color: '#64748B', marginBottom: '1.5rem', fontWeight: 500 }}>
-              Register your credentials to access campus events and passes
-            </p>
-
-            <form onSubmit={handleSignUp} style={{ display: 'grid', gap: '1.05rem', textAlign: 'left' }} autoComplete="off">
+            <form onSubmit={handleSignUp} style={{ display: 'grid', gap: '0.9rem' }} autoComplete="off">
               {/* Full Name */}
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', marginBottom: '0.35rem', display: 'block' }}>
-                  Full Legal Name
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#374151', marginBottom: '0.35rem', display: 'block' }}>
+                  Full Name
                 </label>
                 <div className="auth-input-container">
                   <span className="auth-input-icon">
-                    <User size={18} />
+                    <User size={17} color="#6B7280" />
                   </span>
                   <input
                     type="text"
                     className="auth-input-field"
                     value={fullName}
                     onChange={e => setFullName(e.target.value)}
-                    placeholder="Shubham Kumar"
+                    placeholder="Full legal name"
                     required
                     autoComplete="off"
                     data-lpignore="true"
@@ -593,19 +560,19 @@ export const AuthView: React.FC = () => {
 
               {/* Email Address */}
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', marginBottom: '0.35rem', display: 'block' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#374151', marginBottom: '0.35rem', display: 'block' }}>
                   Email Address
                 </label>
                 <div className="auth-input-container">
                   <span className="auth-input-icon">
-                    <Mail size={18} />
+                    <Mail size={17} color="#6B7280" />
                   </span>
                   <input
                     type="email"
                     className="auth-input-field"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
-                    placeholder="user@eventpass.io"
+                    placeholder="name@example.com"
                     required
                     autoComplete="off"
                     data-lpignore="true"
@@ -615,25 +582,34 @@ export const AuthView: React.FC = () => {
                 </div>
               </div>
 
-              {/* Mobile Number with Country Code Dropdown */}
+              {/* Mobile Number with Country Code (Seamless Unified Field) */}
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', marginBottom: '0.35rem', display: 'block' }}>
-                  Mobile / WhatsApp Number (10 Digits)
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#374151', marginBottom: '0.35rem', display: 'block' }}>
+                  Mobile Number
                 </label>
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  width: '100%',
+                  borderRadius: '14px',
+                  border: '1.5px solid #E2E8F0',
+                  backgroundColor: '#F8FAFC',
+                  boxSizing: 'border-box',
+                  overflow: 'hidden'
+                }}>
                   <select
                     value={countryCode}
                     onChange={e => setCountryCode(e.target.value)}
                     style={{
                       height: '46px',
-                      padding: '0 0.5rem',
-                      borderRadius: '14px',
-                      border: '1.5px solid rgba(255, 255, 255, 0.85)',
-                      background: '#EDF2F7',
-                      boxShadow: 'inset 3px 3px 6px #cad3e2, inset -3px -3px 6px #ffffff',
+                      width: '92px',
+                      padding: '0 0.25rem 0 0.75rem',
+                      border: 'none',
+                      borderRight: '1.5px solid #E2E8F0',
+                      background: 'transparent',
                       color: '#0F172A',
                       fontWeight: 700,
-                      fontSize: '0.88rem',
+                      fontSize: '0.85rem',
                       outline: 'none',
                       cursor: 'pointer',
                       flexShrink: 0
@@ -650,49 +626,52 @@ export const AuthView: React.FC = () => {
                     <option value="+977">🇳🇵 +977</option>
                   </select>
 
-                  <div className="auth-input-container" style={{ flex: 1 }}>
-                    <span className="auth-input-icon">
-                      <Phone size={18} />
-                    </span>
-                    <input
-                      type="tel"
-                      className="auth-input-field"
-                      value={mobile}
-                      onChange={e => {
-                        const val = e.target.value.replace(/\D/g, '').slice(0, 10);
-                        setMobile(val);
-                      }}
-                      placeholder="9876543210"
-                      required
-                      maxLength={10}
-                      autoComplete="off"
-                      data-lpignore="true"
-                      data-form-type="other"
-                    />
-                  </div>
+                  <input
+                    type="tel"
+                    value={mobile}
+                    onChange={e => {
+                      const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                      setMobile(val);
+                    }}
+                    placeholder="9876543210"
+                    required
+                    maxLength={10}
+                    autoComplete="off"
+                    data-lpignore="true"
+                    data-form-type="other"
+                    spellCheck={false}
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      height: '46px',
+                      padding: '0 1rem',
+                      border: 'none',
+                      background: 'transparent',
+                      color: '#0F172A',
+                      fontWeight: 600,
+                      fontSize: '0.92rem',
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
+                  />
                 </div>
-                {mobile.length > 0 && mobile.length < 10 && (
-                  <span style={{ fontSize: '0.72rem', color: '#EF4444', fontWeight: 600, marginTop: '4px', display: 'block' }}>
-                    * Enter {10 - mobile.length} more digit{10 - mobile.length > 1 ? 's' : ''} (10 digits required)
-                  </span>
-                )}
               </div>
 
-              {/* Password */}
+              {/* Create Password with Eye Toggle */}
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', marginBottom: '0.35rem', display: 'block' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#374151', marginBottom: '0.35rem', display: 'block' }}>
                   Create Password
                 </label>
                 <div className="auth-input-container">
                   <span className="auth-input-icon">
-                    <Lock size={18} />
+                    <Lock size={17} color="#6B7280" />
                   </span>
                   <input
                     type={showPassword ? 'text' : 'password'}
                     className="auth-input-field"
                     value={password}
                     onChange={e => setPassword(e.target.value)}
-                    placeholder="••••••••"
+                    placeholder="Min. 6 characters"
                     required
                     minLength={6}
                     autoComplete="off"
@@ -703,89 +682,74 @@ export const AuthView: React.FC = () => {
                     type="button"
                     className="auth-password-toggle"
                     onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    {showPassword ? <EyeOff size={17} color="#6B7280" /> : <Eye size={17} color="#6B7280" />}
                   </button>
                 </div>
               </div>
 
-              {/* Confirm Password */}
+              {/* Confirm Password with Eye Toggle */}
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', marginBottom: '0.35rem', display: 'block' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#374151', marginBottom: '0.35rem', display: 'block' }}>
                   Confirm Password
                 </label>
                 <div className="auth-input-container">
                   <span className="auth-input-icon">
-                    <Lock size={18} />
+                    <Lock size={17} color="#6B7280" />
                   </span>
                   <input
-                    type="password"
+                    type={showConfirmPassword ? 'text' : 'password'}
                     className="auth-input-field"
                     value={confirmPassword}
                     onChange={e => setConfirmPassword(e.target.value)}
-                    placeholder="••••••••"
+                    placeholder="Confirm password"
                     required
                     autoComplete="off"
                     data-lpignore="true"
                     data-form-type="other"
                   />
+                  <button
+                    type="button"
+                    className="auth-password-toggle"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                  >
+                    {showConfirmPassword ? <EyeOff size={17} color="#6B7280" /> : <Eye size={17} color="#6B7280" />}
+                  </button>
                 </div>
               </div>
 
-              {/* Embossed Sign Up Button */}
+              {/* Custom White Raised Action Button with Blue Text */}
               <button
                 type="submit"
                 disabled={isLoading}
-                style={{
-                  marginTop: '0.5rem',
-                  width: '100%',
-                  padding: '1rem',
-                  borderRadius: '18px',
-                  background: '#EDF2F7',
-                  border: '1px solid rgba(255,255,255,0.8)',
-                  boxShadow: '6px 6px 14px #cad3e2, -6px -6px 14px #ffffff',
-                  color: '#0284C7',
-                  fontWeight: 800,
-                  fontSize: '0.95rem',
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  cursor: isLoading ? 'not-allowed' : 'pointer',
-                  opacity: isLoading ? 0.75 : 1,
-                  transition: 'all 0.2s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.5rem'
-                }}
-                onMouseDown={e => { if (!isLoading) e.currentTarget.style.boxShadow = 'inset 3px 3px 6px #cad3e2, inset -3px -3px 6px #ffffff'; }}
-                onMouseUp={e => { if (!isLoading) e.currentTarget.style.boxShadow = '6px 6px 14px #cad3e2, -6px -6px 14px #ffffff'; }}
+                className="embossed-action-btn"
+                style={{ marginTop: '0.5rem' }}
               >
                 {isLoading ? (
                   <>
-                    <Loader2 size={18} className="animate-spin" /> Please wait...
+                    <Loader2 size={17} className="animate-spin" /> CREATING ACCOUNT...
                   </>
                 ) : (
-                  <>
-                    <Sparkles size={18} /> Create Account
-                  </>
+                  'CREATE ACCOUNT'
                 )}
               </button>
             </form>
 
-            {/* Bottom Toggle Option */}
-            <div style={{ marginTop: '1.75rem', fontSize: '0.875rem', color: '#64748B', fontWeight: 600 }}>
+            <div style={{ marginTop: '1.4rem', fontSize: '0.86rem', color: '#6B7280', textAlign: 'center' }}>
               Already have an account?{' '}
               <button
                 type="button"
-                onClick={() => setAuthMode('signin')}
+                onClick={() => { sound.play('click'); setAuthMode('signin'); }}
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#0284C7',
+                  color: '#0072FF',
                   fontWeight: 800,
                   cursor: 'pointer',
-                  fontSize: '0.875rem',
-                  textDecoration: 'underline'
+                  fontSize: '0.86rem',
+                  padding: 0
                 }}
               >
                 Sign In
@@ -800,104 +764,76 @@ export const AuthView: React.FC = () => {
             {/* Step A: Request Email for Reset OTP */}
             {forgotStep === 'request' && (
               <div>
-                <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#1E293B', marginBottom: '0.35rem' }}>
-                  Reset Password
-                </h2>
-                <p style={{ fontSize: '0.85rem', color: '#64748B', marginBottom: '1.6rem', fontWeight: 500 }}>
-                  Enter your email address to receive a secure 6-digit verification code
-                </p>
-
-                <form onSubmit={handleSendForgotOtp} style={{ display: 'grid', gap: '1.15rem', textAlign: 'left' }}>
+                <form onSubmit={handleSendForgotOtp} style={{ display: 'grid', gap: '1rem' }}>
                   <div>
-                    <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', marginBottom: '0.35rem', display: 'block' }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#374151', marginBottom: '0.35rem', display: 'block' }}>
                       Registered Email Address
                     </label>
                     <div className="auth-input-container">
                       <span className="auth-input-icon">
-                        <Mail size={18} />
+                        <Mail size={17} color="#6B7280" />
                       </span>
                       <input
                         type="email"
                         className="auth-input-field"
                         value={email}
                         onChange={e => setEmail(e.target.value)}
-                        placeholder="user@eventpass.io"
+                        placeholder="name@example.com"
                         required
+                        autoComplete="off"
                       />
                     </div>
                   </div>
 
                   <button
                     type="submit"
-                    style={{
-                      marginTop: '0.5rem',
-                      width: '100%',
-                      padding: '1rem',
-                      borderRadius: '18px',
-                      background: '#EDF2F7',
-                      border: '1px solid rgba(255,255,255,0.8)',
-                      boxShadow: '6px 6px 14px #cad3e2, -6px -6px 14px #ffffff',
-                      color: '#0284C7',
-                      fontWeight: 800,
-                      fontSize: '0.95rem',
-                      letterSpacing: '0.06em',
-                      textTransform: 'uppercase',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.5rem'
-                    }}
-                    onMouseDown={e => e.currentTarget.style.boxShadow = 'inset 3px 3px 6px #cad3e2, inset -3px -3px 6px #ffffff'}
-                    onMouseUp={e => e.currentTarget.style.boxShadow = '6px 6px 14px #cad3e2, -6px -6px 14px #ffffff'}
+                    disabled={isLoading}
+                    className="embossed-action-btn"
+                    style={{ marginTop: '0.5rem' }}
                   >
-                    <Sparkles size={18} /> Send Reset OTP
+                    {isLoading ? (
+                      <>
+                        <Loader2 size={17} className="animate-spin" /> SENDING CODE...
+                      </>
+                    ) : (
+                      'SEND VERIFICATION CODE'
+                    )}
                   </button>
                 </form>
 
-                <div style={{ marginTop: '1.75rem', fontSize: '0.875rem' }}>
+                <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
                   <button
                     type="button"
-                    onClick={() => setAuthMode('signin')}
+                    onClick={() => { sound.play('click'); setAuthMode('signin'); }}
                     style={{
                       background: 'none',
                       border: 'none',
                       color: '#64748B',
                       fontWeight: 700,
                       cursor: 'pointer',
-                      fontSize: '0.85rem'
+                      fontSize: '0.82rem',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem'
                     }}
                   >
-                    ← Back to Sign In
+                    <ArrowLeft size={15} /> Back to Login
                   </button>
                 </div>
               </div>
             )}
 
-            {/* Step B: Embossed OTP Screen (Exact 1:1 match to user photo!) */}
+            {/* Step B: OTP Verification Screen (Exact Match to Image) */}
             {forgotStep === 'otp' && (
               <div>
-                <h2 style={{ fontSize: '1.65rem', fontWeight: 800, color: '#1E293B', marginBottom: '0.4rem', letterSpacing: '-0.02em' }}>
-                  Verify Your OTP
-                </h2>
-
-                <p style={{ fontSize: '0.875rem', color: '#475569', marginBottom: '0.2rem', fontWeight: 500 }}>
-                  We've sent a 6-digit verification code to
-                </p>
-                <div style={{ fontWeight: 800, color: '#0F172A', fontSize: '0.95rem', marginBottom: '1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
-                  <span>{email}</span>
-                  <button 
-                    type="button" 
-                    onClick={() => setForgotStep('request')}
-                    style={{ background: 'none', border: 'none', color: '#0284C7', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700, marginLeft: 4, textDecoration: 'underline' }}
-                  >
-                    (Change)
-                  </button>
-                </div>
-
-                {/* 6 Embossed Neumorphic Input Boxes */}
-                <div style={{ display: 'flex', justifyContent: 'center', gap: 'clamp(4px, 1.5vw, 8px)', marginBottom: '1.5rem', width: '100%' }}>
+                {/* 6 Black OTP Rounded Boxes with White Digits */}
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  gap: 'clamp(6px, 2vw, 10px)',
+                  margin: '1.25rem 0 1.5rem',
+                  width: '100%'
+                }}>
                   {otpDigits.map((digit, index) => (
                     <input
                       key={index}
@@ -908,62 +844,32 @@ export const AuthView: React.FC = () => {
                       value={digit}
                       onChange={e => handleDigitChange(index, e.target.value)}
                       onKeyDown={e => handleKeyDown(index, e)}
-                      className="auth-otp-box"
-                      style={{
-                        width: 'clamp(36px, 11vw, 48px)',
-                        height: 'clamp(46px, 13vw, 58px)',
-                        borderRadius: '12px',
-                        background: '#EDF2F7',
-                        boxShadow: 'inset 3px 3px 6px #cad3e2, inset -3px -3px 6px #ffffff',
-                        border: otpError ? '1.5px solid #EF4444' : digit ? '1.5px solid #38BDF8' : '1.5px solid transparent',
-                        color: '#0F172A',
-                        fontSize: 'clamp(1.15rem, 4vw, 1.5rem)',
-                        fontWeight: 800,
-                        textAlign: 'center',
-                        outline: 'none',
-                        transition: 'all 0.15s ease',
-                        padding: 0
-                      }}
+                      className={`embossed-otp-digit ${otpError ? 'error' : digit ? 'filled' : ''}`}
                     />
                   ))}
                 </div>
 
-                {/* Embossed Button: VERIFY OTP */}
+                {/* VERIFY OTP Button (White 3D Raised Pill with Blue Text) */}
                 <button
                   type="button"
                   onClick={handleVerifyResetOtp}
                   disabled={isVerifying}
-                  style={{
-                    width: '100%',
-                    padding: '1rem',
-                    borderRadius: '18px',
-                    background: '#EDF2F7',
-                    border: '1px solid rgba(255,255,255,0.85)',
-                    boxShadow: '6px 6px 14px #cad3e2, -6px -6px 14px #ffffff',
-                    color: '#0284C7',
-                    fontWeight: 800,
-                    fontSize: '1.05rem',
-                    letterSpacing: '0.06em',
-                    textTransform: 'uppercase',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem',
-                    marginBottom: '1.25rem'
-                  }}
-                  onMouseDown={e => e.currentTarget.style.boxShadow = 'inset 3px 3px 6px #cad3e2, inset -3px -3px 6px #ffffff'}
-                  onMouseUp={e => e.currentTarget.style.boxShadow = '6px 6px 14px #cad3e2, -6px -6px 14px #ffffff'}
+                  className="embossed-action-btn"
                 >
-                  {isVerifying ? 'VERIFYING...' : 'VERIFY OTP'}
+                  {isVerifying ? (
+                    <>
+                      <Loader2 size={17} className="animate-spin" /> VERIFYING...
+                    </>
+                  ) : (
+                    'VERIFY OTP'
+                  )}
                 </button>
 
-                {/* Countdown / Resend Section */}
-                <div style={{ fontSize: '0.85rem', color: '#64748B', fontWeight: 600, marginBottom: '0.75rem' }}>
+                {/* Resend OTP Countdown */}
+                <div style={{ fontSize: '0.86rem', color: '#64748B', textAlign: 'center', marginTop: '1.25rem', fontWeight: 500 }}>
                   {countdown > 0 ? (
                     <span>
-                      Resend OTP in <strong style={{ color: '#0284C7', fontWeight: 800 }}>{countdown}</strong> seconds
+                      Resend OTP in <strong style={{ color: '#0072FF', fontWeight: 800 }}>{countdown} seconds</strong>
                     </span>
                   ) : (
                     <button
@@ -972,132 +878,115 @@ export const AuthView: React.FC = () => {
                       style={{
                         background: 'none',
                         border: 'none',
-                        color: '#0284C7',
+                        color: '#0072FF',
                         fontWeight: 800,
                         cursor: 'pointer',
-                        fontSize: '0.85rem',
-                        textDecoration: 'underline'
+                        fontSize: '0.86rem'
                       }}
                     >
-                      Resend OTP Now
+                      Resend OTP
                     </button>
                   )}
                 </div>
 
-                {/* Error Message */}
+                {/* Red Error Message */}
                 {otpError && (
-                  <div style={{ color: '#DC2626', fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.75rem' }}>
+                  <div style={{
+                    color: '#DC2626',
+                    fontSize: '0.85rem',
+                    fontWeight: 700,
+                    marginTop: '0.75rem',
+                    textAlign: 'center'
+                  }}>
                     {otpError}
                   </div>
                 )}
+
+                <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+                  <button
+                    type="button"
+                    onClick={() => { sound.play('click'); setForgotStep('request'); }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#64748B',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      fontSize: '0.82rem',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem'
+                    }}
+                  >
+                    <ArrowLeft size={15} /> Change Email
+                  </button>
+                </div>
               </div>
             )}
 
             {/* Step C: Set New Password Form */}
             {forgotStep === 'new_password' && (
               <div>
-                <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#1E293B', marginBottom: '0.35rem' }}>
-                  Set New Password
-                </h2>
-                <p style={{ fontSize: '0.85rem', color: '#64748B', marginBottom: '1.5rem', fontWeight: 500 }}>
-                  Enter your new password to complete account recovery
-                </p>
-
-                <form onSubmit={handleSaveNewPassword} style={{ display: 'grid', gap: '1.15rem', textAlign: 'left' }}>
+                <form onSubmit={handleSaveNewPassword} style={{ display: 'grid', gap: '1rem' }}>
                   <div>
-                    <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', marginBottom: '0.35rem', display: 'block' }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#374151', marginBottom: '0.35rem', display: 'block' }}>
                       New Password
                     </label>
-                    <div style={{ position: 'relative' }}>
-                      <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#64748B' }}>
-                        <Lock size={18} />
+                    <div className="auth-input-container">
+                      <span className="auth-input-icon">
+                        <Lock size={17} color="#6B7280" />
                       </span>
                       <input
                         type={showPassword ? 'text' : 'password'}
+                        className="auth-input-field"
                         value={newPassword}
                         onChange={e => setNewPassword(e.target.value)}
                         placeholder="Min. 6 characters"
                         required
                         minLength={6}
-                        style={{
-                          width: '100%',
-                          padding: '0.85rem 2.75rem 0.85rem 2.75rem',
-                          borderRadius: '14px',
-                          border: '1px solid rgba(255,255,255,0.8)',
-                          background: '#EDF2F7',
-                          boxShadow: 'inset 3px 3px 6px #cad3e2, inset -3px -3px 6px #ffffff',
-                          color: '#0F172A',
-                          fontWeight: 700,
-                          fontSize: '0.95rem',
-                          outline: 'none'
-                        }}
                       />
                       <button
                         type="button"
+                        className="auth-password-toggle"
                         onClick={() => setShowPassword(!showPassword)}
-                        style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#64748B', cursor: 'pointer' }}
                       >
-                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        {showPassword ? <EyeOff size={17} color="#6B7280" /> : <Eye size={17} color="#6B7280" />}
                       </button>
                     </div>
                   </div>
 
                   <div>
-                    <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', marginBottom: '0.35rem', display: 'block' }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#374151', marginBottom: '0.35rem', display: 'block' }}>
                       Confirm New Password
                     </label>
-                    <div style={{ position: 'relative' }}>
-                      <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#64748B' }}>
-                        <Lock size={18} />
+                    <div className="auth-input-container">
+                      <span className="auth-input-icon">
+                        <Lock size={17} color="#6B7280" />
                       </span>
                       <input
-                        type="password"
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        className="auth-input-field"
                         value={confirmPassword}
                         onChange={e => setConfirmPassword(e.target.value)}
                         placeholder="Re-enter new password"
                         required
-                        style={{
-                          width: '100%',
-                          padding: '0.85rem 1rem 0.85rem 2.75rem',
-                          borderRadius: '14px',
-                          border: '1px solid rgba(255,255,255,0.8)',
-                          background: '#EDF2F7',
-                          boxShadow: 'inset 3px 3px 6px #cad3e2, inset -3px -3px 6px #ffffff',
-                          color: '#0F172A',
-                          fontWeight: 700,
-                          fontSize: '0.95rem',
-                          outline: 'none'
-                        }}
                       />
+                      <button
+                        type="button"
+                        className="auth-password-toggle"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      >
+                        {showConfirmPassword ? <EyeOff size={17} color="#6B7280" /> : <Eye size={17} color="#6B7280" />}
+                      </button>
                     </div>
                   </div>
 
                   <button
                     type="submit"
-                    style={{
-                      marginTop: '0.5rem',
-                      width: '100%',
-                      padding: '1rem',
-                      borderRadius: '18px',
-                      background: '#EDF2F7',
-                      border: '1px solid rgba(255,255,255,0.8)',
-                      boxShadow: '6px 6px 14px #cad3e2, -6px -6px 14px #ffffff',
-                      color: '#0284C7',
-                      fontWeight: 800,
-                      fontSize: '0.95rem',
-                      letterSpacing: '0.06em',
-                      textTransform: 'uppercase',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.5rem'
-                    }}
-                    onMouseDown={e => e.currentTarget.style.boxShadow = 'inset 3px 3px 6px #cad3e2, inset -3px -3px 6px #ffffff'}
-                    onMouseUp={e => e.currentTarget.style.boxShadow = '6px 6px 14px #cad3e2, -6px -6px 14px #ffffff'}
+                    className="embossed-action-btn"
+                    style={{ marginTop: '0.5rem' }}
                   >
-                    <CheckCircle2 size={18} /> Save Password & Sign In
+                    SAVE PASSWORD & SIGN IN
                   </button>
                 </form>
               </div>

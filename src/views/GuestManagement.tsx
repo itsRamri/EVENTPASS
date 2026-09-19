@@ -382,7 +382,7 @@ export const GuestManagement: React.FC = () => {
       <div className="page-header" style={{ marginBottom: '1.5rem' }}>
         <div>
           <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: '#0F172A', fontWeight: 800 }}>
-            <Users size={26} color="var(--accent-primary)" /> Invite Guest
+            <Users size={26} color="var(--accent-primary)" /> Guest Approval
           </h1>
           <p style={{ color: '#475569', fontWeight: 600 }}>Send invitations, approve guest registrations, issue event QR passes, and track check-ins</p>
         </div>

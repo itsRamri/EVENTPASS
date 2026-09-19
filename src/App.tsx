@@ -68,21 +68,23 @@ export const App: React.FC = () => {
     }
   };
 
+  const isScanner = currentView === 'scanner';
+
   return (
     <div id="app">
       {/* Desktop Sidebar Layout */}
-      <Sidebar />
+      {!isScanner && <Sidebar />}
 
       {/* Main Wrapper */}
-      <div className="app-wrapper">
-        <Navbar />
+      <div className={`app-wrapper ${isScanner ? 'scanner-mode' : ''}`}>
+        {!isScanner && <Navbar />}
 
-        <main className="main-content">
+        <main className={`main-content ${isScanner ? 'scanner-main' : ''}`}>
           {renderCurrentView()}
         </main>
 
         {/* Mobile Bottom Navigation */}
-        <BottomNav />
+        {!isScanner && <BottomNav />}
       </div>
 
       {/* Global Modals & Toasts */}

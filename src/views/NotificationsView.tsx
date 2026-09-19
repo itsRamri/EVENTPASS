@@ -1,16 +1,39 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
-import { Bell, CheckCircle2, Trash2 } from 'lucide-react';
+import { Bell, CheckCircle2, Trash2, ArrowLeft } from 'lucide-react';
 
 export const NotificationsView: React.FC = () => {
-  const { notifications, markNotificationsRead, deleteNotification, clearAllNotifications } = useApp();
+  const { user, navigate, notifications, markNotificationsRead, deleteNotification, clearAllNotifications } = useApp();
 
   return (
-    <div className="animate-fade" style={{ maxWidth: 640, margin: '0 auto' }}>
+    <div className="animate-fade" style={{ maxWidth: 640, margin: '0 auto', paddingBottom: '3rem' }}>
       <div className="page-header">
-        <div>
-          <h1>Notifications</h1>
-          <p>Real-time alerts regarding approvals, passes, gate check-ins and security</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+          <button
+            type="button"
+            onClick={() => navigate(user.role === 'guest' ? 'guest_home' : 'dashboard')}
+            style={{
+              background: '#F1F5F9',
+              border: '1px solid #E2E8F0',
+              borderRadius: '50%',
+              width: 36,
+              height: 36,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#0F172A',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              flexShrink: 0
+            }}
+            aria-label="Go Back"
+          >
+            <ArrowLeft size={18} />
+          </button>
+          <div>
+            <h1 style={{ margin: 0, fontSize: '1.35rem' }}>Notifications</h1>
+            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.825rem', color: '#64748B' }}>Real-time alerts regarding approvals, passes, gate check-ins and security</p>
+          </div>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button className="btn btn-secondary btn-sm" onClick={markNotificationsRead}>

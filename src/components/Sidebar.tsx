@@ -24,6 +24,7 @@ export const Sidebar: React.FC = () => {
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
+    { id: 'create_event', label: 'Create Event', icon: <PlusCircle size={18} /> },
     { id: 'guest_home', label: 'My Passes & Invites', icon: <Ticket size={18} /> },
     { id: 'scanner', label: 'Live Gate Scanner', icon: <QrCode size={18} /> },
     { id: 'guests', label: 'Guests & Approvals', icon: <Users size={18} /> },
@@ -34,8 +35,8 @@ export const Sidebar: React.FC = () => {
   return (
     <aside className="desktop-sidebar">
       <div className="desktop-sidebar-brand">
-        <div className="brand-icon-box">
-          <Sparkles size={22} />
+        <div className="brand-icon-box" style={{ overflow: 'hidden', padding: '2px', background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+          <img src="/logo.png" alt="EventPass" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
         </div>
         <div>
           <div className="brand-logo" style={{ fontSize: '1.15rem' }}>EVENTPASS</div>

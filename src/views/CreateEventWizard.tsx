@@ -98,20 +98,71 @@ export const CreateEventWizard: React.FC = () => {
     try {
       const isPdf = file.name.toLowerCase().endsWith('.pdf');
       const dataUrl = isPdf ? await readFileAsDataUrl(file) : await compressImageFile(file, 800, 0.85);
-      const doc: EventDocument = {
+      const newDoc: EventDocument = {
         id: 'doc_' + Date.now(),
         name: file.name,
         size: (file.size / 1024).toFixed(1) + ' KB',
-        uploadDate: new Date().toISOString().split('T')[0],
+        uploadDate: new Date().toLocaleDateString(),
         type: isPdf ? 'pdf' : 'image',
         url: dataUrl
       };
-      setEventData(prev => ({ ...prev, documents: [...prev.documents, doc] }));
-      showToast(`Document "${file.name}" attached`, 'success');
+      setEventData(prev => ({
+        ...prev,
+        documents: [...(prev.documents || []), newDoc]
+      }));
+      showToast(`✓ Uploaded "${file.name}"`, 'success');
     } catch (err) {
       console.error('Doc upload error:', err);
-      showToast('Failed to attach document.', 'error');
+      showToast('Could not process attachment file.', 'error');
     }
+  };
+
+  const handleRemoveDoc = (id: string) => {
+    setEventData(prev => ({
+      ...prev,
+      documents: (prev.documents || []).filter(d => d.id !== id)
+    }));
+  };
+
+  const handleAddRequirement = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newReqLabel.trim()) return;
+
+    const newReq: RequirementField = {
+      id: 'req_' + Date.now(),
+      label: newReqLabel.trim(),
+      type: newReqType,
+      required: newReqRequired,
+      description: `Custom ${newReqType} requirement`
+    };
+
+    setEventData(prev => ({
+      ...prev,
+      requirements: [...prev.requirements, newReq]
+    }));
+
+    setNewReqLabel('');
+    setNewReqType('live_photo');
+    setNewReqRequired(true);
+    setIsAddReqModalOpen(false);
+    showToast('✓ Custom registration field added to event!', 'success');
+  };
+
+  const saveNewReq = handleAddRequirement;
+
+  const deleteReq = (index: number) => {
+    const reqs = [...eventData.requirements];
+    reqs.splice(index, 1);
+    setEventData(prev => ({ ...prev, requirements: reqs }));
+    showToast('Requirement field deleted', 'info');
+  };
+
+  const duplicateReq = (index: number) => {
+    const reqs = [...eventData.requirements];
+    const item = { ...reqs[index], id: 'req_' + Date.now(), label: reqs[index].label + ' (Copy)' };
+    reqs.splice(index + 1, 0, item);
+    setEventData(prev => ({ ...prev, requirements: reqs }));
+    showToast('Requirement duplicated', 'info');
   };
 
   const moveReq = (index: number, delta: number) => {
@@ -123,38 +174,41 @@ export const CreateEventWizard: React.FC = () => {
     setEventData(prev => ({ ...prev, requirements: reqs }));
   };
 
-  const duplicateReq = (index: number) => {
-    const reqs = [...eventData.requirements];
-    const item = { ...reqs[index], id: 'req_' + Date.now(), label: reqs[index].label + ' (Copy)' };
-    reqs.splice(index + 1, 0, item);
-    setEventData(prev => ({ ...prev, requirements: reqs }));
-    showToast('Requirement duplicated', 'info');
-  };
-
-  const deleteReq = (index: number) => {
-    const reqs = [...eventData.requirements];
-    reqs.splice(index, 1);
-    setEventData(prev => ({ ...prev, requirements: reqs }));
-    showToast('Requirement field deleted', 'info');
-  };
-
-  const saveNewReq = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newReqLabel.trim()) {
-      showToast('Please enter a requirement name', 'warning');
+  const handlePublish = (status: 'active' | 'draft') => {
+    if (!eventData.name.trim()) {
+      showToast('Please enter an event name before publishing.', 'warning');
+      setStep(1);
       return;
     }
-    const item: RequirementField = {
-      id: 'req_' + Date.now(),
-      label: newReqLabel.trim(),
-      type: newReqType,
-      required: newReqRequired
+
+    const isEdit = !!editingEvent;
+    const finalEvent: EventItem = {
+      ...eventData,
+      status,
+      creatorId: user.id || eventData.creatorId || 'mgr_admin',
+      creatorEmail: user.email || eventData.creatorEmail || '',
+      creatorMobile: user.mobile || eventData.creatorMobile || '',
+      tokenSettings: {
+        ...eventData.tokenSettings,
+        tokensPerUser: parseInt(tokensInputStr, 10) > 0 ? parseInt(tokensInputStr, 10) : 1
+      }
     };
-    setEventData(prev => ({ ...prev, requirements: [...prev.requirements, item] }));
-    setIsAddReqModalOpen(false);
-    setNewReqLabel('');
-    setNewReqType('live_photo');
-    showToast(`Added requirement: "${item.label}"`, 'success');
+
+    saveEvent(finalEvent);
+    addNotification({
+      title: isEdit ? 'Event Updated' : `Event ${status === 'active' ? 'Published' : 'Saved as Draft'}`,
+      message: `"${finalEvent.name}" has been ${isEdit ? 'customized and updated' : 'created'} successfully.`,
+      type: 'success'
+    });
+    setEditingEvent(null);
+    navigate('dashboard');
+  };
+
+  const handleSave = handlePublish;
+
+  const handleCancel = () => {
+    setEditingEvent(null);
+    navigate('dashboard');
   };
 
   const handleNext = () => {
@@ -167,47 +221,8 @@ export const CreateEventWizard: React.FC = () => {
     setStep(prev => Math.min(4, prev + 1));
   };
 
-  const handlePublish = (status: 'active' | 'draft') => {
-    const isEdit = !!editingEvent;
-    const finalEvent: EventItem = { 
-      ...eventData, 
-      status,
-      creatorId: eventData.creatorId || user.id,
-      creatorEmail: (eventData.creatorEmail || user.email || '').toLowerCase().trim(),
-      creatorMobile: (eventData.creatorMobile || user.mobile || '').replace(/\D/g, ''),
-      organizer: eventData.organizer || user.name || 'Event Management Team'
-    };
-    saveEvent(finalEvent);
-    addNotification({
-      title: isEdit ? 'Event Updated' : `Event ${status === 'active' ? 'Published' : 'Saved as Draft'}`,
-      message: `"${finalEvent.name}" has been ${isEdit ? 'customized and updated' : 'created'} successfully.`,
-      type: 'success'
-    });
-    setEditingEvent(null);
-    navigate('dashboard');
-  };
-
-  const handleCancel = () => {
-    setEditingEvent(null);
-    navigate('dashboard');
-  };
-
   return (
-    <div className="animate-fade" style={{ maxWidth: 820, margin: '0 auto' }}>
-      <div className="page-header">
-        <div>
-          <h1>{editingEvent ? 'Customize / Edit Event' : 'Create New Event'}</h1>
-          <p>
-            {editingEvent 
-              ? `Customizing "${editingEvent.name}" (ID: ${editingEvent.id})`
-              : 'Configure event information, pass limits, and custom requirements builder'}
-          </p>
-        </div>
-        <button className="btn btn-secondary btn-sm" onClick={handleCancel}>
-          ✕ Cancel
-        </button>
-      </div>
-
+    <div className="animate-fade" style={{ maxWidth: 820, margin: '0 auto', paddingBottom: '3rem' }}>
       {/* Step Indicator */}
       <div className="glass-panel" style={{ padding: '1rem 0.85rem', marginBottom: '1.25rem', background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', position: 'relative', alignItems: 'center', minWidth: 300, gap: '0.25rem' }}>

@@ -544,8 +544,8 @@ export const GuestHome: React.FC = () => {
         })}
       </div>
 
-      {/* Registration History */}
-      <h2 style={{ marginBottom: '1rem' }}>My Event Passes & Status</h2>
+      {/* Registration History & Joined Passes */}
+      <h2 style={{ marginBottom: '1rem', fontSize: '1.25rem', fontWeight: 800 }}>My Event Passes & Tickets</h2>
       {myRegistrations.length === 0 ? (
         <div className="empty-state">
           <div className="empty-icon-wrap">
@@ -555,37 +555,131 @@ export const GuestHome: React.FC = () => {
           <p className="empty-desc">Choose an event above or join with an Event ID to submit your registration.</p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem' }}>
           {myRegistrations.map(reg => {
-            const evt = events.find(e => e.id === reg.eventId) || { name: 'Campus Event', date: 'TBD' };
+            const evt = events.find(e => e.id === reg.eventId);
+            const coverPhoto = evt?.coverImage && evt.coverImage.trim() !== ''
+              ? evt.coverImage 
+              : 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=400&q=80';
 
             return (
+              /* Sleek Dark Event Pass Card */
               <div 
                 key={reg.id} 
-                className="req-item-card" 
-                style={{ padding: '1rem 1.15rem' }}
+                style={{
+                  background: '#181A22',
+                  borderRadius: 20,
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  padding: '1.15rem',
+                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.85rem'
+                }}
               >
-                <div style={{ fontSize: '1.5rem', cursor: 'pointer' }} onClick={() => (reg.status === 'approved' || reg.status === 'checkedin') && openDigitalPass(reg.id)}>
-                  {reg.status === 'approved' || reg.status === 'checkedin' ? '🎫' : '⏳'}
-                </div>
-                <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => (reg.status === 'approved' || reg.status === 'checkedin') && openDigitalPass(reg.id)}>
-                  <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{evt.name}</div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                    Registered: {reg.registrationDate}
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.9rem' }}>
+                  {/* Event Cover Image */}
+                  <div 
+                    style={{
+                      width: 74,
+                      height: 74,
+                      borderRadius: 14,
+                      overflow: 'hidden',
+                      flexShrink: 0,
+                      background: '#0B0C10',
+                      border: '1px solid rgba(255, 255, 255, 0.08)'
+                    }}
+                  >
+                    <img 
+                      src={coverPhoto} 
+                      alt={evt?.name || 'Event Cover'} 
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      onError={(e) => {
+                        e.currentTarget.src = 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=400&q=80';
+                      }}
+                    />
+                  </div>
+
+                  {/* Event Information */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
+                      <h4 
+                        style={{ 
+                          fontSize: '1.05rem', 
+                          fontWeight: 800, 
+                          color: '#FFFFFF', 
+                          margin: '0 0 0.35rem',
+                          lineHeight: 1.25,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}
+                      >
+                        {evt?.name || 'Exclusive Event'}
+                      </h4>
+
+                      <span 
+                        style={{
+                          fontSize: '0.675rem',
+                          fontWeight: 700,
+                          padding: '0.15rem 0.45rem',
+                          borderRadius: 6,
+                          textTransform: 'uppercase',
+                          background: reg.status === 'approved' || reg.status === 'checkedin' ? '#DCFCE7' : '#FEF3C7',
+                          color: reg.status === 'approved' || reg.status === 'checkedin' ? '#166534' : '#92400E'
+                        }}
+                      >
+                        {reg.status}
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', fontSize: '0.785rem', color: '#94A3B8' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <Calendar size={13} color="#38BDF8" />
+                        <span>{evt?.date ? `Event • ${evt.date}` : 'Event Date TBD'}</span>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <Clock size={13} color="#818CF8" />
+                        <span>Location: {evt?.location || 'Central Venue'}</span>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <MapPin size={13} color="#C084FC" />
+                        <span>{evt?.venue || 'Main Park Arena'}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                  <span className={`badge badge-${reg.status}`}>
-                    {reg.status.toUpperCase()}
-                  </span>
-
-                  {(reg.status === 'approved' || reg.status === 'checkedin') && (
-                    <button className="btn btn-primary btn-sm" onClick={() => openDigitalPass(reg.id)}>
-                      Pass
-                    </button>
-                  )}
-                </div>
+                {/* Vibrant Cyan-Purple Gradient View Pass Button */}
+                <button
+                  type="button"
+                  onClick={() => openDigitalPass(reg.id)}
+                  style={{
+                    background: 'linear-gradient(90deg, #38BDF8 0%, #818CF8 50%, #C084FC 100%)',
+                    color: '#FFFFFF',
+                    fontWeight: 800,
+                    fontSize: '0.95rem',
+                    borderRadius: 30,
+                    padding: '0.75rem 1rem',
+                    width: '100%',
+                    border: 'none',
+                    cursor: 'pointer',
+                    textAlign: 'center',
+                    boxShadow: '0 4px 16px rgba(56, 189, 248, 0.35)',
+                    transition: 'all 0.2s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.4rem',
+                    letterSpacing: '0.01em'
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.filter = 'brightness(1.1)')}
+                  onMouseLeave={e => (e.currentTarget.style.filter = 'none')}
+                >
+                  View Pass
+                </button>
               </div>
             );
           })}

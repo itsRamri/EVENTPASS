@@ -58,6 +58,7 @@ interface AppContextType {
   scanLogs: ScanHistoryRecord[];
   checkins: CheckinAuditRecord[];
   currentView: string;
+  profileSubpage: 'my_events' | 'my_tickets' | 'history' | 'settings' | 'support' | null;
   selectedEventId: string | null;
   activePassGuestId: string | null;
   editingEvent: EventItem | null;
@@ -69,6 +70,7 @@ interface AppContextType {
   login: (userProfile: UserProfile) => void;
   logout: () => void;
   navigate: (view: string) => void;
+  setProfileSubpage: (subpage: 'my_events' | 'my_tickets' | 'history' | 'settings' | 'support' | null) => void;
   switchRole: (role: UserRole) => void;
   updateUser: (data: Partial<UserProfile>) => void;
   saveEvent: (event: EventItem) => void;
@@ -196,6 +198,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
 
   const [currentView, setCurrentView] = useState<string>('dashboard');
+  const [profileSubpage, setProfileSubpage] = useState<'my_events' | 'my_tickets' | 'history' | 'settings' | 'support' | null>(null);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [activePassGuestId, setActivePassGuestId] = useState<string | null>(null);
   const [editingEvent, setEditingEvent] = useState<EventItem | null>(null);
@@ -326,6 +329,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const navigate = (view: string) => {
+    if (view !== 'profile') {
+      setProfileSubpage(null);
+    }
     setCurrentView(view);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -742,6 +748,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       scanLogs,
       checkins,
       currentView,
+      profileSubpage,
       selectedEventId,
       activePassGuestId,
       editingEvent,
@@ -751,6 +758,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       login,
       logout,
       navigate,
+      setProfileSubpage,
       switchRole,
       updateUser,
       saveEvent,
