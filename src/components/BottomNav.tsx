@@ -107,187 +107,159 @@ export const BottomNav: React.FC = () => {
           bottom: 0,
           left: 0,
           right: 0,
+          width: '100%',
           background: '#FFFFFF',
           borderTop: '1px solid #E2E8F0',
-          boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.05)',
+          boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.08)',
           zIndex: 90,
-          display: 'flex',
-          justifyContent: 'space-around',
-          alignItems: 'center',
-          padding: '0.5rem 0.75rem max(0.6rem, env(safe-area-inset-bottom))',
-          maxWidth: 600,
-          margin: '0 auto'
+          padding: '0.5rem 1rem max(0.6rem, env(safe-area-inset-bottom))'
         }}
       >
-        {/* 1. Home */}
-        <button
-          type="button"
-          onClick={() => navigate('guest_home')}
+        <div
           style={{
-            background: 'none',
-            border: 'none',
+            maxWidth: 540,
+            margin: '0 auto',
             display: 'flex',
-            flexDirection: 'column',
+            justifyContent: 'space-around',
             alignItems: 'center',
-            gap: 3,
-            color: currentView === 'guest_home' ? '#2563EB' : '#94A3B8',
-            cursor: 'pointer',
-            padding: '4px 10px',
-            fontSize: '0.725rem',
-            fontWeight: currentView === 'guest_home' ? 700 : 500
+            width: '100%'
           }}
         >
-          <Home size={20} strokeWidth={currentView === 'guest_home' ? 2.5 : 2} />
-          <span>Home</span>
-        </button>
+          {/* 1. Home */}
+          <button
+            type="button"
+            onClick={() => navigate('guest_home')}
+            style={{
+              background: 'none',
+              border: 'none',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 3,
+              color: currentView === 'guest_home' ? '#2563EB' : '#94A3B8',
+              cursor: 'pointer',
+              padding: '4px 10px',
+              fontSize: '0.725rem',
+              fontWeight: currentView === 'guest_home' ? 700 : 500
+            }}
+          >
+            <Home size={20} strokeWidth={currentView === 'guest_home' ? 2.5 : 2} />
+            <span>Home</span>
+          </button>
 
-        {/* 2. My Events */}
-        <button
-          type="button"
-          onClick={() => navigate('guest_home')}
-          style={{
-            background: 'none',
-            border: 'none',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 3,
-            color: currentView === 'my_events' ? '#2563EB' : '#94A3B8',
-            cursor: 'pointer',
-            padding: '4px 10px',
-            fontSize: '0.725rem',
-            fontWeight: currentView === 'my_events' ? 700 : 500
-          }}
-        >
-          <Calendar size={20} strokeWidth={currentView === 'my_events' ? 2.5 : 2} />
-          <span>My Events</span>
-        </button>
+          {/* 2. My Events */}
+          <button
+            type="button"
+            onClick={() => navigate('guest_home')}
+            style={{
+              background: 'none',
+              border: 'none',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 3,
+              color: currentView === 'my_events' ? '#2563EB' : '#94A3B8',
+              cursor: 'pointer',
+              padding: '4px 10px',
+              fontSize: '0.725rem',
+              fontWeight: currentView === 'my_events' ? 700 : 500
+            }}
+          >
+            <Calendar size={20} strokeWidth={currentView === 'my_events' ? 2.5 : 2} />
+            <span>My Events</span>
+          </button>
 
-        {/* 3. Tickets */}
-        <button
-          type="button"
-          onClick={() => navigate('guest_home')}
-          style={{
-            background: 'none',
-            border: 'none',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 3,
-            color: currentView === 'my_passes' ? '#2563EB' : '#94A3B8',
-            cursor: 'pointer',
-            padding: '4px 10px',
-            fontSize: '0.725rem',
-            fontWeight: currentView === 'my_passes' ? 700 : 500
-          }}
-        >
-          <Ticket size={20} strokeWidth={currentView === 'my_passes' ? 2.5 : 2} />
-          <span>Tickets</span>
-        </button>
+          {/* 3. Tickets */}
+          <button
+            type="button"
+            onClick={() => navigate('guest_home')}
+            style={{
+              background: 'none',
+              border: 'none',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 3,
+              color: currentView === 'my_passes' ? '#2563EB' : '#94A3B8',
+              cursor: 'pointer',
+              padding: '4px 10px',
+              fontSize: '0.725rem',
+              fontWeight: currentView === 'my_passes' ? 700 : 500
+            }}
+          >
+            <Ticket size={20} strokeWidth={currentView === 'my_passes' ? 2.5 : 2} />
+            <span>Tickets</span>
+          </button>
 
-        {/* 4. Notifications */}
-        <button
-          type="button"
-          onClick={() => navigate('notifications')}
-          style={{
-            background: 'none',
-            border: 'none',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 3,
-            color: currentView === 'notifications' ? '#2563EB' : '#94A3B8',
-            cursor: 'pointer',
-            padding: '4px 10px',
-            position: 'relative',
-            fontSize: '0.725rem',
-            fontWeight: currentView === 'notifications' ? 700 : 500
-          }}
-        >
-          <div style={{ position: 'relative' }}>
-            <Bell size={20} strokeWidth={currentView === 'notifications' ? 2.5 : 2} />
-            {unreadCount > 0 && (
-              <span 
-                style={{
-                  position: 'absolute',
-                  top: -2,
-                  right: -4,
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
-                  background: '#EF4444',
-                  border: '1.5px solid #FFF'
-                }}
-              />
-            )}
-          </div>
-          <span>Notifications</span>
-        </button>
+          {/* 4. Notifications */}
+          <button
+            type="button"
+            onClick={() => navigate('notifications')}
+            style={{
+              background: 'none',
+              border: 'none',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 3,
+              color: currentView === 'notifications' ? '#2563EB' : '#94A3B8',
+              cursor: 'pointer',
+              padding: '4px 10px',
+              position: 'relative',
+              fontSize: '0.725rem',
+              fontWeight: currentView === 'notifications' ? 700 : 500
+            }}
+          >
+            <div style={{ position: 'relative' }}>
+              <Bell size={20} strokeWidth={currentView === 'notifications' ? 2.5 : 2} />
+              {unreadCount > 0 && (
+                <span 
+                  style={{
+                    position: 'absolute',
+                    top: -2,
+                    right: -4,
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    background: '#EF4444',
+                    border: '1.5px solid #FFF'
+                  }}
+                />
+              )}
+            </div>
+            <span>Notifications</span>
+          </button>
 
-        {/* 5. Profile */}
-        <button
-          type="button"
-          onClick={() => navigate('profile')}
-          style={{
-            background: 'none',
-            border: 'none',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 3,
-            color: isProfile ? '#2563EB' : '#94A3B8',
-            cursor: 'pointer',
-            padding: '4px 10px',
-            fontSize: '0.725rem',
-            fontWeight: isProfile ? 700 : 500
-          }}
-        >
-          <User size={20} strokeWidth={isProfile ? 2.5 : 2} />
-          <span>Profile</span>
-        </button>
+          {/* 5. Profile */}
+          <button
+            type="button"
+            onClick={() => navigate('profile')}
+            style={{
+              background: 'none',
+              border: 'none',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 3,
+              color: isProfile ? '#2563EB' : '#94A3B8',
+              cursor: 'pointer',
+              padding: '4px 10px',
+              fontSize: '0.725rem',
+              fontWeight: isProfile ? 700 : 500
+            }}
+          >
+            <User size={20} strokeWidth={isProfile ? 2.5 : 2} />
+            <span>Profile</span>
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
     <>
-      {/* Floating Modern Pill Dock Navigation for Managers / Staff */}
+      {/* Modern Solid Grounded Bottom Dock Navigation for Managers / Staff */}
       <div className="floating-dock-wrapper">
-        {/* SVG Dock Silhouette with Center Curve Mound */}
-        <svg 
-          className="dock-svg-shell" 
-          viewBox="0 0 380 66" 
-          preserveAspectRatio="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <defs>
-            <linearGradient id="dockGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#171920" />
-              <stop offset="100%" stopColor="#0B0C10" />
-            </linearGradient>
-            <filter id="dockGlow" x="-10%" y="-20%" width="120%" height="150%">
-              <feDropShadow dx="0" dy="10" stdDeviation="16" floodColor="#000000" floodOpacity="0.65" />
-            </filter>
-          </defs>
-          <path 
-            d="M 33 0 
-               L 138 0 
-               C 148 0 156 -18 170 -22 
-               C 178 -24 202 -24 210 -22 
-               C 224 -18 232 0 242 0 
-               L 347 0 
-               C 365 0 380 15 380 33 
-               C 380 51 365 66 347 66 
-               L 33 66 
-               C 15 66 0 51 0 33 
-               C 0 15 15 0 33 0 Z" 
-            fill="url(#dockGrad)" 
-            stroke="rgba(255, 255, 255, 0.12)" 
-            strokeWidth="1.2"
-            filter="url(#dockGlow)"
-          />
-        </svg>
-
         {/* Navigation Items Container */}
         <nav className="dock-inner-nav">
           {/* 1. Home / Dashboard */}

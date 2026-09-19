@@ -242,14 +242,14 @@ export const Navbar: React.FC = () => {
         <div 
           className="brand-logo" 
           onClick={() => navigate(user.role === 'guest' ? 'guest_home' : user.role === 'scanner' ? 'scanner' : 'dashboard')} 
-          style={{ cursor: 'pointer' }}
+          style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem' }}
         >
-          <div className="brand-icon-box" style={{ overflow: 'hidden', padding: '2px', background: '#FFFFFF', border: '1px solid #E2E8F0' }}>
+          <div className="brand-icon-box" style={{ width: '44px', height: '44px', borderRadius: '12px', overflow: 'hidden', padding: '3px', background: '#FFFFFF', border: '1.5px solid #E2E8F0', boxShadow: '0 2px 10px rgba(0,0,0,0.06)', flexShrink: 0 }}>
             <img src="/logo.png" alt="EventPass" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
           </div>
-          <div>
-            <span>EVENTPASS</span>
-            <span className="brand-tagline-mini">Simple • Secure • Seamless</span>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '-0.02em', color: '#0F172A', lineHeight: 1.1 }}>EVENTPASS</span>
+            <span className="brand-tagline-mini" style={{ fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.04em', color: '#2563EB', marginTop: '2px' }}>Simple • Secure • Seamless</span>
           </div>
         </div>
       )}
@@ -260,9 +260,10 @@ export const Navbar: React.FC = () => {
           className="icon-btn" 
           onClick={() => navigate('notifications')}
           title="Notifications"
+          style={{ width: '42px', height: '42px', borderRadius: '50%', background: '#F8FAFC', border: '1.5px solid #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1E293B', position: 'relative', cursor: 'pointer', transition: 'all 0.2s ease', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}
         >
-          <Bell size={18} />
-          {unreadCount > 0 && <span className="notification-badge-dot" />}
+          <Bell size={21} strokeWidth={2.2} />
+          {unreadCount > 0 && <span className="notification-badge-dot" style={{ position: 'absolute', top: 3, right: 3, width: 9, height: 9, borderRadius: '50%', background: '#EF4444', border: '2px solid #FFFFFF' }} />}
         </button>
       </div>
     </header>

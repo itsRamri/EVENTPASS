@@ -3,28 +3,28 @@
    ========================================================================== */
 
 :root {
-  /* Color Palette - RSK Beige & Crisp White & Navy & Blue */
-  --bg-primary: #F5F3EB;       /* RSK beige */
-  --bg-secondary: #FFFFFF;
-  --bg-tertiary: #EBE7DC;
+  /* Color Palette - White, Black & Vibrant Mid-Blue (Not dark, not light) */
+  --bg-primary: #F8FAFC;       /* Clean crisp modern white */
+  --bg-secondary: #FFFFFF;     /* Pure white */
+  --bg-tertiary: #F1F5F9;      /* Subtle slate white */
   --bg-card: #FFFFFF;
-  --bg-card-hover: #FAFAF8;
-  --bg-glass: rgba(255, 255, 255, 0.92);
+  --bg-card-hover: #F8FAFC;
+  --bg-glass: rgba(255, 255, 255, 0.96);
   --bg-input: #FFFFFF;
-  --bg-overlay: rgba(30, 41, 59, 0.65);
+  --bg-overlay: rgba(15, 23, 42, 0.65);
 
   /* Borders & Dividers */
-  --border-subtle: #E5E1D5;
-  --border-focus: #4A7BF7;
-  --border-active: #4A7BF7;
+  --border-subtle: #E2E8F0;
+  --border-focus: #2563EB;
+  --border-active: #2563EB;
 
-  /* Primary & Accent Colors */
-  --primary-navy: #1E293B;
-  --accent-primary: #4A7BF7;
-  --accent-primary-hover: #3B66DB;
-  --accent-primary-light: rgba(74, 123, 247, 0.12);
-  --accent-secondary: #1E293B;
-  --accent-gradient: linear-gradient(135deg, #4A7BF7 0%, #3B66DB 100%);
+  /* Primary & Accent Colors - Vibrant Mid-Blue */
+  --primary-navy: #0F172A;
+  --accent-primary: #2563EB;
+  --accent-primary-hover: #1D4ED8;
+  --accent-primary-light: rgba(37, 99, 235, 0.1);
+  --accent-secondary: #0F172A;
+  --accent-gradient: linear-gradient(135deg, #2563EB 0%, #3B82F6 100%);
   --accent-gold: #F59E0B;
   --accent-gold-gradient: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
 
@@ -33,17 +33,17 @@
   --status-pending-bg: rgba(245, 158, 11, 0.12);
   --status-approved: #10B981;
   --status-approved-bg: rgba(16, 185, 129, 0.12);
-  --status-checkedin: #4A7BF7;
-  --status-checkedin-bg: rgba(74, 123, 247, 0.12);
+  --status-checkedin: #2563EB;
+  --status-checkedin-bg: rgba(37, 99, 235, 0.1);
   --status-rejected: #EF4444;
   --status-rejected-bg: rgba(239, 68, 68, 0.12);
-  --status-blocked: #1E293B;
-  --status-blocked-bg: rgba(30, 41, 59, 0.12);
+  --status-blocked: #0F172A;
+  --status-blocked-bg: rgba(15, 23, 42, 0.12);
 
-  /* Text Colors */
-  --text-primary: #1A1A1A;
-  --text-secondary: #6B7280;
-  --text-muted: #9CA3AF;
+  /* Text Colors - Black & Clean Slate */
+  --text-primary: #0F172A;     /* Deep Crisp Black/Slate */
+  --text-secondary: #475569;
+  --text-muted: #64748B;
   --text-inverse: #FFFFFF;
 
   /* Typography */
@@ -51,11 +51,11 @@
   --font-mono: 'JetBrains Mono', 'Courier New', monospace;
 
   /* Shadows & Elevation */
-  --shadow-sm: 0 2px 8px rgba(30, 41, 59, 0.05);
-  --shadow-md: 0 6px 20px rgba(30, 41, 59, 0.08);
-  --shadow-lg: 0 12px 32px rgba(30, 41, 59, 0.12);
-  --shadow-glow: 0 0 20px rgba(74, 123, 247, 0.25);
-  --shadow-cyan-glow: 0 0 20px rgba(74, 123, 247, 0.15);
+  --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 6px 20px rgba(15, 23, 42, 0.07);
+  --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.1);
+  --shadow-glow: 0 4px 16px rgba(37, 99, 235, 0.25);
+  --shadow-cyan-glow: 0 4px 16px rgba(37, 99, 235, 0.2);
 
   /* Radii */
   --radius-xs: 6px;
@@ -78,18 +78,18 @@
 
 /* Light Mode Overrides */
 [data-theme="light"] {
-  --bg-primary: #F5F3EB;
+  --bg-primary: #F8FAFC;
   --bg-secondary: #FFFFFF;
-  --bg-tertiary: #EBE7DC;
+  --bg-tertiary: #F1F5F9;
   --bg-card: #FFFFFF;
-  --bg-card-hover: #FAFAF8;
-  --bg-glass: rgba(255, 255, 255, 0.95);
+  --bg-card-hover: #F8FAFC;
+  --bg-glass: rgba(255, 255, 255, 0.96);
   --bg-input: #FFFFFF;
-  --bg-overlay: rgba(30, 41, 59, 0.65);
-  --border-subtle: #E5E1D5;
-  --text-primary: #1A1A1A;
-  --text-secondary: #6B7280;
-  --text-muted: #9CA3AF;
+  --bg-overlay: rgba(15, 23, 42, 0.65);
+  --border-subtle: #E2E8F0;
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #64748B;
   --text-inverse: #FFFFFF;
 }
 

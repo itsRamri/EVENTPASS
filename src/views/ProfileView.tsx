@@ -695,13 +695,40 @@ export const ProfileView: React.FC = () => {
             </div>
           </div>
 
-          <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.2rem', letterSpacing: '-0.01em' }}>
+          <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.35rem', letterSpacing: '-0.01em' }}>
             {user.name || user.email.split('@')[0] || 'User Profile'}
           </h2>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#64748B', fontSize: '0.875rem' }}>
-            <Mail size={14} color="#94A3B8" />
-            <span>{user.email}</span>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.35rem', marginTop: '0.2rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#64748B', fontSize: '0.875rem', fontWeight: 500 }}>
+              <Mail size={14} color="#2563EB" />
+              <span>{user.email || 'No email registered'}</span>
+            </div>
+
+            {user.mobile && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#64748B', fontSize: '0.875rem', fontWeight: 500 }}>
+                <Phone size={14} color="#2563EB" />
+                <span>{user.mobile}</span>
+              </div>
+            )}
+
+            <div style={{ 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              gap: '0.35rem', 
+              background: '#EFF6FF', 
+              color: '#2563EB', 
+              fontSize: '0.75rem', 
+              fontWeight: 700, 
+              padding: '0.2rem 0.65rem', 
+              borderRadius: 999, 
+              marginTop: '0.35rem',
+              border: '1px solid #DBEAFE',
+              textTransform: 'capitalize'
+            }}>
+              <ShieldCheck size={13} color="#2563EB" />
+              <span>{user.role === 'manager' ? 'Event Organizer / Manager' : user.role === 'scanner' ? 'Gate Staff Scanner' : 'Attendee / Guest'}</span>
+            </div>
           </div>
         </div>
 
