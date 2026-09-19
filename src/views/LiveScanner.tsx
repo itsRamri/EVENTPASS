@@ -713,160 +713,239 @@ export const LiveScanner: React.FC = () => {
               </div>
             </div>
 
-            {scanResult.guest && (
-              <>
-                {/* Centered Circular Attendee Avatar */}
-                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.75rem' }}>
-                  <img 
-                    src={scanResult.guest.avatar} 
-                    alt={scanResult.guest.name} 
+            {scanResult.guest && (() => {
+              const guest = scanResult.guest;
+              const matchedEvt = events.find(e => e.id === guest.eventId) || assignedEvent;
+
+              return (
+                <>
+                  {/* Centered Circular Attendee Avatar Photo */}
+                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.75rem' }}>
+                    <img 
+                      src={guest.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'} 
+                      alt={guest.name} 
+                      style={{
+                        width: 96,
+                        height: 96,
+                        borderRadius: '50%',
+                        objectFit: 'cover',
+                        border: '3.5px solid #F8FAFC',
+                        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.14)'
+                      }}
+                      onError={(e) => {
+                        e.currentTarget.src = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80';
+                      }}
+                    />
+                  </div>
+
+                  {/* Name & Party / Event Name */}
+                  <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                    <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.25rem' }}>
+                      {guest.name}
+                    </h2>
+                    <div style={{ fontSize: '1rem', color: '#475569', fontWeight: 700, marginBottom: '0.35rem' }}>
+                      {matchedEvt?.name || 'Exclusive Event'}
+                    </div>
+
+                    {/* Event Date & Time & Venue */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', flexWrap: 'wrap', fontSize: '0.8rem', color: '#64748B', fontWeight: 600 }}>
+                      {matchedEvt?.date && (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                          📅 {matchedEvt.date}
+                        </span>
+                      )}
+                      {matchedEvt?.startTime && (
+                        <span>• ⏰ {matchedEvt.startTime}{matchedEvt.endTime ? ` - ${matchedEvt.endTime}` : ''}</span>
+                      )}
+                      {matchedEvt?.venue && (
+                        <span>• 📍 {matchedEvt.venue}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Details Box: Token No & Pass ID */}
+                  <div 
                     style={{
-                      width: 90,
-                      height: 90,
-                      borderRadius: '50%',
-                      objectFit: 'cover',
-                      border: '3.5px solid #F8FAFC',
-                      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)'
+                      background: '#FFFFFF',
+                      border: '1.5px solid #E2E8F0',
+                      borderRadius: 18,
+                      padding: '1rem 1.15rem',
+                      marginBottom: '1.25rem',
+                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.03)'
                     }}
-                  />
-                </div>
-
-                {/* Name & Event */}
-                <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
-                  <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.2rem' }}>
-                    {scanResult.guest.name}
-                  </h2>
-                  <div style={{ fontSize: '0.9rem', color: '#64748B', fontWeight: 600 }}>
-                    {events.find(e => e.id === scanResult.guest?.eventId)?.name || 'Event Pass'}
-                  </div>
-                </div>
-
-                {/* Details Box: Token No & Pass ID */}
-                <div 
-                  style={{
-                    background: '#FFFFFF',
-                    border: '1.5px solid #E2E8F0',
-                    borderRadius: 18,
-                    padding: '1rem 1.15rem',
-                    marginBottom: '1.25rem',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.03)'
-                  }}
-                >
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
-                    {/* Left: Token No. */}
-                    <div>
-                      <div style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600, marginBottom: 2 }}>Token No.</div>
-                      <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0F172A', marginBottom: 6, wordBreak: 'break-all' }}>
-                        {scanResult.scannedTokenCode || scanResult.guest.token}
+                  >
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+                      {/* Left: Token No. */}
+                      <div>
+                        <div style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600, marginBottom: 2 }}>Token No.</div>
+                        <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0F172A', marginBottom: 6, wordBreak: 'break-all' }}>
+                          {scanResult.scannedTokenCode || guest.token || 'N/A'}
+                        </div>
+                        <span 
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 3,
+                            background: '#DCFCE7',
+                            color: '#16A34A',
+                            fontSize: '0.725rem',
+                            fontWeight: 700,
+                            padding: '2px 8px',
+                            borderRadius: 100,
+                            border: '1px solid #BBF7D0'
+                          }}
+                        >
+                          ✿ Approved
+                        </span>
                       </div>
-                      <span 
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 3,
-                          background: '#DCFCE7',
-                          color: '#16A34A',
-                          fontSize: '0.725rem',
-                          fontWeight: 700,
-                          padding: '2px 8px',
-                          borderRadius: 100
-                        }}
-                      >
-                        ✿ Approved
-                      </span>
+
+                      {/* Right: Pass ID */}
+                      <div>
+                        <div style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600, marginBottom: 2 }}>Pass ID</div>
+                        <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0F172A', marginBottom: 6, wordBreak: 'break-all' }}>
+                          #{guest.passId}
+                        </div>
+                        <span 
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 3,
+                            background: guest.status === 'checkedin' ? '#DCFCE7' : '#EFF6FF',
+                            color: guest.status === 'checkedin' ? '#166534' : '#2563EB',
+                            fontSize: '0.725rem',
+                            fontWeight: 700,
+                            padding: '2px 8px',
+                            borderRadius: 100,
+                            border: guest.status === 'checkedin' ? '1px solid #BBF7D0' : '1px solid #BFDBFE'
+                          }}
+                        >
+                          ❖ {guest.status === 'checkedin' ? 'Checked In' : 'Not Checked In'}
+                        </span>
+                      </div>
                     </div>
 
-                    {/* Right: Pass ID */}
-                    <div>
-                      <div style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600, marginBottom: 2 }}>Pass ID</div>
-                      <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0F172A', marginBottom: 6, wordBreak: 'break-all' }}>
-                        #{scanResult.guest.passId}
+                    {/* All Attendee Filled Registration Details */}
+                    <div style={{ marginTop: '0.85rem', paddingTop: '0.75rem', borderTop: '1px dashed #CBD5E1', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      <div style={{ fontSize: '0.725rem', fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 2 }}>
+                        Attendee Submission Details
                       </div>
-                      <span 
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 3,
-                          background: scanResult.guest.status === 'checkedin' ? '#DCFCE7' : '#EFF6FF',
-                          color: scanResult.guest.status === 'checkedin' ? '#166534' : '#2563EB',
-                          fontSize: '0.725rem',
-                          fontWeight: 700,
-                          padding: '2px 8px',
-                          borderRadius: 100
-                        }}
-                      >
-                        ❖ {scanResult.guest.status === 'checkedin' ? 'Checked In' : 'Not Checked In'}
-                      </span>
-                    </div>
-                  </div>
 
-                  {/* Filled Details Summary (Email, Mobile, College, Custom Questions) */}
-                  {(scanResult.guest.email || scanResult.guest.mobile || scanResult.guest.college || (scanResult.guest.answers && Object.keys(scanResult.guest.answers).length > 0)) && (
-                    <div style={{ marginTop: '0.85rem', paddingTop: '0.75rem', borderTop: '1px dashed #E2E8F0', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                      {scanResult.guest.email && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem' }}>
+                      {guest.email && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
                           <span style={{ color: '#64748B', fontWeight: 600 }}>Email:</span>
-                          <span style={{ color: '#0F172A', fontWeight: 700 }}>{scanResult.guest.email}</span>
+                          <span style={{ color: '#0F172A', fontWeight: 700 }}>{guest.email}</span>
                         </div>
                       )}
-                      {scanResult.guest.mobile && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem' }}>
+
+                      {guest.mobile && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
                           <span style={{ color: '#64748B', fontWeight: 600 }}>Mobile:</span>
-                          <span style={{ color: '#0F172A', fontWeight: 700 }}>{scanResult.guest.mobile}</span>
+                          <span style={{ color: '#0F172A', fontWeight: 700 }}>{guest.mobile}</span>
                         </div>
                       )}
-                      {scanResult.guest.college && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem' }}>
+
+                      {guest.college && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
                           <span style={{ color: '#64748B', fontWeight: 600 }}>College:</span>
-                          <span style={{ color: '#0F172A', fontWeight: 700 }}>{scanResult.guest.college}</span>
+                          <span style={{ color: '#0F172A', fontWeight: 700 }}>{guest.college}</span>
                         </div>
                       )}
-                      {scanResult.guest.answers && Object.entries(scanResult.guest.answers).map(([key, val]) => {
-                        if (!val || typeof val !== 'string' || val.startsWith('data:image') || val.startsWith('http') || ['Email Address', 'Mobile Number', 'Full Name', 'Invited Email', 'Invited Phone'].includes(key)) return null;
+
+                      {guest.branch && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                          <span style={{ color: '#64748B', fontWeight: 600 }}>Branch:</span>
+                          <span style={{ color: '#0F172A', fontWeight: 700 }}>{guest.branch}</span>
+                        </div>
+                      )}
+
+                      {guest.rollNo && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                          <span style={{ color: '#64748B', fontWeight: 600 }}>Roll No:</span>
+                          <span style={{ color: '#0F172A', fontWeight: 700 }}>{guest.rollNo}</span>
+                        </div>
+                      )}
+
+                      {guest.registrationDate && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                          <span style={{ color: '#64748B', fontWeight: 600 }}>Registered On:</span>
+                          <span style={{ color: '#0F172A', fontWeight: 700 }}>{guest.registrationDate}</span>
+                        </div>
+                      )}
+
+                      {/* Dynamic Custom Answers */}
+                      {guest.answers && Object.entries(guest.answers).map(([key, val]) => {
+                        if (!val || typeof val !== 'string' || val.startsWith('data:image') || val.startsWith('http') || ['Email Address', 'Mobile Number', 'Full Name', 'Invited Email', 'Invited Phone', 'College / Institute', 'Department / Branch', 'Student Roll Number'].includes(key)) return null;
                         return (
-                          <div key={key} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem' }}>
+                          <div key={key} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
                             <span style={{ color: '#64748B', fontWeight: 600 }}>{key}:</span>
                             <span style={{ color: '#0F172A', fontWeight: 700 }}>{val}</span>
                           </div>
                         );
                       })}
+
+                      {/* Attached Documents Preview */}
+                      {guest.documents && guest.documents.length > 0 && (
+                        <div style={{ marginTop: '0.35rem', paddingTop: '0.35rem', borderTop: '1px solid #F1F5F9' }}>
+                          <div style={{ fontSize: '0.725rem', color: '#64748B', fontWeight: 600, marginBottom: 4 }}>
+                            Attached Documents ({guest.documents.length}):
+                          </div>
+                          <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                            {guest.documents.map((doc, idx) => (
+                              <span 
+                                key={idx}
+                                style={{
+                                  fontSize: '0.725rem',
+                                  fontWeight: 700,
+                                  background: '#EFF6FF',
+                                  color: '#1D4ED8',
+                                  padding: '0.2rem 0.5rem',
+                                  borderRadius: 6,
+                                  border: '1px solid #BFDBFE'
+                                }}
+                              >
+                                📎 {doc.name}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Primary Button: Check In Guest */}
+                  {canCheckIn ? (
+                    <button 
+                      type="button"
+                      onClick={() => handleCheckIn(guest)}
+                      style={{
+                        width: '100%',
+                        padding: '0.95rem 1.5rem',
+                        background: '#2563EB',
+                        color: '#FFFFFF',
+                        fontSize: '1rem',
+                        fontWeight: 800,
+                        borderRadius: 100,
+                        border: 'none',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      Check In Guest
+                    </button>
+                  ) : (
+                    <div style={{ padding: '0.75rem', background: '#F1F5F9', borderRadius: 12, color: '#64748B', fontWeight: 700, fontSize: '0.85rem', textAlign: 'center' }}>
+                      View Pass Only (Permission Restricted)
                     </div>
                   )}
-                </div>
 
-                {/* Primary Button: Check In Guest */}
-                {canCheckIn ? (
-                  <button 
-                    type="button"
-                    onClick={() => handleCheckIn(scanResult.guest!)}
-                    style={{
-                      width: '100%',
-                      padding: '0.9rem 1.5rem',
-                      background: '#2563EB',
-                      color: '#FFFFFF',
-                      fontSize: '1rem',
-                      fontWeight: 800,
-                      borderRadius: 100,
-                      border: 'none',
-                      cursor: 'pointer',
-                      boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)',
-                      transition: 'all 0.2s ease'
-                    }}
-                  >
-                    Check In Guest
-                  </button>
-                ) : (
-                  <div style={{ padding: '0.75rem', background: '#F1F5F9', borderRadius: 12, color: '#64748B', fontWeight: 700, fontSize: '0.85rem', textAlign: 'center' }}>
-                    View Pass Only (Permission Restricted)
+                  {/* Caption below button */}
+                  <div style={{ textAlign: 'center', fontSize: '0.75rem', color: '#94A3B8', marginTop: '0.65rem', fontWeight: 600 }}>
+                    Make sure the guest is present at the venue.
                   </div>
-                )}
-
-                {/* Caption below button */}
-                <div style={{ textAlign: 'center', fontSize: '0.75rem', color: '#94A3B8', marginTop: '0.65rem', fontWeight: 600 }}>
-                  Make sure the guest is present at the venue.
-                </div>
-              </>
-            )}
+                </>
+              );
+            })()}
 
             {/* Status fallback if already checked in / invalid / pending */}
             {!scanResult.guest && (
@@ -903,7 +982,7 @@ export const LiveScanner: React.FC = () => {
       )}
 
       {/* ========================================================
-          2. CHECK-IN SUCCESSFUL MODAL (MATCHING SCREENSHOT 2)
+          2. CHECK-IN SUCCESSFUL MODAL (EXACTLY MATCHING SCREENSHOT)
           ======================================================== */}
       {checkInSuccessGuest && (
         <div 
@@ -915,98 +994,83 @@ export const LiveScanner: React.FC = () => {
               ...modalCardStyle,
               position: 'relative',
               overflow: 'hidden',
-              padding: '2rem 1.5rem 1.5rem',
-              maxWidth: 400
+              padding: '2.5rem 1.65rem 1.75rem',
+              maxWidth: 380,
+              background: '#FFFFFF',
+              boxShadow: '0 24px 64px rgba(0, 0, 0, 0.24)'
             }}
             onClick={e => e.stopPropagation()}
           >
+            {/* Subtle Decorative Confetti Particles */}
+            <div style={{ position: 'absolute', top: 18, left: 24, width: 8, height: 8, background: '#F43F5E', borderRadius: 2, transform: 'rotate(25deg)', opacity: 0.7 }} />
+            <div style={{ position: 'absolute', top: 38, left: 52, width: 6, height: 12, background: '#3B82F6', borderRadius: 2, transform: 'rotate(-40deg)', opacity: 0.8 }} />
+            <div style={{ position: 'absolute', top: 60, left: 30, width: 7, height: 7, background: '#10B981', borderRadius: '50%', opacity: 0.7 }} />
+            <div style={{ position: 'absolute', top: 22, right: 36, width: 8, height: 10, background: '#F59E0B', borderRadius: 2, transform: 'rotate(35deg)', opacity: 0.8 }} />
+            <div style={{ position: 'absolute', top: 54, right: 28, width: 6, height: 14, background: '#EC4899', borderRadius: 2, transform: 'rotate(-20deg)', opacity: 0.7 }} />
+            <div style={{ position: 'absolute', top: 75, right: 62, width: 7, height: 7, background: '#8B5CF6', borderRadius: '50%', opacity: 0.6 }} />
+
             <div style={{ textAlign: 'center' }}>
               
               {/* Green Circle Checkmark Icon */}
               <div 
                 style={{ 
-                  width: 68, 
-                  height: 68, 
+                  width: 72, 
+                  height: 72, 
                   borderRadius: '50%', 
                   background: '#10B981', 
                   color: '#FFFFFF', 
-                  fontSize: '2rem', 
                   display: 'flex', 
                   alignItems: 'center', 
                   justifyContent: 'center', 
-                  margin: '0 auto 1rem', 
-                  boxShadow: '0 6px 20px rgba(16, 185, 129, 0.35)' 
+                  margin: '0 auto 1.25rem', 
+                  boxShadow: '0 8px 24px rgba(16, 185, 129, 0.35)' 
                 }}
               >
-                <span style={{ fontWeight: 900, lineHeight: 1 }}>✓</span>
+                <CheckCircle2 size={44} color="#FFFFFF" strokeWidth={2.8} />
               </div>
 
               {/* Title: Check-in Successful! */}
-              <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.35rem', letterSpacing: '-0.01em' }}>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.45rem', letterSpacing: '-0.01em' }}>
                 Check-in Successful!
               </h2>
 
-              {/* Guest Name & Event */}
-              <div style={{ fontWeight: 800, fontSize: '1.15rem', color: '#0F172A', marginBottom: 2 }}>
+              {/* Guest Name & Party Name */}
+              <div style={{ fontWeight: 800, fontSize: '1.25rem', color: '#0F172A', marginBottom: '0.2rem' }}>
                 {checkInSuccessGuest.guest.name}
               </div>
-              <div style={{ fontSize: '0.875rem', color: '#64748B', fontWeight: 600, marginBottom: '1.25rem' }}>
-                {events.find(e => e.id === checkInSuccessGuest.guest.eventId)?.name || 'Event Pass'}
+              <div style={{ fontSize: '0.95rem', color: '#64748B', fontWeight: 600, marginBottom: '1.5rem' }}>
+                {events.find(e => e.id === checkInSuccessGuest.guest.eventId)?.name || assignedEvent?.name || 'Music Fest'}
               </div>
 
               {/* Details Box */}
               <div 
                 style={{ 
                   background: '#FFFFFF', 
-                  border: '1.5px solid #E2E8F0', 
-                  borderRadius: 18, 
-                  padding: '1rem 1.25rem', 
+                  border: '1.5px solid #F1F5F9', 
+                  borderRadius: 20, 
+                  padding: '1.25rem 1.4rem', 
                   textAlign: 'left', 
-                  marginBottom: '1.25rem',
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.03)'
+                  marginBottom: '1.5rem',
+                  boxShadow: '0 2px 12px rgba(0, 0, 0, 0.03)'
                 }}
               >
-                <div style={{ marginBottom: '0.75rem' }}>
-                  <div style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600, marginBottom: 2 }}>Check-in Time</div>
-                  <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0F172A' }}>
-                    {checkInSuccessGuest.time}
-                  </div>
-                </div>
-
                 <div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600, marginBottom: 2 }}>Token No.</div>
-                  <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0F172A', wordBreak: 'break-all' }}>
-                    {checkInSuccessGuest.scannedTokenCode || checkInSuccessGuest.guest.token}
+                  <div style={{ fontSize: '0.785rem', color: '#94A3B8', fontWeight: 600, marginBottom: 4 }}>Check-in Time</div>
+                  <div style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A' }}>
+                    {checkInSuccessGuest.time || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' • ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
                   </div>
                 </div>
 
-                {/* Filled Details Summary */}
-                {(checkInSuccessGuest.guest.email || checkInSuccessGuest.guest.mobile || checkInSuccessGuest.guest.college) && (
-                  <div style={{ marginTop: '0.75rem', paddingTop: '0.65rem', borderTop: '1px dashed #CBD5E1', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                    {checkInSuccessGuest.guest.email && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
-                        <span style={{ color: '#64748B' }}>Email:</span>
-                        <span style={{ color: '#0F172A', fontWeight: 700 }}>{checkInSuccessGuest.guest.email}</span>
-                      </div>
-                    )}
-                    {checkInSuccessGuest.guest.mobile && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
-                        <span style={{ color: '#64748B' }}>Mobile:</span>
-                        <span style={{ color: '#0F172A', fontWeight: 700 }}>{checkInSuccessGuest.guest.mobile}</span>
-                      </div>
-                    )}
-                    {checkInSuccessGuest.guest.college && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
-                        <span style={{ color: '#64748B' }}>College:</span>
-                        <span style={{ color: '#0F172A', fontWeight: 700 }}>{checkInSuccessGuest.guest.college}</span>
-                      </div>
-                    )}
+                <div style={{ marginTop: '1rem' }}>
+                  <div style={{ fontSize: '0.785rem', color: '#94A3B8', fontWeight: 600, marginBottom: 4 }}>Token No.</div>
+                  <div style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A', wordBreak: 'break-all' }}>
+                    {checkInSuccessGuest.scannedTokenCode || checkInSuccessGuest.guest.token || 'N/A'}
                   </div>
-                )}
+                </div>
               </div>
 
-              {/* Action Buttons: View Details & Done */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+              {/* Action Buttons: View Details & Done (Matching Image) */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 <button 
                   type="button"
                   onClick={() => {
@@ -1016,10 +1080,10 @@ export const LiveScanner: React.FC = () => {
                   }}
                   style={{
                     width: '100%',
-                    padding: '0.85rem 1.5rem',
+                    padding: '0.95rem 1.5rem',
                     background: '#2563EB',
                     color: '#FFFFFF',
-                    fontSize: '0.95rem',
+                    fontSize: '1rem',
                     fontWeight: 800,
                     borderRadius: 100,
                     border: 'none',
@@ -1036,13 +1100,13 @@ export const LiveScanner: React.FC = () => {
                   onClick={() => setCheckInSuccessGuest(null)}
                   style={{
                     width: '100%',
-                    padding: '0.85rem 1.5rem',
+                    padding: '0.9rem 1.5rem',
                     background: '#FFFFFF',
                     color: '#2563EB',
-                    fontSize: '0.95rem',
+                    fontSize: '1rem',
                     fontWeight: 800,
                     borderRadius: 100,
-                    border: '1.5px solid #2563EB',
+                    border: '2px solid #93C5FD',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease'
                   }}

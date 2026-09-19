@@ -31,17 +31,39 @@ export const ManagerDashboard: React.FC = () => {
     showToast 
   } = useApp();
 
-  const totalGuests = guests.length;
-  const checkedInCount = guests.filter(g => g.status === 'checkedin').length;
-  const pendingCount = guests.filter(g => g.status === 'pending' || g.status === 'invited').length;
-  const approvedCount = guests.filter(g => g.status === 'approved').length;
-  const activeEventsCount = events.filter(e => e.status === 'active').length;
+  // Events created by the logged-in manager / account
+  const myEvents = events.filter(e => {
+    const userEmail = (user.email || '').toLowerCase().trim();
+    const userMobile = (user.mobile || '').replace(/\D/g, '');
+    const userId = user.id || '';
+    const creatorEmail = (e.creatorEmail || '').toLowerCase().trim();
+    const creatorMobile = (e.creatorMobile || '').replace(/\D/g, '');
+    const creatorId = e.creatorId || '';
+
+    if (creatorEmail || creatorId || creatorMobile) {
+      return (
+        (creatorEmail && creatorEmail === userEmail) ||
+        (creatorId && creatorId === userId) ||
+        (creatorMobile && userMobile && creatorMobile === userMobile)
+      );
+    }
+    return false;
+  });
+
+  const myEventIds = new Set(myEvents.map(e => e.id));
+  const myGuests = guests.filter(g => myEventIds.has(g.eventId));
+  const myStaff = staff.filter(s => s.assignedEventId === 'all' || myEventIds.has(s.assignedEventId));
+
+  const totalGuests = myGuests.length;
+  const checkedInCount = myGuests.filter(g => g.status === 'checkedin').length;
+  const pendingCount = myGuests.filter(g => g.status === 'pending' || g.status === 'invited').length;
+  const approvedCount = myGuests.filter(g => g.status === 'approved').length;
+  const activeEventsCount = myEvents.filter(e => e.status === 'active').length;
   const checkInPercent = totalGuests > 0 ? Math.round((checkedInCount / totalGuests) * 100) : 0;
-  const approvedStaff = staff.filter(s => s.status === 'active');
+  const approvedStaff = myStaff.filter(s => s.status === 'active');
 
-
-  // Active events list
-  const activeEvents = events.filter(e => e.status === 'active');
+  // Active events list for this manager
+  const activeEvents = myEvents.filter(e => e.status === 'active');
 
   const currentHour = new Date().getHours();
   const timeGreeting = currentHour < 12 ? 'Good Morning' : currentHour < 17 ? 'Good Afternoon' : 'Good Evening';
@@ -266,7 +288,7 @@ export const ManagerDashboard: React.FC = () => {
             </span>
           </div>
           <div style={{ fontSize: '1.75rem', fontWeight: 900, color: '#0F172A', marginTop: '0.35rem' }}>
-            {events.length}
+            {myEvents.length}
             <span style={{ fontSize: '0.85rem', color: '#64748B', fontWeight: 600, marginLeft: '0.4rem' }}>Parties</span>
           </div>
         </div>
@@ -415,11 +437,18 @@ export const ManagerDashboard: React.FC = () => {
 
                     <button 
                       className="btn btn-secondary btn-sm"
-                      style={{ width: '100%', justifyContent: 'center', color: 'var(--text-muted)' }}
+                      style={{ 
+                        width: '100%', 
+                        justifyContent: 'center', 
+                        color: '#DC2626', 
+                        background: '#FEF2F2', 
+                        borderColor: '#FCA5A5', 
+                        fontWeight: 700 
+                      }}
                       onClick={() => handleDeleteEvent(evt.id, evt.name)}
                       title="Delete Event"
                     >
-                      <Trash2 size={14} /> Delete
+                      <Trash2 size={14} color="#DC2626" /> Delete
                     </button>
                   </div>
                 </div>

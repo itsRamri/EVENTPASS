@@ -352,7 +352,7 @@ export const AuthView: React.FC = () => {
           <div className="embossed-logo-well" style={{
             width: '82px',
             height: '82px',
-            margin: '0 auto 0.6rem',
+            margin: '0 auto',
             padding: '4px',
             boxSizing: 'border-box',
             overflow: 'hidden',
@@ -368,15 +368,6 @@ export const AuthView: React.FC = () => {
                 borderRadius: '50%'
               }} 
             />
-          </div>
-          <div style={{
-            fontSize: '1.35rem',
-            fontWeight: 900,
-            color: '#0F172A',
-            letterSpacing: '-0.02em',
-            lineHeight: 1.2
-          }}>
-            Event Pass
           </div>
         </div>
 
@@ -548,7 +539,7 @@ export const AuthView: React.FC = () => {
                     className="auth-input-field"
                     value={fullName}
                     onChange={e => setFullName(e.target.value)}
-                    placeholder="Full legal name"
+                    placeholder="Full name"
                     required
                     autoComplete="off"
                     data-lpignore="true"

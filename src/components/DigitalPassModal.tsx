@@ -83,97 +83,89 @@ export const DigitalPassModal: React.FC = () => {
           <div className="pass-header">
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
               <div style={{ fontWeight: 800, fontSize: '1.15rem', letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#FFFFFF' }}>
-                <Sparkles size={18} color="#818CF8" />
-                EVENTPASS
+                <Sparkles size={18} color="#93C5FD" />
+                DIGITAL EVENT PASS
               </div>
-              <span className="badge badge-role" style={{ fontSize: '0.7rem', padding: '0.15rem 0.55rem' }}>VIP PASS</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span className={`badge badge-${guest.status}`}>
+              <span style={{ 
+                fontSize: '0.75rem', 
+                fontWeight: 800, 
+                padding: '0.2rem 0.6rem', 
+                borderRadius: '999px',
+                background: guest.status === 'approved' ? '#DCFCE7' : guest.status === 'checkedin' ? '#DBEAFE' : '#FEF3C7',
+                color: guest.status === 'approved' ? '#15803D' : guest.status === 'checkedin' ? '#1D4ED8' : '#B45309',
+                border: '1px solid rgba(255, 255, 255, 0.4)'
+              }}>
                 {guest.status.toUpperCase()}
               </span>
               <button 
                 type="button" 
                 onClick={closeDigitalPass}
-                style={{ background: 'rgba(255, 255, 255, 0.15)', border: 'none', color: '#FFFFFF', width: 28, height: 28, borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem' }}
+                style={{ background: 'rgba(255, 255, 255, 0.25)', border: 'none', color: '#FFFFFF', width: 28, height: 28, borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', fontWeight: 700 }}
               >
                 ✕
               </button>
             </div>
           </div>
 
-          {/* Pass Body */}
-          <div className="pass-body" style={{ padding: '1.25rem 1rem' }}>
-            {/* Guest Profile Section */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem', background: 'rgba(255, 255, 255, 0.04)', padding: '0.85rem', borderRadius: 'var(--radius-lg)', border: '1px solid rgba(255, 255, 255, 0.08)', flexWrap: 'wrap' }}>
-              <img 
-                src={guest.avatar} 
-                className="pass-guest-img" 
-                style={{ width: 'clamp(92px, 26vw, 125px)', height: 'clamp(92px, 26vw, 125px)', borderRadius: 'var(--radius-xl)', objectFit: 'cover', border: '3.5px solid #38BDF8', boxShadow: '0 6px 20px rgba(56, 189, 248, 0.4)', flexShrink: 0 }}
-                alt={guest.name} 
-              />
-              <div style={{ flex: '1 1 180px', minWidth: 0 }}>
-                <h3 style={{ fontSize: '1.15rem', color: '#FFFFFF', margin: '0 0 0.2rem', fontWeight: 800, wordBreak: 'break-word' }}>
-                  {guest.name}
-                </h3>
-                <div style={{ fontSize: '0.8rem', color: '#CBD5E1', display: 'flex', alignItems: 'center', gap: 4, fontWeight: 600 }}>
-                  <GraduationCap size={14} color="#818CF8" />
-                  <span>{guest.college || 'Attendee'}</span>
-                </div>
-                <div style={{ fontSize: '0.75rem', color: '#94A3B8', marginTop: 2, display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                  {guest.branch && <span>{guest.branch}</span>}
-                  {guest.rollNo && <span>• Roll: <strong style={{ color: '#F8FAFC' }}>{guest.rollNo}</strong></span>}
-                </div>
-                <div style={{ fontSize: '0.725rem', color: '#64748B', marginTop: 3, display: 'flex', gap: '0.4rem', flexWrap: 'wrap', wordBreak: 'break-all' }}>
-                  {guest.email && <span>✉️ {guest.email}</span>}
-                  {guest.mobile && <span>• 📱 {guest.mobile}</span>}
-                </div>
-              </div>
-            </div>
+          {/* Pass Body (QR Scanner & Event Info Only) */}
+          <div className="pass-body" style={{ padding: '1.25rem 1rem', background: '#FFFFFF' }}>
+            {/* Event Header Banner */}
+            <div style={{ background: '#F8FAFC', padding: '0.85rem 1rem', borderRadius: 'var(--radius-lg)', border: '1.5px solid #E2E8F0', marginBottom: '1rem' }}>
+              <div style={{ fontSize: '0.65rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.04em' }}>EVENT</div>
+              <div style={{ fontWeight: 800, fontSize: '1.05rem', color: '#0F172A', marginTop: 1, wordBreak: 'break-word' }}>{event.name}</div>
 
-            {/* Event Details Section */}
-            <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '0.75rem 0.85rem', borderRadius: 'var(--radius-md)', border: '1px solid rgba(255, 255, 255, 0.06)', display: 'grid', gap: '0.45rem', fontSize: '0.8rem', marginBottom: '1rem' }}>
-              <div>
-                <div style={{ fontSize: '0.65rem', color: '#94A3B8', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.04em' }}>EVENT NAME</div>
-                <div style={{ fontWeight: 800, fontSize: '0.98rem', color: '#FFFFFF', marginTop: 1, wordBreak: 'break-word' }}>{event.name}</div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.65rem', marginTop: 2, borderTop: '1px dashed rgba(255, 255, 255, 0.1)', paddingTop: '0.45rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.65rem', marginTop: '0.5rem', borderTop: '1px dashed #E2E8F0', paddingTop: '0.5rem' }}>
                 <div>
-                  <div style={{ fontSize: '0.65rem', color: '#94A3B8', textTransform: 'uppercase', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 3 }}>
-                    <Calendar size={12} color="#38BDF8" /> DATE & TIME
+                  <div style={{ fontSize: '0.65rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 3 }}>
+                    <Calendar size={12} color="#2563EB" /> DATE & TIME
                   </div>
-                  <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#F8FAFC', marginTop: 2 }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0F172A', marginTop: 2 }}>
                     {event.date} • {event.startTime}
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: '0.65rem', color: '#94A3B8', textTransform: 'uppercase', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 3 }}>
-                    <MapPin size={12} color="#38BDF8" /> VENUE
+                  <div style={{ fontSize: '0.65rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 3 }}>
+                    <MapPin size={12} color="#2563EB" /> VENUE
                   </div>
-                  <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#F8FAFC', marginTop: 2, wordBreak: 'break-word' }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#0F172A', marginTop: 2, wordBreak: 'break-word' }}>
                     {event.venue}
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Multi-Token Allocation Switcher (e.g. 15 Tokens) */}
-            <div style={{ background: 'rgba(255, 255, 255, 0.05)', borderRadius: 'var(--radius-lg)', padding: '0.85rem', border: '1px solid rgba(255, 255, 255, 0.1)', marginBottom: '1rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.65rem', flexWrap: 'wrap', gap: '0.4rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <Ticket size={16} color="#38BDF8" />
-                  <span style={{ fontWeight: 800, fontSize: '0.85rem', color: '#FFFFFF' }}>
-                    Allocated Passes: <strong style={{ color: '#38BDF8' }}>{totalTokens} Tokens</strong>
-                  </span>
+            {/* Large QR Code Scanner Box */}
+            <div className="pass-qr-box" style={{ padding: '1.5rem 1rem', background: '#FFFFFF', borderRadius: 'var(--radius-xl)', margin: '0 0 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', border: '2px solid #E2E8F0', boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)' }}>
+              <QRCodeSVG value={currentTokenItem?.tokenCode || guest.token || guest.passId} size={220} />
+              
+              <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+                <div style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  GATE SCAN TOKEN
                 </div>
-                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: remainingCount > 0 ? '#10B981' : '#EF4444' }}>
-                  {remainingCount} Available • {usedCount} Used
+                <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#2563EB', fontFamily: 'var(--font-mono)', letterSpacing: '0.05em', marginTop: 2 }}>
+                  {currentTokenItem?.tokenCode}
                 </div>
               </div>
+            </div>
 
-              {/* Token Pills (Select Token 1..15) */}
-              {totalTokens > 1 && (
+            {/* Multi-Token Allocation Switcher (if > 1 token exists) */}
+            {totalTokens > 1 && (
+              <div style={{ background: '#F8FAFC', borderRadius: 'var(--radius-lg)', padding: '0.85rem', border: '1px solid #E2E8F0', marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.65rem', flexWrap: 'wrap', gap: '0.4rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Ticket size={16} color="#2563EB" />
+                    <span style={{ fontWeight: 800, fontSize: '0.85rem', color: '#0F172A' }}>
+                      Passes: <strong style={{ color: '#2563EB' }}>{totalTokens} Tokens</strong>
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: remainingCount > 0 ? '#15803D' : '#DC2626' }}>
+                    {remainingCount} Available • {usedCount} Used
+                  </div>
+                </div>
+
+                {/* Token Pills (Select Token 1..N) */}
                 <div style={{ display: 'flex', gap: '0.35rem', overflowX: 'auto', paddingBottom: '0.4rem', WebkitOverflowScrolling: 'touch', marginBottom: '0.65rem' }}>
                   {tokensList.map((t, idx) => {
                     const isSelected = safeIdx === idx;
@@ -190,9 +182,10 @@ export const DigitalPassModal: React.FC = () => {
                           fontWeight: 800,
                           cursor: 'pointer',
                           whiteSpace: 'nowrap',
-                          border: isSelected ? '1.5px solid #38BDF8' : '1px solid rgba(255, 255, 255, 0.15)',
-                          background: isSelected ? 'rgba(56, 189, 248, 0.25)' : isUsed ? 'rgba(239, 68, 68, 0.15)' : 'rgba(255, 255, 255, 0.08)',
-                          color: isSelected ? '#38BDF8' : isUsed ? '#FCA5A5' : '#E2E8F0',
+                          border: isSelected ? '1.5px solid #2563EB' : '1px solid #CBD5E1',
+                          background: isSelected ? '#2563EB' : isUsed ? '#FEE2E2' : '#FFFFFF',
+                          color: isSelected ? '#FFFFFF' : isUsed ? '#DC2626' : '#475569',
+                          boxShadow: isSelected ? '0 2px 8px rgba(37, 99, 235, 0.25)' : 'none',
                           transition: 'all 0.15s ease'
                         }}
                       >
@@ -201,50 +194,42 @@ export const DigitalPassModal: React.FC = () => {
                     );
                   })}
                 </div>
-              )}
 
-              {/* Current Active Token Info & Prev/Next */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(0, 0, 0, 0.3)', padding: '0.45rem 0.75rem', borderRadius: 'var(--radius-sm)' }}>
-                <button
-                  type="button"
-                  disabled={safeIdx <= 0}
-                  onClick={() => setSelectedTokenIdx(prev => Math.max(0, prev - 1))}
-                  style={{ background: 'transparent', border: 'none', color: safeIdx <= 0 ? 'rgba(255,255,255,0.2)' : '#FFFFFF', cursor: safeIdx <= 0 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center' }}
-                >
-                  <ChevronLeft size={18} />
-                </button>
+                {/* Prev/Next Controls */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#FFFFFF', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid #E2E8F0' }}>
+                  <button
+                    type="button"
+                    disabled={safeIdx <= 0}
+                    onClick={() => setSelectedTokenIdx(prev => Math.max(0, prev - 1))}
+                    style={{ background: 'transparent', border: 'none', color: safeIdx <= 0 ? '#CBD5E1' : '#475569', cursor: safeIdx <= 0 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center' }}
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
 
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#38BDF8', fontFamily: 'var(--font-mono)' }}>
-                    {currentTokenItem?.tokenCode}
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '0.725rem', color: currentTokenItem?.status === 'used' ? '#DC2626' : '#15803D', fontWeight: 800 }}>
+                      {currentTokenItem?.status === 'used' ? `✕ Admitted (${currentTokenItem.checkInTime || 'Used'})` : `✓ Active Pass (${safeIdx + 1} of ${totalTokens})`}
+                    </div>
                   </div>
-                  <div style={{ fontSize: '0.68rem', color: currentTokenItem?.status === 'used' ? '#EF4444' : '#10B981', fontWeight: 700 }}>
-                    {currentTokenItem?.status === 'used' ? `✕ Admitted (${currentTokenItem.checkInTime || 'Used'})` : `✓ Active Entry Pass (${safeIdx + 1} of ${totalTokens})`}
-                  </div>
+
+                  <button
+                    type="button"
+                    disabled={safeIdx >= totalTokens - 1}
+                    onClick={() => setSelectedTokenIdx(prev => Math.min(totalTokens - 1, prev + 1))}
+                    style={{ background: 'transparent', border: 'none', color: safeIdx >= totalTokens - 1 ? '#CBD5E1' : '#475569', cursor: safeIdx >= totalTokens - 1 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center' }}
+                  >
+                    <ChevronRight size={18} />
+                  </button>
                 </div>
-
-                <button
-                  type="button"
-                  disabled={safeIdx >= totalTokens - 1}
-                  onClick={() => setSelectedTokenIdx(prev => Math.min(totalTokens - 1, prev + 1))}
-                  style={{ background: 'transparent', border: 'none', color: safeIdx >= totalTokens - 1 ? 'rgba(255,255,255,0.2)' : '#FFFFFF', cursor: safeIdx >= totalTokens - 1 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center' }}
-                >
-                  <ChevronRight size={18} />
-                </button>
               </div>
-            </div>
-
-            {/* Large QR Code for Selected Token */}
-            <div className="pass-qr-box" style={{ padding: '1.25rem', background: '#FFFFFF', borderRadius: 'var(--radius-lg)', margin: '0 0 0.75rem', display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }}>
-              <QRCodeSVG value={currentTokenItem?.tokenCode || guest.token || guest.passId} size={190} />
-            </div>
+            )}
 
             {currentTokenItem?.status === 'used' ? (
-              <div style={{ textAlign: 'center', color: '#EF4444', fontSize: '0.825rem', fontWeight: 800, margin: '0.5rem 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', background: 'rgba(239, 68, 68, 0.15)', padding: '0.45rem', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+              <div style={{ textAlign: 'center', color: '#DC2626', fontSize: '0.825rem', fontWeight: 800, margin: '0.5rem 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', background: '#FEF2F2', padding: '0.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid #FECACA' }}>
                 <AlertCircle size={15} /> Pass #{currentTokenItem.index || safeIdx + 1} Already Checked In at {currentTokenItem.checkInTime || 'Earlier'}
               </div>
             ) : (
-              <div style={{ textAlign: 'center', fontSize: '0.75rem', color: '#94A3B8', marginTop: '0.5rem' }}>
+              <div style={{ textAlign: 'center', fontSize: '0.8rem', color: '#64748B', fontWeight: 600, marginTop: '0.25rem' }}>
                 Present this QR code at the event gate to check in.
               </div>
             )}

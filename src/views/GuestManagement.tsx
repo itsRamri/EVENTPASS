@@ -55,6 +55,28 @@ export const GuestManagement: React.FC = () => {
     showToast 
   } = useApp();
 
+  // Events created by the logged-in manager / account
+  const myEvents = events.filter(e => {
+    const userEmail = (user.email || '').toLowerCase().trim();
+    const userMobile = (user.mobile || '').replace(/\D/g, '');
+    const userId = user.id || '';
+    const creatorEmail = (e.creatorEmail || '').toLowerCase().trim();
+    const creatorMobile = (e.creatorMobile || '').replace(/\D/g, '');
+    const creatorId = e.creatorId || '';
+
+    if (creatorEmail || creatorId || creatorMobile) {
+      return (
+        (creatorEmail && creatorEmail === userEmail) ||
+        (creatorId && creatorId === userId) ||
+        (creatorMobile && userMobile && creatorMobile === userMobile)
+      );
+    }
+    return false;
+  });
+
+  const myEventIds = new Set(myEvents.map(e => e.id));
+  const myGuests = guests.filter(g => myEventIds.has(g.eventId));
+
   const [statusTab, setStatusTab] = useState<'all' | 'pending' | 'approved' | 'checkedin'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGuestDossier, setSelectedGuestDossier] = useState<GuestRegistration | null>(null);
@@ -70,8 +92,8 @@ export const GuestManagement: React.FC = () => {
   const [quickInviteNote, setQuickInviteNote] = useState('');
 
   // Target Event State for Modal
-  const [guestEventId, setGuestEventId] = useState(selectedEventId && selectedEventId !== 'all' ? selectedEventId : (events[0]?.id || ''));
-  const targetModalEvt = events.find(e => e.id === guestEventId) || events[0];
+  const [guestEventId, setGuestEventId] = useState(selectedEventId && selectedEventId !== 'all' && myEventIds.has(selectedEventId) ? selectedEventId : (myEvents[0]?.id || ''));
+  const targetModalEvt = myEvents.find(e => e.id === guestEventId) || myEvents[0];
   const [tokensToGrant, setTokensToGrant] = useState<number>(targetModalEvt?.tokenSettings?.tokensPerUser || 1);
 
   // Document Upload & Bulk Parse State
@@ -79,12 +101,10 @@ export const GuestManagement: React.FC = () => {
   const [docTextContent, setDocTextContent] = useState('');
   const [parsedEntries, setParsedEntries] = useState<Array<{ type: 'email' | 'phone'; value: string }>>([]);
 
-
-
   // Filter guests by selected event first
   const eventScopedGuests = (selectedEventId && selectedEventId !== 'all')
-    ? guests.filter(g => g.eventId === selectedEventId)
-    : guests;
+    ? myGuests.filter(g => g.eventId === selectedEventId)
+    : myGuests;
 
   const counts = {
     all: eventScopedGuests.length,
@@ -116,7 +136,7 @@ export const GuestManagement: React.FC = () => {
     return true;
   });
 
-  const currentSelectedEvent = events.find(e => e.id === guestEventId) || events[0] || { id: 'evt_general', name: 'Event', tokenSettings: { prefix: 'EP' } };
+  const currentSelectedEvent = myEvents.find(e => e.id === guestEventId) || myEvents[0] || { id: 'evt_general', name: 'Event', tokenSettings: { prefix: 'EP' } };
 
   const handleDeleteAction = (g: GuestRegistration) => {
     if (confirm(`Permanently delete ${g.name} from the event records?`)) {
@@ -178,12 +198,13 @@ export const GuestManagement: React.FC = () => {
       };
 
       addDirectGuest(newGuest);
-    });
 
-    addNotification({
-      title: '🎟️ You are Invited!',
-      message: `You have been officially invited to "${targetEvt.name}"! Access and manage your entry passes.`,
-      type: 'info'
+      addNotification({
+        title: '🎟️ You are Invited!',
+        message: `You have been officially invited to "${targetEvt.name}"! Access and manage your entry passes.`,
+        type: 'info',
+        recipientEmail: emailAddr
+      });
     });
 
     setIsAddGuestModalOpen(false);
@@ -245,12 +266,13 @@ export const GuestManagement: React.FC = () => {
       };
 
       addDirectGuest(newGuest);
-    });
 
-    addNotification({
-      title: '🎟️ You are Invited!',
-      message: `You have been officially invited to "${targetEvt.name}"! Access and manage your entry passes.`,
-      type: 'info'
+      addNotification({
+        title: '🎟️ You are Invited!',
+        message: `You have been officially invited to "${targetEvt.name}"! Access and manage your entry passes.`,
+        type: 'info',
+        recipientPhone: phoneNum
+      });
     });
 
     setIsAddGuestModalOpen(false);
@@ -467,8 +489,8 @@ export const GuestManagement: React.FC = () => {
             onChange={e => setSelectedEventId(e.target.value === 'all' ? null : e.target.value)}
             style={{ padding: '0.45rem 0.85rem', fontSize: '0.85rem', borderRadius: 'var(--radius-md)', fontWeight: 700, color: '#0F172A', border: '1px solid #CBD5E1', maxWidth: '100%', boxSizing: 'border-box' }}
           >
-            <option value="all">All Events ({events.length})</option>
-            {events.map(ev => (
+            <option value="all">All Events ({myEvents.length})</option>
+            {myEvents.map(ev => (
               <option key={ev.id} value={ev.id}>{ev.name}</option>
             ))}
           </select>
@@ -539,19 +561,22 @@ export const GuestManagement: React.FC = () => {
                 }}
               >
                 {/* Left: Attendee Avatar & Primary Info */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: '1 1 260px', minWidth: 0, flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1.15rem', flex: '1 1 300px', minWidth: 0, flexWrap: 'wrap' }}>
                   <div style={{ position: 'relative', flexShrink: 0 }}>
                     <img 
                       src={g.avatar} 
                       style={{ 
-                        width: 'clamp(72px, 20vw, 110px)', 
-                        height: 'clamp(72px, 20vw, 110px)', 
-                        borderRadius: 'var(--radius-lg)', 
+                        width: 'clamp(100px, 24vw, 135px)', 
+                        height: 'clamp(120px, 28vw, 155px)', 
+                        borderRadius: 'var(--radius-md)', 
                         objectFit: 'cover', 
-                        border: '3px solid #FFFFFF',
-                        boxShadow: '0 4px 14px rgba(0,0,0,0.14)'
+                        border: '3px solid #E2E8F0',
+                        boxShadow: '0 6px 18px rgba(15, 23, 42, 0.12)',
+                        cursor: 'pointer'
                       }} 
-                      alt={g.name} 
+                      alt={g.name}
+                      onClick={() => setPreviewPhotoModal({ url: g.avatar, title: `${g.name}'s Attendee Photo` })}
+                      title="Click to view full photo"
                     />
                     {isCheckedIn && (
                       <span 
@@ -562,12 +587,12 @@ export const GuestManagement: React.FC = () => {
                           background: '#10B981', 
                           color: '#FFFFFF', 
                           borderRadius: '50%', 
-                          width: 24, 
-                          height: 24, 
+                          width: 26, 
+                          height: 26, 
                           display: 'flex', 
                           alignItems: 'center', 
                           justifyContent: 'center', 
-                          fontSize: '0.85rem', 
+                          fontSize: '0.9rem', 
                           fontWeight: 800, 
                           border: '2px solid #FFFFFF', 
                           boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
@@ -715,7 +740,7 @@ export const GuestManagement: React.FC = () => {
                       onClick={() => openDigitalPass(g.id)}
                       style={{ fontWeight: 700, color: '#0F172A' }}
                     >
-                      <QrCode size={14} /> View VIP Pass
+                      <QrCode size={14} /> View Digital Pass
                     </button>
                   )}
 
@@ -775,7 +800,7 @@ export const GuestManagement: React.FC = () => {
                   }}
                   style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-sm)', color: '#0F172A', fontWeight: 700, border: '1.5px solid #CBD5E1', background: '#FFFFFF', fontSize: '0.85rem' }}
                 >
-                  {events.map(ev => (
+                  {myEvents.map(ev => (
                     <option key={ev.id} value={ev.id}>{ev.name}</option>
                   ))}
                 </select>
@@ -1047,16 +1072,16 @@ export const GuestManagement: React.FC = () => {
             </div>
             <div className="modal-body">
               <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-                <div style={{ position: 'relative' }}>
+                <div style={{ position: 'relative', flexShrink: 0 }}>
                   <img 
                     src={selectedGuestDossier.avatar} 
                     style={{ 
-                      width: 'clamp(140px, 36vw, 185px)', 
-                      height: 'clamp(140px, 36vw, 185px)', 
-                      borderRadius: 'var(--radius-xl)', 
+                      width: 'clamp(160px, 42vw, 210px)', 
+                      height: 'clamp(185px, 48vw, 240px)', 
+                      borderRadius: 'var(--radius-lg)', 
                       objectFit: 'cover', 
-                      border: '4px solid #FFFFFF', 
-                      boxShadow: '0 8px 24px rgba(0,0,0,0.18)', 
+                      border: '4px solid #E2E8F0', 
+                      boxShadow: '0 8px 24px rgba(15, 23, 42, 0.16)', 
                       flexShrink: 0,
                       cursor: 'pointer' 
                     }} 
@@ -1296,7 +1321,7 @@ export const GuestManagement: React.FC = () => {
                     onClick={() => openDigitalPass(selectedGuestDossier.id)}
                     style={{ fontWeight: 800 }}
                   >
-                    <QrCode size={14} /> View VIP Pass
+                    <QrCode size={14} /> View Digital Pass
                   </button>
                 )}
               </div>

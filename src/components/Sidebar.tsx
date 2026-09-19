@@ -1,14 +1,14 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
-import { 
-  LayoutDashboard, 
-  PlusCircle, 
-  Users, 
-  ShieldCheck, 
-  QrCode, 
-  UserCheck, 
-  Bell, 
-  User, 
+import {
+  LayoutDashboard,
+  PlusCircle,
+  Users,
+  ShieldCheck,
+  QrCode,
+  UserCheck,
+  Bell,
+  User,
   LogOut,
   Sparkles,
   Repeat,
@@ -59,18 +59,18 @@ export const Sidebar: React.FC = () => {
 
       <div className="desktop-sidebar-footer">
         <div className="desktop-user-pill">
-          <div 
-            style={{ 
-              width: 36, 
-              height: 36, 
-              borderRadius: 'var(--radius-sm)', 
-              background: '#EFF6FF', 
-              border: '1.5px solid #38BDF8', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
+          <div
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 'var(--radius-sm)',
+              background: '#EFF6FF',
+              border: '1.5px solid #38BDF8',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               color: '#2563EB',
-              flexShrink: 0 
+              flexShrink: 0
             }}
           >
             <User size={18} strokeWidth={2.3} />
@@ -81,8 +81,8 @@ export const Sidebar: React.FC = () => {
           </div>
         </div>
         <div style={{ display: 'flex', gap: '0.25rem' }}>
-          <button 
-            className="icon-btn" 
+          <button
+            className="icon-btn"
             onClick={logout}
             title="Log Out"
             style={{ color: '#EF4444' }}

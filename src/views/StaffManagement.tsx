@@ -13,9 +13,31 @@ import {
 } from 'lucide-react';
 
 export const StaffManagement: React.FC = () => {
-  const { staff, events, saveStaff, deleteStaff, updateStaffPermission, toggleStaffStatus, showToast } = useApp();
+  const { user, staff, events, saveStaff, deleteStaff, updateStaffPermission, toggleStaffStatus, showToast } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddStaffModalOpen, setIsAddStaffModalOpen] = useState(false);
+
+  // Events created by the logged-in manager / account
+  const myEvents = events.filter(e => {
+    const userEmail = (user.email || '').toLowerCase().trim();
+    const userMobile = (user.mobile || '').replace(/\D/g, '');
+    const userId = user.id || '';
+    const creatorEmail = (e.creatorEmail || '').toLowerCase().trim();
+    const creatorMobile = (e.creatorMobile || '').replace(/\D/g, '');
+    const creatorId = e.creatorId || '';
+
+    if (creatorEmail || creatorId || creatorMobile) {
+      return (
+        (creatorEmail && creatorEmail === userEmail) ||
+        (creatorId && creatorId === userId) ||
+        (creatorMobile && userMobile && creatorMobile === userMobile)
+      );
+    }
+    return false;
+  });
+
+  const myEventIds = new Set(myEvents.map(e => e.id));
+  const myStaff = staff.filter(s => s.assignedEventId === 'all' || myEventIds.has(s.assignedEventId));
 
   // Direct Staff Invite State (Zero Form Filling)
   const [staffInviteMode, setStaffInviteMode] = useState<'email' | 'mobile'>('email');
@@ -30,10 +52,10 @@ export const StaffManagement: React.FC = () => {
     canReject: false
   });
 
-  const targetEvent = events.find(e => e.id === assignedEventId);
+  const targetEvent = myEvents.find(e => e.id === assignedEventId);
   const partyName = assignedEventId === 'all' ? 'All Active Events' : targetEvent?.name || 'Selected Event';
 
-  const filteredStaff = staff.filter(s => {
+  const filteredStaff = myStaff.filter(s => {
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
     return s.name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q) || (s.phone && s.phone.includes(q));
@@ -352,7 +374,7 @@ export const StaffManagement: React.FC = () => {
                       }}
                     >
                       <option value="all">🌐 All Active Events (Full Gate Access)</option>
-                      {events.map(ev => (
+                      {myEvents.map(ev => (
                         <option key={ev.id} value={ev.id}>🎯 {ev.name}</option>
                       ))}
                     </select>
@@ -600,7 +622,7 @@ export const StaffManagement: React.FC = () => {
                     style={{ color: '#0F172A', fontWeight: 700, border: '1.5px solid #94A3B8', borderRadius: 'var(--radius-sm)', padding: '0.6rem 0.75rem', width: '100%', background: '#FFFFFF', fontSize: '0.875rem' }}
                   >
                     <option value="all">🌐 All Active Events (Universal Scanner Access)</option>
-                    {events.map(ev => (
+                    {myEvents.map(ev => (
                       <option key={ev.id} value={ev.id}>🎯 {ev.name}</option>
                     ))}
                   </select>

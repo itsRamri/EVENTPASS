@@ -38,26 +38,11 @@ export const GuestHome: React.FC = () => {
   // Join by Event ID state
   const [inputEventId, setInputEventId] = useState('');
 
-  const activeEvents = events.filter(e => e.status === 'active');
-  const myRegistrations = guests.filter(g => 
-    (g.email && g.email.toLowerCase() === user.email.toLowerCase()) || 
-    (g.name && g.name === user.name && g.name !== 'Pending Guest Submission') ||
-    (g.mobile && g.mobile === user.mobile)
-  );
-
-  const pendingInvitations = guests.filter(g => 
-    g.status === 'invited' && (
-      !g.email || 
-      g.email.toLowerCase() === user.email.toLowerCase() || 
-      g.mobile === user.mobile ||
-      g.answers?.['Invited Email']?.toLowerCase() === user.email.toLowerCase() ||
-      g.name === 'Pending Guest Submission'
-    )
-  );
+  const userEmail = (user.email || '').toLowerCase().trim();
+  const userMobile = (user.mobile || '').replace(/\D/g, '');
+  const userName = (user.name || '').toLowerCase().trim();
 
   const isEventOrganizer = (evt: EventItem) => {
-    const userEmail = (user.email || '').toLowerCase().trim();
-    const userMobile = (user.mobile || '').replace(/\D/g, '');
     const evtCreatorEmail = (evt.creatorEmail || '').toLowerCase().trim();
     const evtCreatorMobile = (evt.creatorMobile || '').replace(/\D/g, '');
 
@@ -67,6 +52,38 @@ export const GuestHome: React.FC = () => {
     if (user.role === 'manager' && user.name && evt.organizer && user.name.toLowerCase() === evt.organizer.toLowerCase()) return true;
     return false;
   };
+
+  const myRegistrations = guests.filter(g => {
+    if (g.status === 'invited') return false;
+    const gEmail = (g.email || '').toLowerCase().trim();
+    const gMobile = (g.mobile || '').replace(/\D/g, '');
+    const gName = (g.name || '').toLowerCase().trim();
+
+    if (userEmail && gEmail && gEmail === userEmail) return true;
+    if (userMobile && gMobile && gMobile === userMobile) return true;
+    if (userName && gName && gName === userName && gName !== 'pending guest submission') return true;
+    return false;
+  });
+
+  const pendingInvitations = guests.filter(g => {
+    if (g.status !== 'invited') return false;
+    const gEmail = (g.email || g.answers?.['Invited Email'] || '').toLowerCase().trim();
+    const gMobile = (g.mobile || g.answers?.['Mobile Contact'] || '').replace(/\D/g, '');
+
+    const matchesEmail = Boolean(userEmail && gEmail && gEmail === userEmail);
+    const matchesMobile = Boolean(userMobile && gMobile && gMobile === userMobile);
+
+    return matchesEmail || matchesMobile;
+  });
+
+  // Only show events where the user has actually registered/joined, or the organizer.
+  // Invitations are shown in the top "Pending Invitations" banner until the guest accepts.
+  const myVisibleEvents = events.filter(evt => {
+    if (evt.status !== 'active') return false;
+    if (isEventOrganizer(evt)) return true;
+    if (myRegistrations.some(r => r.eventId === evt.id)) return true;
+    return false;
+  });
 
   const handleOpenRegistration = (evt: EventItem, existingInviteId?: string, defaultEmail?: string, defaultMobile?: string) => {
     // 0. Check if user is the creator/organizer of this event
@@ -79,8 +96,8 @@ export const GuestHome: React.FC = () => {
     if (!existingInviteId) {
       const alreadyJoined = guests.find(g => 
         g.eventId === evt.id && (
-          (g.email && user.email && g.email.toLowerCase() === user.email.toLowerCase()) ||
-          (g.mobile && user.mobile && g.mobile === user.mobile)
+          (g.email && userEmail && g.email.toLowerCase().trim() === userEmail) ||
+          (g.mobile && userMobile && g.mobile.replace(/\D/g, '') === userMobile)
         ) && (g.status === 'approved' || g.status === 'pending' || g.status === 'checkedin')
       );
 
@@ -98,13 +115,24 @@ export const GuestHome: React.FC = () => {
     setRegisteringEvent(evt);
     setTargetInvitedGuestId(existingInviteId || null);
     setCapturedAvatar(null);
-    setFormData({
-      'Full Name': user.name && user.name !== 'Pending Guest Submission' ? user.name : '',
-      'Email Address': defaultEmail || user.email || '',
-      'Mobile Number': defaultMobile || user.mobile || '',
-      'College / Institute': user.college || '',
-      'Department / Branch': user.branch || ''
+
+    const initialFormData: Record<string, any> = {};
+    const reqs = evt.requirements || [];
+
+    reqs.forEach(req => {
+      const lower = req.label.toLowerCase();
+      if (req.type === 'email' || lower.includes('email')) {
+        initialFormData[req.label] = defaultEmail || user.email || '';
+      } else if (req.type === 'mobile' || lower.includes('mobile') || lower.includes('phone')) {
+        initialFormData[req.label] = defaultMobile || user.mobile || '';
+      } else if (lower.includes('name')) {
+        initialFormData[req.label] = user.name && user.name !== 'Pending Guest Submission' ? user.name : '';
+      } else {
+        initialFormData[req.label] = '';
+      }
     });
+
+    setFormData(initialFormData);
     setUploadedFiles([]);
   };
 
@@ -133,29 +161,28 @@ export const GuestHome: React.FC = () => {
       matchedEvent = events.find(evt => 
         evt.id.toLowerCase() === query.toLowerCase() ||
         (evt.tokenSettings?.prefix && evt.tokenSettings.prefix.toLowerCase() === query.toLowerCase()) ||
-        evt.name.toLowerCase().includes(query.toLowerCase())
+        evt.name.toLowerCase() === query.toLowerCase()
       );
     }
 
     if (!matchedEvent) {
-      showToast(`No event found with code / ID "${query}". Please check the ID provided by your Event Manager.`, 'error');
+      showToast(`No event found with ID / Code "${query}". Please check the ID provided by your Event Manager.`, 'error');
       return;
     }
 
     // 3. Prevent Event Creator from joining their own party
     if (isEventOrganizer(matchedEvent)) {
-      showToast(`⚠️ You created this party ("${matchedEvent.name}"). Event organizers cannot register as guests in their own party.`, 'warning');
+      showToast(`⚠️ You created this party ("${matchedEvent.name}"). Event organizers manage their event from the Manager Dashboard.`, 'warning');
       setInputEventId('');
       return;
     }
 
-    // 4. Check if user already joined this event
+    // 4. Check if current user has an existing registration or invitation for this event
     const userExistingReg = guests.find(g => 
       g.eventId === matchedEvent!.id && (
         (tokenMatchedGuest && tokenMatchedGuest.id === g.id) ||
-        (g.email && user.email && g.email.toLowerCase() === user.email.toLowerCase()) ||
-        (g.mobile && user.mobile && g.mobile === user.mobile) ||
-        (g.name && user.name && g.name === user.name && g.name !== 'Pending Guest Submission')
+        (userEmail && g.email && g.email.toLowerCase().trim() === userEmail) ||
+        (userMobile && g.mobile && g.mobile.replace(/\D/g, '') === userMobile)
       )
     );
 
@@ -170,10 +197,17 @@ export const GuestHome: React.FC = () => {
         setInputEventId('');
         return;
       } else if (userExistingReg.status === 'invited') {
-        showToast(`Found your invitation for "${matchedEvent.name}"! Please fill your attendee details.`, 'info');
-        handleOpenRegistration(matchedEvent, userExistingReg.id, userExistingReg.email, userExistingReg.mobile);
-        setInputEventId('');
-        return;
+        const invEmail = (userExistingReg.email || userExistingReg.answers?.['Invited Email'] || '').toLowerCase().trim();
+        const invMobile = (userExistingReg.mobile || userExistingReg.answers?.['Mobile Contact'] || '').replace(/\D/g, '');
+
+        const isMyInvite = (userEmail && invEmail && invEmail === userEmail) || (userMobile && invMobile && invMobile === userMobile);
+
+        if (isMyInvite) {
+          showToast(`Found your invitation for "${matchedEvent.name}"! Please fill your attendee details.`, 'info');
+          handleOpenRegistration(matchedEvent, userExistingReg.id, userExistingReg.email, userExistingReg.mobile);
+          setInputEventId('');
+          return;
+        }
       }
     }
 
@@ -276,16 +310,38 @@ export const GuestHome: React.FC = () => {
     const guestId = targetInvitedGuestId || ('gst_' + Date.now());
     const passId = 'PASS-' + Math.floor(100000 + Math.random() * 900000);
 
+    const reqs = registeringEvent.requirements || [];
+
+    const nameEntry = Object.entries(formData).find(([k]) => k.toLowerCase().includes('name'));
+    const resolvedName = nameEntry && String(nameEntry[1]).trim() ? String(nameEntry[1]).trim() : (user.name && user.name !== 'Pending Guest Submission' ? user.name : 'Guest');
+
+    const emailEntry = Object.entries(formData).find(([k]) => k.toLowerCase().includes('email')) || 
+                       reqs.find(r => r.type === 'email');
+    const resolvedEmail = (emailEntry ? (formData[emailEntry[0] || (emailEntry as any).label] || '') : (existingGuest?.email || user.email || '')).toLowerCase().trim();
+
+    const mobileEntry = Object.entries(formData).find(([k]) => k.toLowerCase().includes('mobile') || k.toLowerCase().includes('phone')) || 
+                        reqs.find(r => r.type === 'mobile');
+    const resolvedMobile = (mobileEntry ? (formData[mobileEntry[0] || (mobileEntry as any).label] || '') : (existingGuest?.mobile || user.mobile || '')).replace(/\D/g, '');
+
+    const collegeEntry = Object.entries(formData).find(([k]) => k.toLowerCase().includes('college') || k.toLowerCase().includes('institute') || k.toLowerCase().includes('university'));
+    const resolvedCollege = collegeEntry ? String(collegeEntry[1]).trim() : '';
+
+    const branchEntry = Object.entries(formData).find(([k]) => k.toLowerCase().includes('branch') || k.toLowerCase().includes('department'));
+    const resolvedBranch = branchEntry ? String(branchEntry[1]).trim() : '';
+
+    const rollEntry = Object.entries(formData).find(([k]) => k.toLowerCase().includes('roll') || k.toLowerCase().includes('reg no') || k.toLowerCase().includes('student id'));
+    const resolvedRollNo = rollEntry ? String(rollEntry[1]).trim() : '';
+
     const updatedGuest: GuestRegistration = {
       id: guestId,
       eventId: registeringEvent.id,
-      name: formData['Full Name'] || user.name,
-      email: formData['Email Address'] || existingGuest?.email || user.email,
-      mobile: formData['Mobile Number'] || existingGuest?.mobile || user.mobile,
+      name: resolvedName,
+      email: resolvedEmail || existingGuest?.email || user.email,
+      mobile: resolvedMobile || existingGuest?.mobile || user.mobile,
       avatar: capturedAvatar || existingGuest?.avatar || user.avatar,
-      college: formData['College / Institute'] || user.college || 'National Institute of Technology',
-      branch: formData['Department / Branch'] || user.branch || 'Engineering',
-      rollNo: formData['Student Roll Number'] || 'REG-' + Math.floor(1000 + Math.random() * 9000),
+      college: resolvedCollege,
+      branch: resolvedBranch,
+      rollNo: resolvedRollNo,
       status: 'pending', // Sent to manager for review/approval
       token: existingGuest?.token || '', // Token will be issued upon manager approval
       tokenCount: existingGuest?.tokenCount || registeringEvent.tokenSettings?.tokensPerUser || 1,
@@ -431,118 +487,130 @@ export const GuestHome: React.FC = () => {
         </form>
       </div>
 
-      {/* Available Events */}
-      <h2 style={{ marginBottom: '1rem' }}>Available Events for Registration</h2>
-      <div className="events-grid" style={{ marginBottom: '2.5rem' }}>
-        {activeEvents.map(evt => {
-          const myReg = myRegistrations.find(r => r.eventId === evt.id);
-          const hasInvite = pendingInvitations.find(i => i.eventId === evt.id);
-          const isHost = isEventOrganizer(evt);
+      {/* My Joined Events Section */}
+      <h2 style={{ marginBottom: '1rem', fontSize: '1.25rem', fontWeight: 800 }}>My Joined Events</h2>
+      {myVisibleEvents.length === 0 ? (
+        <div className="empty-state" style={{ marginBottom: '2.5rem', background: 'var(--bg-card)', border: '1px dashed rgba(255,255,255,0.15)', borderRadius: 'var(--radius-lg)', padding: '2rem 1.5rem' }}>
+          <div className="empty-icon-wrap" style={{ background: '#EFF6FF', color: '#2563EB' }}>
+            <KeyRound size={26} />
+          </div>
+          <div className="empty-title" style={{ fontSize: '1.05rem', fontWeight: 700 }}>No Joined Events Yet</div>
+          <p className="empty-desc" style={{ maxWidth: 480, margin: '0.4rem auto 0', fontSize: '0.85rem', color: '#64748B' }}>
+            If you received an invitation, click <strong>"Accept Invitation & Fill Details"</strong> in the banner above. Or paste an Event ID to join a party.
+          </p>
+        </div>
+      ) : (
+        <div className="events-grid" style={{ marginBottom: '2.5rem' }}>
+          {myVisibleEvents.map(evt => {
+            const myReg = myRegistrations.find(r => r.eventId === evt.id);
+            const hasInvite = pendingInvitations.find(i => i.eventId === evt.id);
+            const isHost = isEventOrganizer(evt);
 
-          return (
-            <div key={evt.id} className="event-card">
-              <div className="event-cover-wrap">
-                <img src={evt.coverImage} className="event-cover-img" alt={evt.name} />
-                <div className="event-badge-overlay">
-                  {isHost ? (
-                    <span className="badge" style={{ background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE', fontWeight: 800 }}>
-                      👑 ORGANIZER / HOST
-                    </span>
-                  ) : myReg ? (
-                    <span className={`badge badge-${myReg.status}`}>
-                      {myReg.status.toUpperCase()}
-                    </span>
-                  ) : hasInvite ? (
-                    <span className="badge badge-invited" style={{ background: '#FEF3C7', color: '#92400E', border: '1px solid #FCD34D' }}>
-                      INVITATION RECEIVED
-                    </span>
-                  ) : (
-                    <span className="badge badge-approved">REGISTRATION OPEN</span>
-                  )}
-                </div>
-              </div>
-
-              <div className="event-card-body">
-                <h3 className="event-title">{evt.name}</h3>
-
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                  Event ID: <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent-primary)', fontWeight: 700 }}>{evt.id}</span>
-                </div>
-
-                <div className="event-meta-row">
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <Calendar size={14} /> {evt.date}
-                  </span>
-                  <span>•</span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <Clock size={14} /> {evt.startTime}
-                  </span>
-                </div>
-                <div className="event-meta-row" style={{ color: 'var(--text-secondary)' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <MapPin size={14} /> {evt.venue}
-                  </span>
-                </div>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                  {evt.description ? evt.description.substring(0, 110) + '...' : ''}
-                </p>
-
-                {/* Document Vault & Guidelines preview for Guest */}
-                {evt.documents && evt.documents.length > 0 && (
-                  <div style={{ background: 'var(--bg-tertiary)', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-sm)', margin: '0.5rem 0', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontWeight: 600, color: 'var(--text-primary)' }}>
-                      📜 Document Vault ({evt.documents.length} Guidelines/Files)
-                    </span>
-                    <span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>Attached</span>
+            return (
+              <div key={evt.id} className="event-card">
+                <div className="event-cover-wrap">
+                  <img src={evt.coverImage} className="event-cover-img" alt={evt.name} />
+                  <div className="event-badge-overlay">
+                    {isHost ? (
+                      <span className="badge" style={{ background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE', fontWeight: 800 }}>
+                        👑 ORGANIZER / HOST
+                      </span>
+                    ) : myReg ? (
+                      <span className={`badge badge-${myReg.status}`}>
+                        {myReg.status.toUpperCase()}
+                      </span>
+                    ) : hasInvite ? (
+                      <span className="badge badge-invited" style={{ background: '#FEF3C7', color: '#92400E', border: '1px solid #FCD34D' }}>
+                        INVITATION RECEIVED
+                      </span>
+                    ) : (
+                      <span className="badge badge-approved">REGISTRATION OPEN</span>
+                    )}
                   </div>
-                )}
+                </div>
 
-                <div className="event-card-actions" style={{ gap: '0.5rem', display: 'flex', flexWrap: 'wrap' }}>
-                  {isHost ? (
-                    <button 
-                      className="btn btn-secondary btn-sm"
-                      style={{ flex: 1, background: '#F8FAFC', color: '#64748B', fontWeight: 700 }}
-                      onClick={() => showToast(`You are the creator/host of "${evt.name}". Organizers manage their event from the Manager Dashboard.`, 'info')}
-                    >
-                      👑 You Host This Event
-                    </button>
-                  ) : myReg ? (
-                    <button 
-                      className="btn btn-secondary btn-sm"
-                      style={{ flex: 1 }}
-                      onClick={() => {
-                        if (myReg.status === 'approved' || myReg.status === 'checkedin') {
-                          openDigitalPass(myReg.id);
-                        } else {
-                          showToast(`Your status for this event is: ${myReg.status.toUpperCase()}`, 'info');
-                        }
-                      }}
-                    >
-                      {myReg.status === 'approved' || myReg.status === 'checkedin' ? '🎟️ View Pass' : `Status: ${myReg.status.toUpperCase()}`}
-                    </button>
-                  ) : hasInvite ? (
-                    <button 
-                      className="btn btn-primary btn-sm"
-                      style={{ flex: 1, background: '#D97706', borderColor: '#B45309', fontWeight: 800 }}
-                      onClick={() => handleOpenRegistration(evt, hasInvite.id, hasInvite.email, hasInvite.mobile)}
-                    >
-                      ✉️ Accept & Complete Details →
-                    </button>
-                  ) : (
-                    <button 
-                      className="btn btn-primary btn-sm"
-                      style={{ flex: 1 }}
-                      onClick={() => handleOpenRegistration(evt)}
-                    >
-                      Register for Event →
-                    </button>
+                <div className="event-card-body">
+                  <h3 className="event-title">{evt.name}</h3>
+
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                    Event ID: <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent-primary)', fontWeight: 700 }}>{evt.id}</span>
+                  </div>
+
+                  <div className="event-meta-row">
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <Calendar size={14} /> {evt.date}
+                    </span>
+                    <span>•</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <Clock size={14} /> {evt.startTime}
+                    </span>
+                  </div>
+                  <div className="event-meta-row" style={{ color: 'var(--text-secondary)' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <MapPin size={14} /> {evt.venue}
+                    </span>
+                  </div>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                    {evt.description ? evt.description.substring(0, 110) + '...' : ''}
+                  </p>
+
+                  {/* Document Vault & Guidelines preview for Guest */}
+                  {evt.documents && evt.documents.length > 0 && (
+                    <div style={{ background: 'var(--bg-tertiary)', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-sm)', margin: '0.5rem 0', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontWeight: 600, color: 'var(--text-primary)' }}>
+                        📜 Document Vault ({evt.documents.length} Guidelines/Files)
+                      </span>
+                      <span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>Attached</span>
+                    </div>
                   )}
+
+                  <div className="event-card-actions" style={{ gap: '0.5rem', display: 'flex', flexWrap: 'wrap' }}>
+                    {isHost ? (
+                      <button 
+                        className="btn btn-secondary btn-sm"
+                        style={{ flex: 1, background: '#F8FAFC', color: '#64748B', fontWeight: 700 }}
+                        onClick={() => showToast(`You are the creator/host of "${evt.name}". Organizers manage their event from the Manager Dashboard.`, 'info')}
+                      >
+                        👑 You Host This Event
+                      </button>
+                    ) : myReg ? (
+                      <button 
+                        className="btn btn-secondary btn-sm"
+                        style={{ flex: 1 }}
+                        onClick={() => {
+                          if (myReg.status === 'approved' || myReg.status === 'checkedin') {
+                            openDigitalPass(myReg.id);
+                          } else {
+                            showToast(`Your status for this event is: ${myReg.status.toUpperCase()}`, 'info');
+                          }
+                        }}
+                      >
+                        {myReg.status === 'approved' || myReg.status === 'checkedin' ? '🎟️ View Pass' : `Status: ${myReg.status.toUpperCase()}`}
+                      </button>
+                    ) : hasInvite ? (
+                      <button 
+                        className="btn btn-primary btn-sm"
+                        style={{ flex: 1, background: '#D97706', borderColor: '#B45309', fontWeight: 800 }}
+                        onClick={() => handleOpenRegistration(evt, hasInvite.id, hasInvite.email, hasInvite.mobile)}
+                      >
+                        ✉️ Accept & Complete Details →
+                      </button>
+                    ) : (
+                      <button 
+                        className="btn btn-primary btn-sm"
+                        style={{ flex: 1 }}
+                        onClick={() => handleOpenRegistration(evt)}
+                      >
+                        Register for Event →
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Registration History & Joined Passes */}
       <h2 style={{ marginBottom: '1rem', fontSize: '1.25rem', fontWeight: 800 }}>My Event Passes & Tickets</h2>
@@ -563,31 +631,33 @@ export const GuestHome: React.FC = () => {
               : 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=400&q=80';
 
             return (
-              /* Sleek Dark Event Pass Card */
+              /* App-Themed Clean Event Pass Card */
               <div 
                 key={reg.id} 
                 style={{
-                  background: '#181A22',
+                  background: '#FFFFFF',
                   borderRadius: 20,
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  padding: '1.15rem',
-                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
+                  border: '1.5px solid #E2E8F0',
+                  padding: '1.25rem',
+                  boxShadow: '0 4px 16px rgba(15, 23, 42, 0.06)',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '0.85rem'
+                  justifyContent: 'space-between',
+                  gap: '0.95rem',
+                  transition: 'all 0.2s ease'
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.9rem' }}>
                   {/* Event Cover Image */}
                   <div 
                     style={{
-                      width: 74,
-                      height: 74,
+                      width: 76,
+                      height: 76,
                       borderRadius: 14,
                       overflow: 'hidden',
                       flexShrink: 0,
-                      background: '#0B0C10',
-                      border: '1px solid rgba(255, 255, 255, 0.08)'
+                      background: '#EFF6FF',
+                      border: '1px solid #DBEAFE'
                     }}
                   >
                     <img 
@@ -602,13 +672,13 @@ export const GuestHome: React.FC = () => {
 
                   {/* Event Information */}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.25rem' }}>
                       <h4 
                         style={{ 
                           fontSize: '1.05rem', 
                           fontWeight: 800, 
-                          color: '#FFFFFF', 
-                          margin: '0 0 0.35rem',
+                          color: '#0F172A', 
+                          margin: 0,
                           lineHeight: 1.25,
                           whiteSpace: 'nowrap',
                           overflow: 'hidden',
@@ -622,52 +692,53 @@ export const GuestHome: React.FC = () => {
                         style={{
                           fontSize: '0.675rem',
                           fontWeight: 700,
-                          padding: '0.15rem 0.45rem',
+                          padding: '0.2rem 0.5rem',
                           borderRadius: 6,
                           textTransform: 'uppercase',
                           background: reg.status === 'approved' || reg.status === 'checkedin' ? '#DCFCE7' : '#FEF3C7',
-                          color: reg.status === 'approved' || reg.status === 'checkedin' ? '#166534' : '#92400E'
+                          color: reg.status === 'approved' || reg.status === 'checkedin' ? '#166534' : '#92400E',
+                          border: reg.status === 'approved' || reg.status === 'checkedin' ? '1px solid #BBF7D0' : '1px solid #FCD34D'
                         }}
                       >
                         {reg.status}
                       </span>
                     </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', fontSize: '0.785rem', color: '#94A3B8' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', fontSize: '0.785rem', color: '#64748B' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                        <Calendar size={13} color="#38BDF8" />
+                        <Calendar size={13} color="#2563EB" />
                         <span>{evt?.date ? `Event • ${evt.date}` : 'Event Date TBD'}</span>
                       </div>
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                        <Clock size={13} color="#818CF8" />
+                        <Clock size={13} color="#8B5CF6" />
                         <span>Location: {evt?.location || 'Central Venue'}</span>
                       </div>
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                        <MapPin size={13} color="#C084FC" />
+                        <MapPin size={13} color="#EC4899" />
                         <span>{evt?.venue || 'Main Park Arena'}</span>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Vibrant Cyan-Purple Gradient View Pass Button */}
+                {/* App-Themed Blue View Pass Button */}
                 <button
                   type="button"
                   onClick={() => openDigitalPass(reg.id)}
                   style={{
-                    background: 'linear-gradient(90deg, #38BDF8 0%, #818CF8 50%, #C084FC 100%)',
+                    background: '#2563EB',
                     color: '#FFFFFF',
                     fontWeight: 800,
                     fontSize: '0.95rem',
-                    borderRadius: 30,
+                    borderRadius: 100,
                     padding: '0.75rem 1rem',
                     width: '100%',
                     border: 'none',
                     cursor: 'pointer',
                     textAlign: 'center',
-                    boxShadow: '0 4px 16px rgba(56, 189, 248, 0.35)',
+                    boxShadow: '0 4px 14px rgba(37, 99, 235, 0.25)',
                     transition: 'all 0.2s ease',
                     display: 'flex',
                     alignItems: 'center',
@@ -675,10 +746,10 @@ export const GuestHome: React.FC = () => {
                     gap: '0.4rem',
                     letterSpacing: '0.01em'
                   }}
-                  onMouseEnter={e => (e.currentTarget.style.filter = 'brightness(1.1)')}
-                  onMouseLeave={e => (e.currentTarget.style.filter = 'none')}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#1D4ED8')}
+                  onMouseLeave={e => (e.currentTarget.style.background = '#2563EB')}
                 >
-                  View Pass
+                  <Ticket size={16} /> View Digital Pass
                 </button>
               </div>
             );
@@ -719,41 +790,8 @@ export const GuestHome: React.FC = () => {
               )}
 
               <form onSubmit={handleDynamicSubmit}>
-                {/* Standard Base Fields */}
-                <div className="form-group">
-                  <label className="form-label">Full Name <span className="required-star">*</span></label>
-                  <input 
-                    type="text" 
-                    value={formData['Full Name'] || ''} 
-                    onChange={e => setFormData({ ...formData, 'Full Name': e.target.value })} 
-                    required 
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Email Address <span className="required-star">*</span></label>
-                  <input 
-                    type="email" 
-                    value={formData['Email Address'] || ''} 
-                    onChange={e => setFormData({ ...formData, 'Email Address': e.target.value })} 
-                    required 
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Mobile Number <span className="required-star">*</span></label>
-                  <input 
-                    type="tel" 
-                    value={formData['Mobile Number'] || ''} 
-                    onChange={e => setFormData({ ...formData, 'Mobile Number': e.target.value })} 
-                    required 
-                  />
-                </div>
-
-                {/* Event Custom Requirements */}
-                {registeringEvent.requirements.map(req => {
-                  if (['Full Name', 'Email Address', 'Mobile Number'].includes(req.label)) return null;
-
+                {/* Event Custom Requirements (Strictly configured by organizer) */}
+                {(registeringEvent.requirements || []).map(req => {
                   if (req.type === 'dropdown' && req.options) {
                     return (
                       <div key={req.id} className="form-group">
@@ -947,13 +985,40 @@ export const GuestHome: React.FC = () => {
                     );
                   }
 
+                  const getInputType = () => {
+                    if (req.type === 'email' || req.label.toLowerCase().includes('email')) return 'email';
+                    if (req.type === 'mobile' || req.label.toLowerCase().includes('mobile') || req.label.toLowerCase().includes('phone')) return 'tel';
+                    if (req.type === 'number') return 'number';
+                    if (req.type === 'date') return 'date';
+                    return 'text';
+                  };
+
+                  if (req.type === 'checkbox') {
+                    return (
+                      <div key={req.id} className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.75rem 0' }}>
+                        <input 
+                          type="checkbox" 
+                          id={`chk-${req.id}`}
+                          checked={Boolean(formData[req.label])}
+                          onChange={e => setFormData({ ...formData, [req.label]: e.target.checked })}
+                          required={req.required}
+                          style={{ width: 'auto', cursor: 'pointer' }}
+                        />
+                        <label htmlFor={`chk-${req.id}`} style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', cursor: 'pointer' }}>
+                          {req.label} {req.required && <span className="required-star">*</span>}
+                        </label>
+                        {req.description && <div className="form-hint" style={{ width: '100%' }}>{req.description}</div>}
+                      </div>
+                    );
+                  }
+
                   return (
                     <div key={req.id} className="form-group">
                       <label className="form-label">
                         {req.label} {req.required && <span className="required-star">*</span>}
                       </label>
                       <input 
-                        type={req.type === 'number' ? 'number' : 'text'} 
+                        type={getInputType()} 
                         placeholder={`Enter ${req.label}...`}
                         value={formData[req.label] || ''}
                         onChange={e => setFormData({ ...formData, [req.label]: e.target.value })}

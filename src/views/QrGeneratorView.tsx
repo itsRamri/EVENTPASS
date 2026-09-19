@@ -18,13 +18,32 @@ import {
 } from 'lucide-react';
 
 export const QrGeneratorView: React.FC = () => {
-  const { events, guests, navigate, showToast } = useApp();
+  const { user, events, guests, navigate, showToast } = useApp();
+
+  const userEmail = (user.email || '').toLowerCase().trim();
+  const userMobile = (user.mobile || '').replace(/\D/g, '');
+  const userId = user.id || '';
+
+  const myEvents = events.filter(e => {
+    const creatorEmail = (e.creatorEmail || '').toLowerCase().trim();
+    const creatorMobile = (e.creatorMobile || '').replace(/\D/g, '');
+    const creatorId = e.creatorId || '';
+
+    if (creatorEmail || creatorId || creatorMobile) {
+      return (
+        (creatorEmail && creatorEmail === userEmail) ||
+        (creatorId && creatorId === userId) ||
+        (creatorMobile && userMobile && creatorMobile === userMobile)
+      );
+    }
+    return false;
+  });
 
   // Mode: 'pass' | 'event_link' | 'url' | 'text' | 'wifi'
   const [genMode, setGenMode] = useState<'pass' | 'event_link' | 'url' | 'text' | 'wifi'>('pass');
 
   // Input States
-  const [selectedEvtId, setSelectedEvtId] = useState<string>(events[0]?.id || '');
+  const [selectedEvtId, setSelectedEvtId] = useState<string>(myEvents[0]?.id || events[0]?.id || '');
   const [selectedGuestId, setSelectedGuestId] = useState<string>('');
   const [customToken, setCustomToken] = useState<string>('EP-PASS-10042');
   const [customUrl, setCustomUrl] = useState<string>('https://eventpass.io/register');
@@ -48,7 +67,7 @@ export const QrGeneratorView: React.FC = () => {
   const [copied, setCopied] = useState<boolean>(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const currentEvent = events.find(e => e.id === selectedEvtId) || events[0] || {
+  const currentEvent = myEvents.find(e => e.id === selectedEvtId) || myEvents[0] || events[0] || {
     id: 'evt_demo',
     name: 'Sample Event',
     venue: 'Main Auditorium',
@@ -252,7 +271,7 @@ export const QrGeneratorView: React.FC = () => {
               <div className="form-group">
                 <label className="form-label">Select Event <span className="required-star">*</span></label>
                 <select value={selectedEvtId} onChange={e => { setSelectedEvtId(e.target.value); setSelectedGuestId(''); }}>
-                  {events.map(e => (
+                  {myEvents.map(e => (
                     <option key={e.id} value={e.id}>{e.name} ({e.tokenSettings?.prefix || 'EP'})</option>
                   ))}
                 </select>
@@ -299,7 +318,7 @@ export const QrGeneratorView: React.FC = () => {
               <div className="form-group">
                 <label className="form-label">Select Event for Registration QR <span className="required-star">*</span></label>
                 <select value={selectedEvtId} onChange={e => setSelectedEvtId(e.target.value)}>
-                  {events.map(e => (
+                  {myEvents.map(e => (
                     <option key={e.id} value={e.id}>{e.name} (ID: {e.id})</option>
                   ))}
                 </select>

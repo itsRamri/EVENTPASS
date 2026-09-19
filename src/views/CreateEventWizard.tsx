@@ -185,9 +185,9 @@ export const CreateEventWizard: React.FC = () => {
     const finalEvent: EventItem = {
       ...eventData,
       status,
-      creatorId: user.id || eventData.creatorId || 'mgr_admin',
-      creatorEmail: user.email || eventData.creatorEmail || '',
-      creatorMobile: user.mobile || eventData.creatorMobile || '',
+      creatorId: user.id || eventData.creatorId || `usr_${Date.now()}`,
+      creatorEmail: (user.email || eventData.creatorEmail || '').toLowerCase().trim(),
+      creatorMobile: (user.mobile || eventData.creatorMobile || '').replace(/\D/g, ''),
       tokenSettings: {
         ...eventData.tokenSettings,
         tokensPerUser: parseInt(tokensInputStr, 10) > 0 ? parseInt(tokensInputStr, 10) : 1
