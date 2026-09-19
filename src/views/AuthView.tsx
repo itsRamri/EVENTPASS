@@ -88,12 +88,6 @@ export const AuthView: React.FC = () => {
     const accounts = getAccounts();
     const existing = accounts.find(a => a.email.toLowerCase() === email.toLowerCase().trim());
 
-    const defaultAvatar = role === 'guest' 
-      ? 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80'
-      : role === 'scanner'
-      ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
-      : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
-
     // 1. If known local account and password matches
     if (existing) {
       if (existing.password === password) {
@@ -104,7 +98,7 @@ export const AuthView: React.FC = () => {
           mobile: existing.mobile || '',
           role: existing.role || role,
           status: 'active',
-          avatar: existing.avatar || defaultAvatar
+          avatar: (existing.avatar && !existing.avatar.includes('unsplash.com')) ? existing.avatar : ''
         };
 
         // Async background Firebase check
@@ -168,12 +162,6 @@ export const AuthView: React.FC = () => {
     const cleanMobile = `${countryCode} ${digitsOnly}`;
     setIsLoading(true);
 
-    const defaultAvatar = role === 'guest' 
-      ? 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80'
-      : role === 'scanner'
-      ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
-      : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
-
     // Store account locally first
     const accounts = getAccounts();
     const newAcc: StoredAccount = {
@@ -182,7 +170,7 @@ export const AuthView: React.FC = () => {
       password: password,
       role: role,
       mobile: cleanMobile,
-      avatar: defaultAvatar
+      avatar: ''
     };
     saveAccounts([...accounts.filter(a => a.email.toLowerCase() !== cleanEmail.toLowerCase()), newAcc]);
 
@@ -208,7 +196,7 @@ export const AuthView: React.FC = () => {
         mobile: cleanMobile,
         role: role,
         status: 'active',
-        avatar: defaultAvatar
+        avatar: ''
       };
 
       setIsLoading(false);
@@ -336,7 +324,7 @@ export const AuthView: React.FC = () => {
       mobile: acc?.mobile || '',
       role: acc ? acc.role : role,
       status: 'active',
-      avatar: acc ? acc.avatar : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
+      avatar: (acc && acc.avatar && !acc.avatar.includes('unsplash.com')) ? acc.avatar : ''
     };
 
     login(userProfile);

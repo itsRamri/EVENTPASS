@@ -28,7 +28,8 @@ import {
   FileSpreadsheet,
   CheckCheck,
   ImageIcon,
-  ExternalLink
+  ExternalLink,
+  User
 } from 'lucide-react';
 
 // Helper to extract clean date-only from registration timestamp (e.g. "17 Sep 2026")
@@ -178,7 +179,7 @@ export const GuestManagement: React.FC = () => {
         name: 'Pending Guest Submission',
         email: emailAddr,
         mobile: '',
-        avatar: `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80`,
+        avatar: '',
         college: 'Awaiting Submission',
         branch: 'Pending Acceptance',
         rollNo: '',
@@ -246,7 +247,7 @@ export const GuestManagement: React.FC = () => {
         name: 'Pending Guest Submission',
         email: '',
         mobile: phoneNum,
-        avatar: `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80`,
+        avatar: '',
         college: 'Awaiting Submission',
         branch: 'Pending Acceptance',
         rollNo: '',
@@ -361,7 +362,7 @@ export const GuestManagement: React.FC = () => {
         name: 'Pending Guest Submission',
         email: isEmail ? entry.value : '',
         mobile: !isEmail ? entry.value : '',
-        avatar: `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80`,
+        avatar: '',
         college: 'Awaiting Submission',
         branch: 'Pending Acceptance',
         rollNo: '',
@@ -563,21 +564,42 @@ export const GuestManagement: React.FC = () => {
                 {/* Left: Attendee Avatar & Primary Info */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1.15rem', flex: '1 1 300px', minWidth: 0, flexWrap: 'wrap' }}>
                   <div style={{ position: 'relative', flexShrink: 0 }}>
-                    <img 
-                      src={g.avatar} 
-                      style={{ 
-                        width: 'clamp(100px, 24vw, 135px)', 
-                        height: 'clamp(120px, 28vw, 155px)', 
-                        borderRadius: 'var(--radius-md)', 
-                        objectFit: 'cover', 
-                        border: '3px solid #E2E8F0',
-                        boxShadow: '0 6px 18px rgba(15, 23, 42, 0.12)',
-                        cursor: 'pointer'
-                      }} 
-                      alt={g.name}
-                      onClick={() => setPreviewPhotoModal({ url: g.avatar, title: `${g.name}'s Attendee Photo` })}
-                      title="Click to view full photo"
-                    />
+                    {g.avatar && !g.avatar.includes('unsplash.com') ? (
+                      <img 
+                        src={g.avatar} 
+                        style={{ 
+                          width: 'clamp(100px, 24vw, 135px)', 
+                          height: 'clamp(120px, 28vw, 155px)', 
+                          borderRadius: 'var(--radius-md)', 
+                          objectFit: 'cover', 
+                          border: '3px solid #E2E8F0',
+                          boxShadow: '0 6px 18px rgba(15, 23, 42, 0.12)',
+                          cursor: 'pointer'
+                        }} 
+                        alt={g.name}
+                        onClick={() => setPreviewPhotoModal({ url: g.avatar, title: `${g.name}'s Attendee Photo` })}
+                        title="Click to view full photo"
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          width: 'clamp(100px, 24vw, 135px)', 
+                          height: 'clamp(120px, 28vw, 155px)', 
+                          borderRadius: 'var(--radius-md)', 
+                          background: 'linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 100%)',
+                          border: '2px dashed #CBD5E1',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.35rem',
+                          color: '#94A3B8'
+                        }}
+                      >
+                        <User size={34} strokeWidth={2} color="#94A3B8" />
+                        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748B' }}>No Photo</span>
+                      </div>
+                    )}
                     {isCheckedIn && (
                       <span 
                         style={{ 
@@ -1073,44 +1095,67 @@ export const GuestManagement: React.FC = () => {
             <div className="modal-body">
               <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
                 <div style={{ position: 'relative', flexShrink: 0 }}>
-                  <img 
-                    src={selectedGuestDossier.avatar} 
-                    style={{ 
-                      width: 'clamp(160px, 42vw, 210px)', 
-                      height: 'clamp(185px, 48vw, 240px)', 
-                      borderRadius: 'var(--radius-lg)', 
-                      objectFit: 'cover', 
-                      border: '4px solid #E2E8F0', 
-                      boxShadow: '0 8px 24px rgba(15, 23, 42, 0.16)', 
-                      flexShrink: 0,
-                      cursor: 'pointer' 
-                    }} 
-                    alt={selectedGuestDossier.name}
-                    onClick={() => setPreviewPhotoModal({ url: selectedGuestDossier.avatar, title: `${selectedGuestDossier.name}'s Profile / Live Photo` })}
-                    title="Click to view full high-res photo"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setPreviewPhotoModal({ url: selectedGuestDossier.avatar, title: `${selectedGuestDossier.name}'s Profile / Live Photo` })}
-                    style={{
-                      position: 'absolute',
-                      bottom: 6,
-                      right: 6,
-                      background: 'rgba(15, 23, 42, 0.85)',
-                      color: '#FFFFFF',
-                      border: 'none',
-                      borderRadius: '999px',
-                      padding: '6px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
-                    }}
-                    title="Zoom Photo"
-                  >
-                    <Eye size={14} />
-                  </button>
+                  {selectedGuestDossier.avatar && !selectedGuestDossier.avatar.includes('unsplash.com') ? (
+                    <>
+                      <img 
+                        src={selectedGuestDossier.avatar} 
+                        style={{ 
+                          width: 'clamp(160px, 42vw, 210px)', 
+                          height: 'clamp(185px, 48vw, 240px)', 
+                          borderRadius: 'var(--radius-lg)', 
+                          objectFit: 'cover', 
+                          border: '4px solid #E2E8F0', 
+                          boxShadow: '0 8px 24px rgba(15, 23, 42, 0.16)', 
+                          flexShrink: 0,
+                          cursor: 'pointer' 
+                        }} 
+                        alt={selectedGuestDossier.name}
+                        onClick={() => setPreviewPhotoModal({ url: selectedGuestDossier.avatar, title: `${selectedGuestDossier.name}'s Profile / Live Photo` })}
+                        title="Click to view full high-res photo"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setPreviewPhotoModal({ url: selectedGuestDossier.avatar, title: `${selectedGuestDossier.name}'s Profile / Live Photo` })}
+                        style={{
+                          position: 'absolute',
+                          bottom: 6,
+                          right: 6,
+                          background: 'rgba(15, 23, 42, 0.85)',
+                          color: '#FFFFFF',
+                          border: 'none',
+                          borderRadius: '999px',
+                          padding: '6px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
+                        }}
+                        title="Zoom Photo"
+                      >
+                        <Eye size={14} />
+                      </button>
+                    </>
+                  ) : (
+                    <div
+                      style={{
+                        width: 'clamp(160px, 42vw, 210px)', 
+                        height: 'clamp(185px, 48vw, 240px)', 
+                        borderRadius: 'var(--radius-lg)', 
+                        background: 'linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 100%)',
+                        border: '2.5px dashed #CBD5E1',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.5rem',
+                        color: '#94A3B8'
+                      }}
+                    >
+                      <User size={52} strokeWidth={2} color="#94A3B8" />
+                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748B' }}>No Photo Uploaded</span>
+                    </div>
+                  )}
                 </div>
                 <div style={{ flex: '1 1 180px', minWidth: 0 }}>
                   <h3 style={{ fontSize: '1.3rem', color: '#0F172A', margin: 0, fontWeight: 800, wordBreak: 'break-word' }}>{selectedGuestDossier.name}</h3>

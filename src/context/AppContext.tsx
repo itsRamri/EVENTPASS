@@ -129,7 +129,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       try {
         const parsed = JSON.parse(saved);
         if (parsed && parsed.id && parsed.email && !parsed.email.includes('aarav.sharma')) {
-          return parsed;
+          return {
+            ...parsed,
+            avatar: (parsed.avatar && !parsed.avatar.includes('unsplash.com')) ? parsed.avatar : ''
+          };
         }
       } catch (err) {}
     }
@@ -155,7 +158,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       try {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
-          return parsed.filter((g: GuestRegistration) => !['gst_101', 'gst_103'].includes(g.id));
+          return parsed
+            .filter((g: GuestRegistration) => !['gst_101', 'gst_103'].includes(g.id))
+            .map((g: GuestRegistration) => ({
+              ...g,
+              avatar: (g.avatar && !g.avatar.includes('unsplash.com')) ? g.avatar : ''
+            }));
         }
       } catch (err) {}
     }
@@ -248,7 +256,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
     const unsubGuests = subscribeToGuests((remoteGuests) => {
       if (remoteGuests) {
-        const cleanGuests = remoteGuests.filter(g => !['gst_101', 'gst_103'].includes(g.id));
+        const cleanGuests = remoteGuests
+          .filter(g => !['gst_101', 'gst_103'].includes(g.id))
+          .map(g => ({
+            ...g,
+            avatar: (g.avatar && !g.avatar.includes('unsplash.com')) ? g.avatar : ''
+          }));
         setGuests(cleanGuests);
       }
     });
@@ -299,9 +312,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const login = (newUser: UserProfile) => {
-    setUser(newUser);
+    const cleanAvatar = (newUser.avatar && !newUser.avatar.includes('unsplash.com')) ? newUser.avatar : '';
+    const userToSave = { ...newUser, avatar: cleanAvatar };
+    setUser(userToSave);
     setIsAuthenticated(true);
-    syncUserProfileToDb(newUser);
+    syncUserProfileToDb(userToSave);
     if (newUser.role === 'manager') setCurrentView('dashboard');
     else if (newUser.role === 'guest') setCurrentView('guest_home');
     else setCurrentView('scanner');

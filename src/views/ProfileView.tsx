@@ -677,22 +677,37 @@ export const ProfileView: React.FC = () => {
               marginBottom: '0.85rem' 
             }}
           >
-            <div 
-              style={{ 
-                width: '100%', 
-                height: '100%', 
-                borderRadius: '50%', 
-                background: 'linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)',
-                border: '3px solid #38BDF8',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#2563EB',
-                boxShadow: '0 6px 18px rgba(56, 189, 248, 0.25)'
-              }}
-            >
-              <User size={46} strokeWidth={2.2} />
-            </div>
+            {user.avatar && !user.avatar.includes('unsplash.com') ? (
+              <img 
+                src={user.avatar} 
+                alt={user.name || 'User'} 
+                style={{
+                  width: '100%', 
+                  height: '100%', 
+                  borderRadius: '50%', 
+                  objectFit: 'cover',
+                  border: '3px solid #38BDF8',
+                  boxShadow: '0 6px 18px rgba(56, 189, 248, 0.25)'
+                }}
+              />
+            ) : (
+              <div 
+                style={{ 
+                  width: '100%', 
+                  height: '100%', 
+                  borderRadius: '50%', 
+                  background: 'linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)',
+                  border: '3px solid #38BDF8',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#2563EB',
+                  boxShadow: '0 6px 18px rgba(56, 189, 248, 0.25)'
+                }}
+              >
+                <User size={46} strokeWidth={2.2} />
+              </div>
+            )}
           </div>
 
           <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.35rem', letterSpacing: '-0.01em' }}>

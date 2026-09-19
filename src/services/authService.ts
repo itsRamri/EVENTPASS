@@ -89,11 +89,8 @@ export const firebaseSignIn = async (
       ? existingProfile.name
       : (savedName || fbUser.displayName || email.split('@')[0]);
 
-    const defaultAvatar = preferredRole === 'guest' 
-      ? 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80'
-      : preferredRole === 'scanner'
-      ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
-      : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
+    const hasCustomAvatar = existingProfile?.avatar && !existingProfile.avatar.includes('unsplash.com');
+    const hasFbPhoto = fbUser.photoURL && !fbUser.photoURL.includes('unsplash.com');
 
     const userProfile: UserProfile = {
       id: fbUser.uid,
@@ -102,7 +99,7 @@ export const firebaseSignIn = async (
       mobile: existingProfile?.mobile || savedMobile || '',
       role: existingProfile?.role || preferredRole,
       status: 'active',
-      avatar: existingProfile?.avatar || fbUser.photoURL || defaultAvatar
+      avatar: hasCustomAvatar ? existingProfile.avatar : (hasFbPhoto ? fbUser.photoURL! : '')
     };
 
     // 2. Sync to Firestore in the background without making user wait
@@ -142,14 +139,10 @@ export const firebaseSignUp = async (
     // Update Firebase Auth profile displayName
     await updateProfile(fbUser, { displayName: name.trim() }).catch(() => {});
 
-    const defaultAvatar = role === 'guest' 
-      ? 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80'
-      : role === 'scanner'
-      ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
-      : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
-
-    // Use the uploaded custom avatar immediately (data url or url)
-    const finalAvatar = customAvatar && customAvatar.trim() !== '' ? customAvatar : defaultAvatar;
+    // Use only valid uploaded custom avatar (no dummy stock photo fallbacks)
+    const finalAvatar = (customAvatar && customAvatar.trim() !== '' && !customAvatar.includes('unsplash.com'))
+      ? customAvatar.trim()
+      : (fbUser.photoURL && !fbUser.photoURL.includes('unsplash.com') ? fbUser.photoURL : '');
 
     const newProfile: UserProfile = {
       id: fbUser.uid,

@@ -59,22 +59,37 @@ export const Sidebar: React.FC = () => {
 
       <div className="desktop-sidebar-footer">
         <div className="desktop-user-pill">
-          <div
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 'var(--radius-sm)',
-              background: '#EFF6FF',
-              border: '1.5px solid #38BDF8',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#2563EB',
-              flexShrink: 0
-            }}
-          >
-            <User size={18} strokeWidth={2.3} />
-          </div>
+          {user.avatar && !user.avatar.includes('unsplash.com') ? (
+            <img
+              src={user.avatar}
+              alt={user.name || 'User'}
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 'var(--radius-sm)',
+                objectFit: 'cover',
+                border: '1.5px solid #38BDF8',
+                flexShrink: 0
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 'var(--radius-sm)',
+                background: '#EFF6FF',
+                border: '1.5px solid #38BDF8',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#2563EB',
+                flexShrink: 0
+              }}
+            >
+              <User size={18} strokeWidth={2.3} />
+            </div>
+          )}
           <div className="desktop-user-info">
             <div className="desktop-user-name">{user.name || 'User'}</div>
             <div className="desktop-user-role" style={{ fontSize: '0.7rem', color: '#64748B' }}>{user.email || 'Active Member'}</div>

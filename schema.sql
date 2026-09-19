@@ -144,9 +144,9 @@ CREATE TABLE IF NOT EXISTS notifications (
 -- ============================================================================
 
 INSERT INTO users (id, name, email, mobile, role, status, avatar, college, branch) VALUES
-('usr_manager_01', 'Aarav Sharma', 'aarav.sharma@eventpass.io', '+91 98765 43210', 'manager', 'active', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80', 'National Institute of Technology', 'Computer Science & Engineering'),
-('usr_guest_01', 'Shubham Kumar', 'shubham.k@gmail.com', '+91 91234 56789', 'guest', 'active', 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80', 'National Institute of Technology', 'Computer Science & Engineering'),
-('usr_scanner_01', 'Karan Mehra', 'karan.scanner@eventpass.io', '+91 94567 89012', 'scanner', 'active', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80', 'National Institute of Technology', 'Computer Science & Engineering')
+('usr_manager_01', 'Aarav Sharma', 'aarav.sharma@eventpass.io', '+91 98765 43210', 'manager', 'active', '', 'National Institute of Technology', 'Computer Science & Engineering'),
+('usr_guest_01', 'Shubham Kumar', 'shubham.k@gmail.com', '+91 91234 56789', 'guest', 'active', '', 'National Institute of Technology', 'Computer Science & Engineering'),
+('usr_scanner_01', 'Karan Mehra', 'karan.scanner@eventpass.io', '+91 94567 89012', 'scanner', 'active', '', 'National Institute of Technology', 'Computer Science & Engineering')
 ON DUPLICATE KEY UPDATE name=VALUES(name);
 
 INSERT INTO events (id, name, tagline, status, cover_image, description, event_date, start_time, end_time, venue, location, organizer, total_token_limit, token_prefix) VALUES

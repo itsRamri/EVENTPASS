@@ -17,7 +17,8 @@ import {
   Lock,
   Camera,
   Sparkles,
-  X
+  X,
+  User
 } from 'lucide-react';
 
 export const LiveScanner: React.FC = () => {
@@ -721,21 +722,37 @@ export const LiveScanner: React.FC = () => {
                 <>
                   {/* Centered Circular Attendee Avatar Photo */}
                   <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.75rem' }}>
-                    <img 
-                      src={guest.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'} 
-                      alt={guest.name} 
-                      style={{
-                        width: 96,
-                        height: 96,
-                        borderRadius: '50%',
-                        objectFit: 'cover',
-                        border: '3.5px solid #F8FAFC',
-                        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.14)'
-                      }}
-                      onError={(e) => {
-                        e.currentTarget.src = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80';
-                      }}
-                    />
+                    {guest.avatar && !guest.avatar.includes('unsplash.com') ? (
+                      <img 
+                        src={guest.avatar} 
+                        alt={guest.name} 
+                        style={{
+                          width: 96,
+                          height: 96,
+                          borderRadius: '50%',
+                          objectFit: 'cover',
+                          border: '3.5px solid #F8FAFC',
+                          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.14)'
+                        }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          width: 96,
+                          height: 96,
+                          borderRadius: '50%',
+                          background: 'linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)',
+                          border: '3.5px solid #38BDF8',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#2563EB',
+                          boxShadow: '0 8px 24px rgba(56, 189, 248, 0.25)'
+                        }}
+                      >
+                        <User size={46} strokeWidth={2.2} />
+                      </div>
+                    )}
                   </div>
 
                   {/* Name & Party / Event Name */}

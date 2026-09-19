@@ -19,7 +19,7 @@ class AuthModule {
     if (newRole === 'manager') {
       user.name = 'Aarav Sharma';
       user.email = 'aarav.sharma@eventpass.io';
-      user.avatar = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80';
+      user.avatar = '';
     } else if (newRole === 'guest') {
       user.name = 'Shubham Kumar';
       user.email = 'shubham.k@gmail.com';
