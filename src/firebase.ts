@@ -4,7 +4,7 @@ import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 export const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBi0SGNVXJN6xzN_zaUpZYQUfADaiP-joA",
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "eventpass-ad141.firebaseapp.com",
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "eventpass-ad141",
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "eventpass-ad141.firebasestorage.app",
