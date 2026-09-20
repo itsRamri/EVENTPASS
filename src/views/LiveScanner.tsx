@@ -819,14 +819,18 @@ export const LiveScanner: React.FC = () => {
             {scanResult.guest && (() => {
               const guest = scanResult.guest;
               const matchedEvt = events.find(e => e.id === guest.eventId) || assignedEvent;
+              const guestPhoto = (guest.avatar && !guest.avatar.includes('unsplash.com') ? guest.avatar : '') ||
+                (guest.answers?.['Live Photo'] || guest.answers?.['Profile Photo'] || guest.answers?.['Photo'] || guest.answers?.['live_photo'] || guest.answers?.['profile_photo'] || '') ||
+                (guest.documents?.find(d => d.type === 'image' || (d.url && (d.url.startsWith('data:image') || d.url.includes('firebasestorage'))))?.url || '') ||
+                (guest.avatar ? guest.avatar : '');
 
               return (
                 <>
                   {/* Centered Circular Attendee Avatar Photo */}
                   <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.75rem' }}>
-                    {guest.avatar && !guest.avatar.includes('unsplash.com') ? (
+                    {guestPhoto ? (
                       <img 
-                        src={guest.avatar} 
+                        src={guestPhoto} 
                         alt={guest.name} 
                         style={{
                           width: 96,
@@ -1031,7 +1035,7 @@ export const LiveScanner: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Primary Button: Check In Inside Gate */}
+                  {/* Primary Button: Check In Guest */}
                   {canCheckIn ? (
                     <button 
                       type="button"
@@ -1039,22 +1043,22 @@ export const LiveScanner: React.FC = () => {
                       style={{
                         width: '100%',
                         padding: '0.95rem 1.5rem',
-                        background: '#2563EB',
+                        background: 'linear-gradient(135deg, #2563EB 0%, #3B82F6 100%)',
                         color: '#FFFFFF',
-                        fontSize: '1rem',
+                        fontSize: '1.05rem',
                         fontWeight: 800,
                         borderRadius: 100,
                         border: 'none',
                         cursor: 'pointer',
-                        boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)',
+                        boxShadow: '0 4px 16px rgba(37, 99, 235, 0.35)',
                         transition: 'all 0.2s ease',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '0.5rem'
+                        letterSpacing: '0.01em'
                       }}
                     >
-                      <CheckCircle2 size={20} /> Check In
+                      Check In Guest
                     </button>
                   ) : (
                     <div style={{ padding: '0.75rem', background: '#F1F5F9', borderRadius: 12, color: '#64748B', fontWeight: 700, fontSize: '0.85rem', textAlign: 'center' }}>
@@ -1063,7 +1067,7 @@ export const LiveScanner: React.FC = () => {
                   )}
 
                   {/* Caption below button */}
-                  <div style={{ textAlign: 'center', fontSize: '0.75rem', color: '#94A3B8', marginTop: '0.65rem', fontWeight: 600 }}>
+                  <div style={{ textAlign: 'center', fontSize: '0.78rem', color: '#64748B', marginTop: '0.75rem', fontWeight: 600 }}>
                     Make sure the guest is present at the venue.
                   </div>
                 </>
