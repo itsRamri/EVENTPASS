@@ -3,6 +3,10 @@
    Supports: OnePlus Nord 2, Pixel, Huawei P30 Pro, Oppo, Xiaomi Mi 11i, Samsung Galaxy S20, iOS
    ========================================================================== */
 
+:root {
+  --visual-viewport-height: 100dvh;
+}
+
 /* Base & Mobile First */
 .desktop-sidebar {
   display: none;
@@ -248,8 +252,8 @@
 
   /* Modals */
   .modal-overlay {
-    z-index: 99999 !important;
-    padding: max(0.75rem, env(safe-area-inset-top, 0.75rem)) max(0.75rem, env(safe-area-inset-right, 0.75rem)) max(0.75rem, env(safe-area-inset-bottom, 0.75rem)) max(0.75rem, env(safe-area-inset-left, 0.75rem)) !important;
+    z-index: 9999999 !important;
+    padding: max(0.5rem, env(safe-area-inset-top, 0.5rem)) 0.5rem max(0.5rem, env(safe-area-inset-bottom, 0.5rem)) 0.5rem !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -261,8 +265,7 @@
     width: 100% !important;
     max-width: 480px !important;
     margin: auto !important;
-    max-height: calc(90dvh - env(safe-area-inset-top, 12px)) !important;
-    max-height: calc(90vh - env(safe-area-inset-top, 12px)) !important;
+    max-height: min(90dvh, calc(var(--visual-viewport-height, 100dvh) - env(safe-area-inset-top, 12px) - 20px)) !important;
     border-radius: var(--radius-xl) !important;
     display: flex !important;
     flex-direction: column !important;
@@ -282,7 +285,7 @@
   }
 
   .modal-body {
-    padding: 1rem 1rem 2.5rem !important;
+    padding: 0.85rem 1rem 1rem !important;
     flex: 1 1 auto !important;
     min-height: 0 !important;
     max-height: none !important;
@@ -292,8 +295,11 @@
   }
 
   .modal-footer {
-    padding: 0.85rem 1rem max(0.85rem, env(safe-area-inset-bottom, 12px)) !important;
-    flex-direction: column-reverse !important;
+    padding: 0.75rem 1rem max(0.75rem, env(safe-area-inset-bottom, 10px)) !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
     gap: 0.5rem !important;
     flex-shrink: 0 !important;
     position: relative !important;
@@ -302,7 +308,8 @@
   }
 
   .modal-footer button {
-    width: 100% !important;
+    flex: 1 !important;
+    min-width: 0 !important;
   }
 
   /* Digital Pass Card on Mobile */
@@ -466,15 +473,38 @@ body.keyboard-open .app-wrapper {
 
 body.keyboard-open .modal-overlay {
   align-items: flex-start !important;
-  padding-top: max(16px, env(safe-area-inset-top, 16px)) !important;
+  padding: max(8px, env(safe-area-inset-top, 8px)) 8px 8px 8px !important;
   overflow-y: auto !important;
   -webkit-overflow-scrolling: touch !important;
 }
 
 body.keyboard-open .modal-content {
-  max-height: calc(82vh - env(safe-area-inset-top, 12px)) !important;
-  margin-top: 0 !important;
-  margin-bottom: auto !important;
+  max-height: calc(var(--visual-viewport-height, 100dvh) - env(safe-area-inset-top, 8px) - 16px) !important;
+  margin: 0 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+body.keyboard-open .modal-content form {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+body.keyboard-open .modal-body {
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior: contain !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+}
+
+body.keyboard-open .modal-footer {
+  flex-shrink: 0 !important;
+  background: #FFFFFF !important;
 }
 
 /* Focused input highlight */

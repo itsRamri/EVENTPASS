@@ -35,13 +35,39 @@ export const App: React.FC = () => {
       );
     };
 
+    const updateVisualViewport = () => {
+      if (window.visualViewport) {
+        const height = window.visualViewport.height;
+        document.documentElement.style.setProperty('--visual-viewport-height', `${height}px`);
+        if (window.innerHeight - height > 140) {
+          document.body.classList.add('keyboard-open');
+        } else if (!isInputElement(document.activeElement)) {
+          document.body.classList.remove('keyboard-open');
+        }
+      }
+    };
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', updateVisualViewport);
+      window.visualViewport.addEventListener('scroll', updateVisualViewport);
+      updateVisualViewport();
+    }
+
     const handleFocusIn = (e: FocusEvent) => {
       const target = e.target as HTMLElement;
       if (isInputElement(target)) {
         document.body.classList.add('keyboard-open');
-        setTimeout(() => {
-          target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
-        }, 120);
+        const modal = target.closest('.modal-content') || target.closest('.modal-overlay');
+        if (modal) {
+          window.scrollTo(0, 0);
+          setTimeout(() => {
+            target.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+          }, 100);
+        } else {
+          setTimeout(() => {
+            target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+          }, 120);
+        }
       }
     };
 
@@ -60,6 +86,10 @@ export const App: React.FC = () => {
     return () => {
       document.removeEventListener('focusin', handleFocusIn);
       document.removeEventListener('focusout', handleFocusOut);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', updateVisualViewport);
+        window.visualViewport.removeEventListener('scroll', updateVisualViewport);
+      }
       document.body.classList.remove('keyboard-open');
     };
   }, []);

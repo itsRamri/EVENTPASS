@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useApp } from '../context/AppContext';
 import { EventItem, GuestRegistration, GuestDocument } from '../types';
 import { LiveCameraModal } from '../components/LiveCameraModal';
@@ -113,8 +114,9 @@ export const GuestHome: React.FC = () => {
   });
 
   const handleOpenRegistration = (evt: EventItem, existingInviteId?: string, defaultEmail?: string, defaultMobile?: string) => {
-    if (user.role === 'manager') {
-      showToast('You are not allowed to join or register for events.', 'warning');
+    // Check if current user is the organizer / creator who created this event
+    if (isEventOrganizer(evt)) {
+      showToast('You are not allowed to join or register for events that you have created.', 'warning');
       return;
     }
 
@@ -137,6 +139,11 @@ export const GuestHome: React.FC = () => {
         return;
       }
     }
+
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    document.body.classList.remove('keyboard-open');
 
     setRegisteringEvent(evt);
     setTargetInvitedGuestId(existingInviteId || null);
@@ -168,11 +175,6 @@ export const GuestHome: React.FC = () => {
     e.preventDefault();
     const raw = inputEventId.trim();
     if (!raw) return;
-
-    if (user.role === 'manager') {
-      showToast('You are not allowed to join or register for events.', 'warning');
-      return;
-    }
 
     let query = raw;
     if (query.includes('eventId=')) {
@@ -254,6 +256,13 @@ export const GuestHome: React.FC = () => {
 
     if (!matchedEvent) {
       showToast(`No party/event found with ID / Code "${raw}". Please verify the Event ID.`, 'error');
+      return;
+    }
+
+    // Check if the current user created/hosts this event
+    if (isEventOrganizer(matchedEvent)) {
+      showToast('You are not allowed to join or register for events that you have created.', 'warning');
+      setInputEventId('');
       return;
     }
 
@@ -853,12 +862,44 @@ export const GuestHome: React.FC = () => {
       )}
 
       {/* Dynamic Registration Modal */}
-      {registeringEvent && (
-        <div className="modal-overlay active" onClick={() => { if (!isSubmitting) setRegisteringEvent(null); }}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
+      {registeringEvent && createPortal(
+        <div 
+          className="modal-overlay active" 
+          onClick={() => { if (!isSubmitting) setRegisteringEvent(null); }} 
+          style={{ 
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999999,
+            background: 'rgba(15, 23, 42, 0.72)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 'max(16px, env(safe-area-inset-top, 16px)) 12px max(24px, env(safe-area-inset-bottom, 24px)) 12px',
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch'
+          }}
+        >
+          <div 
+            className="modal-content" 
+            onClick={e => e.stopPropagation()} 
+            style={{ 
+              maxWidth: 520, 
+              width: '100%',
+              maxHeight: 'min(90dvh, calc(var(--visual-viewport-height, 90dvh) - env(safe-area-inset-top, 16px) - 16px))', 
+              display: 'flex', 
+              flexDirection: 'column', 
+              background: '#FFFFFF', 
+              borderRadius: 'var(--radius-xl)', 
+              boxShadow: '0 25px 50px rgba(0,0,0,0.3)',
+              overflow: 'hidden',
+              margin: 'auto'
+            }}
+          >
+            <div className="modal-header" style={{ flexShrink: 0, borderBottom: '1px solid #E2E8F0' }}>
               <div>
-                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800 }}>Register: {registeringEvent.name}</h3>
+                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#0F172A' }}>Register: {registeringEvent.name}</h3>
                 <span style={{ fontSize: '0.75rem', color: 'var(--accent-secondary)', fontWeight: 600 }}>
                   Event ID: {registeringEvent.id}
                 </span>
@@ -877,7 +918,7 @@ export const GuestHome: React.FC = () => {
               onSubmit={handleDynamicSubmit}
               style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', minHeight: 0, overflow: 'hidden' }}
             >
-              <div className="modal-body" style={{ overflowY: 'auto', flex: '1 1 auto', paddingBottom: '2.5rem' }}>
+              <div className="modal-body" style={{ overflowY: 'auto', flex: '1 1 auto', padding: '1.15rem 1.25rem 2rem', WebkitOverflowScrolling: 'touch' }}>
                 {/* Event Guidelines & Rules from Vault */}
                 {registeringEvent.documents && registeringEvent.documents.length > 0 && (
                   <div className="glass-panel" style={{ padding: '0.85rem 1rem', background: '#F8FAFC', marginBottom: '1.25rem', border: '1px solid #E2E8F0', borderRadius: 'var(--radius-md)' }}>
@@ -916,13 +957,17 @@ export const GuestHome: React.FC = () => {
                           onFocus={e => {
                             e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
                           }}
-                          required={req.required}
                           style={{
-                            borderColor: hasError ? '#DC2626' : undefined,
-                            boxShadow: hasError ? '0 0 0 2px rgba(220, 38, 38, 0.2)' : undefined
+                            borderColor: hasError ? '#EF4444' : undefined,
+                            background: '#FFFFFF',
+                            color: '#0F172A',
+                            fontWeight: 600,
+                            border: '1.5px solid #94A3B8',
+                            borderRadius: 'var(--radius-sm)',
+                            padding: '0.65rem 0.75rem'
                           }}
                         >
-                          <option value="">Select option...</option>
+                          <option value="">-- Select {req.label} --</option>
                           {req.options.map(opt => (
                             <option key={opt} value={opt}>{opt}</option>
                           ))}
@@ -1213,53 +1258,72 @@ export const GuestHome: React.FC = () => {
                       ) : null}
                     </div>
                   );
-                })}
-              </div>
-
-              {/* Dedicated Non-Overlapping Modal Footer */}
-              <div className="modal-footer" style={{ flexShrink: 0 }}>
-                <button 
-                  type="button" 
-                  className="btn btn-secondary" 
-                  onClick={() => setRegisteringEvent(null)}
-                  disabled={isSubmitting}
-                  style={{ fontWeight: 700 }}
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit" 
-                  className="btn btn-primary"
-                  disabled={isSubmitting}
-                  style={{ 
-                    fontWeight: 800, 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    gap: '0.5rem',
-                    background: 'linear-gradient(135deg, #2563EB, #1D4ED8)',
-                    boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)'
-                  }}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 size={18} className="animate-spin" />
-                      <span>Submitting Request...</span>
-                    </>
-                  ) : (
-                    <span>Submit Registration Request</span>
-                  )}
-                </button>
+                  })}
+                {/* Submit & Cancel Actions at the end of form details */}
+                <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.75rem', paddingTop: '1.15rem', borderTop: '1px solid #E2E8F0', flexWrap: 'wrap' }}>
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary" 
+                    onClick={() => setRegisteringEvent(null)}
+                    disabled={isSubmitting}
+                    style={{ flex: 1, minWidth: 100, fontWeight: 700, padding: '0.75rem 1rem' }}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="btn btn-primary"
+                    disabled={isSubmitting}
+                    style={{ 
+                      flex: 2,
+                      minWidth: 180,
+                      fontWeight: 800, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      gap: '0.5rem',
+                      padding: '0.75rem 1.25rem',
+                      background: 'linear-gradient(135deg, #2563EB, #1D4ED8)',
+                      boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)'
+                    }}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 size={18} className="animate-spin" />
+                        <span>Submitting Request...</span>
+                      </>
+                    ) : (
+                      <span>Submit Registration Request</span>
+                    )}
+                  </button>
+                </div>
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Submission Success Modal */}
-      {submissionSuccessGuest && (
-        <div className="modal-overlay active" onClick={() => setSubmissionSuccessGuest(null)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
+      {submissionSuccessGuest && createPortal(
+        <div 
+          className="modal-overlay active" 
+          onClick={() => setSubmissionSuccessGuest(null)}
+          style={{ 
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999999,
+            background: 'rgba(15, 23, 42, 0.72)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+            overflowY: 'auto'
+          }}
+        >
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 440, width: '100%', margin: 'auto' }}>
             <div className="modal-body" style={{ textAlign: 'center', padding: '2rem 1.5rem' }}>
               <div style={{ width: 70, height: 70, borderRadius: '50%', background: 'rgba(245, 158, 11, 0.15)', color: '#F59E0B', fontSize: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem' }}>
                 <Hourglass size={34} />
@@ -1286,7 +1350,8 @@ export const GuestHome: React.FC = () => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Live Camera Capture & Crop Modal */}

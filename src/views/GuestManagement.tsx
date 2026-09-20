@@ -1,4 +1,5 @@
  import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useApp } from '../context/AppContext';
 import { GuestRegistration, GuestStatus } from '../types';
 import { 
@@ -795,10 +796,42 @@ export const GuestManagement: React.FC = () => {
       )}
 
       {/* Add / Invite Guest Modal with Compact Sleek Layout */}
-      {isAddGuestModalOpen && (
-        <div className="modal-overlay active" onClick={() => setIsAddGuestModalOpen(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 460, background: '#FFFFFF', boxShadow: '0 20px 40px rgba(0,0,0,0.18)', borderRadius: 'var(--radius-lg)' }}>
-            <div className="modal-header" style={{ borderBottom: '1px solid #E2E8F0', padding: '1rem 1.25rem' }}>
+      {isAddGuestModalOpen && createPortal(
+        <div 
+          className="modal-overlay active" 
+          onClick={() => setIsAddGuestModalOpen(false)}
+          style={{ 
+            position: 'fixed', 
+            inset: 0, 
+            zIndex: 9999999, 
+            background: 'rgba(15, 23, 42, 0.72)', 
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            padding: 'max(16px, env(safe-area-inset-top, 16px)) 12px max(24px, env(safe-area-inset-bottom, 24px)) 12px',
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch'
+          }}
+        >
+          <div 
+            className="modal-content" 
+            onClick={e => e.stopPropagation()} 
+            style={{ 
+              maxWidth: 480, 
+              width: '100%',
+              maxHeight: 'min(90dvh, calc(var(--visual-viewport-height, 90dvh) - env(safe-area-inset-top, 16px) - 16px))', 
+              display: 'flex', 
+              flexDirection: 'column', 
+              background: '#FFFFFF', 
+              boxShadow: '0 25px 50px rgba(0,0,0,0.3)', 
+              borderRadius: 'var(--radius-xl)', 
+              overflow: 'hidden',
+              margin: 'auto'
+            }}
+          >
+            <div className="modal-header" style={{ borderBottom: '1px solid #E2E8F0', padding: '1rem 1.25rem', flexShrink: 0 }}>
               <div>
                 <h2 style={{ color: '#0F172A', fontWeight: 800, fontSize: '1.2rem', margin: 0 }}>Invite Guests to Event</h2>
                 <p style={{ fontSize: '0.8rem', color: '#475569', fontWeight: 600, marginTop: 2, margin: 0 }}>
@@ -809,7 +842,7 @@ export const GuestManagement: React.FC = () => {
             </div>
 
             {/* Target Event & Token Allocation Selector */}
-            <div style={{ padding: '0.75rem 1.25rem', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
+            <div style={{ padding: '0.65rem 1.15rem', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.65rem', flexShrink: 0 }}>
               <div>
                 <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0F172A', display: 'block', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                   ASSIGN TO EVENT
@@ -852,7 +885,7 @@ export const GuestManagement: React.FC = () => {
 
 
             {/* Modal Invite Method Tabs - Ultra Clear & High Contrast */}
-            <div style={{ display: 'flex', borderBottom: '1.5px solid #E2E8F0', background: '#F1F5F9' }}>
+            <div style={{ display: 'flex', borderBottom: '1.5px solid #E2E8F0', background: '#F1F5F9', flexShrink: 0 }}>
               <button 
                 type="button"
                 onClick={() => setInviteMode('email')}
@@ -923,8 +956,8 @@ export const GuestManagement: React.FC = () => {
 
             {/* 1. EMAIL INVITE */}
             {inviteMode === 'email' && (
-              <form onSubmit={handleQuickEmailInviteSubmit}>
-                <div className="modal-body" style={{ padding: '1.15rem 1.25rem' }}>
+              <form onSubmit={handleQuickEmailInviteSubmit} style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', minHeight: 0, overflow: 'hidden' }}>
+                <div className="modal-body" style={{ padding: '1.15rem 1.25rem 2rem', overflowY: 'auto', flex: '1 1 auto', minHeight: 0, WebkitOverflowScrolling: 'touch' }}>
                   <div className="form-group" style={{ marginBottom: '0.85rem' }}>
                     <label className="form-label" style={{ color: '#0F172A', fontWeight: 800, fontSize: '0.85rem', marginBottom: '0.35rem' }}>
                       Guest Email Address <span style={{ color: '#EF4444' }}>*</span>
@@ -934,13 +967,12 @@ export const GuestManagement: React.FC = () => {
                       placeholder="e.g. shubham.k@gmail.com"
                       value={quickEmailInput}
                       onChange={e => setQuickEmailInput(e.target.value)}
-                      onFocus={e => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' })}
                       style={{ color: '#0F172A', fontWeight: 600, fontSize: '0.875rem', border: '1.5px solid #94A3B8', borderRadius: 'var(--radius-sm)', padding: '0.6rem 0.75rem', width: '100%', background: '#FFFFFF' }}
                       required
                     />
                   </div>
 
-                  <div className="form-group" style={{ margin: 0 }}>
+                  <div className="form-group" style={{ marginBottom: '1.25rem' }}>
                     <label className="form-label" style={{ color: '#0F172A', fontWeight: 800, fontSize: '0.85rem', marginBottom: '0.35rem' }}>
                       Personalized Note (Optional)
                     </label>
@@ -949,28 +981,28 @@ export const GuestManagement: React.FC = () => {
                       placeholder="e.g. You are cordially invited to our campus event!"
                       value={quickInviteNote}
                       onChange={e => setQuickInviteNote(e.target.value)}
-                      onFocus={e => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' })}
                       style={{ color: '#0F172A', fontWeight: 600, fontSize: '0.875rem', border: '1.5px solid #94A3B8', borderRadius: 'var(--radius-sm)', padding: '0.55rem 0.75rem', width: '100%', background: '#FFFFFF' }}
                     />
                   </div>
-                </div>
 
-                <div className="modal-footer flex-between" style={{ borderTop: '1px solid #E2E8F0', padding: '0.85rem 1.25rem' }}>
-                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => setIsAddGuestModalOpen(false)} style={{ fontWeight: 700 }}>
-                    Cancel
-                  </button>
-                  <button type="submit" className="btn btn-primary btn-sm" style={{ fontWeight: 800, padding: '0.6rem 1.15rem' }}>
-                    <Mail size={15} /> Send Invitation
-                  </button>
+                  {/* Actions placed directly inside scrollable body */}
+                  <div style={{ display: 'flex', gap: '0.65rem', paddingTop: '0.85rem', borderTop: '1px solid #E2E8F0', marginTop: '1rem', paddingBottom: '0.75rem' }}>
+                    <button type="button" className="btn btn-secondary" onClick={() => setIsAddGuestModalOpen(false)} style={{ flex: 1, fontWeight: 700, padding: '0.65rem 1rem' }}>
+                      Cancel
+                    </button>
+                    <button type="submit" className="btn btn-primary" style={{ flex: 2, fontWeight: 800, padding: '0.65rem 1.15rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
+                      <Mail size={16} /> Send Invitation
+                    </button>
+                  </div>
                 </div>
               </form>
             )}
 
             {/* 2. MOBILE INVITE */}
             {inviteMode === 'mobile' && (
-              <form onSubmit={handleQuickMobileInviteSubmit}>
-                <div className="modal-body" style={{ padding: '1.15rem 1.25rem' }}>
-                  <div className="form-group" style={{ margin: 0 }}>
+              <form onSubmit={handleQuickMobileInviteSubmit} style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', minHeight: 0, overflow: 'hidden' }}>
+                <div className="modal-body" style={{ padding: '1.15rem 1.25rem 2rem', overflowY: 'auto', flex: '1 1 auto', minHeight: 0, WebkitOverflowScrolling: 'touch' }}>
+                  <div className="form-group" style={{ marginBottom: '1.25rem' }}>
                     <label className="form-label" style={{ color: '#0F172A', fontWeight: 800, fontSize: '0.85rem', marginBottom: '0.35rem' }}>
                       Mobile Number <span style={{ color: '#EF4444' }}>*</span>
                     </label>
@@ -979,28 +1011,28 @@ export const GuestManagement: React.FC = () => {
                       placeholder="e.g. +91 98765 XXXXX"
                       value={quickMobileInput}
                       onChange={e => setQuickMobileInput(e.target.value)}
-                      onFocus={e => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' })}
                       style={{ color: '#0F172A', fontWeight: 600, fontSize: '0.875rem', border: '1.5px solid #94A3B8', borderRadius: 'var(--radius-sm)', padding: '0.6rem 0.75rem', width: '100%', background: '#FFFFFF' }}
                       required
                     />
                   </div>
-                </div>
 
-                <div className="modal-footer flex-between" style={{ borderTop: '1px solid #E2E8F0', padding: '0.85rem 1.25rem' }}>
-                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => setIsAddGuestModalOpen(false)} style={{ fontWeight: 700 }}>
-                    Cancel
-                  </button>
-                  <button type="submit" className="btn btn-primary btn-sm" style={{ fontWeight: 800, padding: '0.6rem 1.15rem' }}>
-                    <Phone size={15} /> Dispatch Mobile Invite
-                  </button>
+                  {/* Actions placed directly inside scrollable body */}
+                  <div style={{ display: 'flex', gap: '0.65rem', paddingTop: '0.85rem', borderTop: '1px solid #E2E8F0', marginTop: '1rem', paddingBottom: '0.75rem' }}>
+                    <button type="button" className="btn btn-secondary" onClick={() => setIsAddGuestModalOpen(false)} style={{ flex: 1, fontWeight: 700, padding: '0.65rem 1rem' }}>
+                      Cancel
+                    </button>
+                    <button type="submit" className="btn btn-primary" style={{ flex: 2, fontWeight: 800, padding: '0.65rem 1.15rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
+                      <Phone size={16} /> Dispatch Mobile Invite
+                    </button>
+                  </div>
                 </div>
               </form>
             )}
 
             {/* 3. UPLOAD DOCUMENT (BULK INVITES) - Replaces Direct Form */}
             {inviteMode === 'document' && (
-              <form onSubmit={handleBulkDocumentInviteSubmit}>
-                <div className="modal-body" style={{ padding: '1.5rem' }}>
+              <form onSubmit={handleBulkDocumentInviteSubmit} style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', minHeight: 0, overflow: 'hidden' }}>
+                <div className="modal-body" style={{ padding: '1.25rem 1.25rem 2rem', overflowY: 'auto', flex: '1 1 auto', minHeight: 0, WebkitOverflowScrolling: 'touch' }}>
                   <div className="form-group">
                     <label className="form-label" style={{ color: '#0F172A', fontWeight: 800, fontSize: '0.9rem' }}>
                       Upload Attendee Document (CSV, TXT, Excel, PDF) <span style={{ color: '#EF4444' }}>*</span>
@@ -1065,25 +1097,27 @@ export const GuestManagement: React.FC = () => {
                       </div>
                     </div>
                   )}
-                </div>
 
-                <div className="modal-footer flex-between" style={{ borderTop: '1px solid #E2E8F0', padding: '1rem 1.5rem' }}>
-                  <button type="button" className="btn btn-secondary" onClick={() => setIsAddGuestModalOpen(false)} style={{ fontWeight: 700 }}>
-                    Cancel
-                  </button>
-                  <button 
-                    type="submit" 
-                    className="btn btn-primary" 
-                    disabled={parsedEntries.length === 0}
-                    style={{ fontWeight: 800, padding: '0.7rem 1.35rem' }}
-                  >
-                    <Upload size={17} /> Send Invitations to Document List ({parsedEntries.length})
-                  </button>
+                  {/* Actions placed directly inside scrollable body */}
+                  <div style={{ display: 'flex', gap: '0.65rem', paddingTop: '1rem', borderTop: '1px solid #E2E8F0', marginTop: '1.25rem' }}>
+                    <button type="button" className="btn btn-secondary" onClick={() => setIsAddGuestModalOpen(false)} style={{ flex: 1, fontWeight: 700, padding: '0.7rem 1rem' }}>
+                      Cancel
+                    </button>
+                    <button 
+                      type="submit" 
+                      className="btn btn-primary" 
+                      disabled={parsedEntries.length === 0}
+                      style={{ flex: 2, fontWeight: 800, padding: '0.7rem 1.35rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
+                    >
+                      <Upload size={17} /> Send Invitations ({parsedEntries.length})
+                    </button>
+                  </div>
                 </div>
               </form>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Guest Dossier / Full Details Modal */}
