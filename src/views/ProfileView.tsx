@@ -179,6 +179,9 @@ export const ProfileView: React.FC = () => {
   // Events joined / registered by the logged-in user
   const myRegistrations = guests.filter(g => {
     if (g.status === 'invited') return false;
+    const evt = events.find(e => e.id === g.eventId);
+    if (!evt) return false;
+
     const gEmail = (g.email || '').toLowerCase().trim();
     const gMobile = (g.mobile || '').replace(/\D/g, '');
     const gName = (g.name || '').toLowerCase().trim();
@@ -283,7 +286,7 @@ export const ProfileView: React.FC = () => {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.4rem', marginBottom: '0.25rem' }}>
                         <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0F172A', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {evt?.name || 'Exclusive Event'}
+                          {evt?.name || 'Event'}
                         </h4>
                         <span 
                           style={{
@@ -558,7 +561,7 @@ export const ProfileView: React.FC = () => {
                 boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)'
               }}
             >
-              <RefreshCw size={16} /> Save & Sync Cloud Data
+              <RefreshCw size={16} /> Save & Apply Settings
             </button>
           </div>
         </div>
@@ -910,24 +913,6 @@ export const ProfileView: React.FC = () => {
                 <span>{user.mobile}</span>
               </div>
             )}
-
-            <div style={{ 
-              display: 'inline-flex', 
-              alignItems: 'center', 
-              gap: '0.35rem', 
-              background: '#EFF6FF', 
-              color: '#2563EB', 
-              fontSize: '0.75rem', 
-              fontWeight: 700, 
-              padding: '0.2rem 0.65rem', 
-              borderRadius: 999, 
-              marginTop: '0.35rem',
-              border: '1px solid #DBEAFE',
-              textTransform: 'capitalize'
-            }}>
-              <ShieldCheck size={13} color="#2563EB" />
-              <span>{user.role === 'manager' ? 'Event Organizer / Manager' : user.role === 'scanner' ? 'Gate Staff Scanner' : 'Attendee / Guest'}</span>
-            </div>
           </div>
         </div>
 

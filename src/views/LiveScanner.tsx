@@ -1373,7 +1373,7 @@ export const LiveScanner: React.FC = () => {
                   EVENT INFORMATION
                 </div>
                 <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '0 0 0.35rem', color: '#FFFFFF', wordBreak: 'break-word' }}>
-                  {matchedEvt?.name || 'Exclusive Event'}
+                  {matchedEvt?.name || 'Event'}
                 </h3>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', fontSize: '0.78rem', color: '#DBEAFE' }}>
                   {matchedEvt?.date && (

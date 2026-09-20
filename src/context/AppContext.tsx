@@ -367,12 +367,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const syncAllDataToCloud = async (): Promise<void> => {
     try {
-      showToast('☁️ Syncing data to cloud...', 'info');
+      showToast('☁️ Saving and syncing settings...', 'info');
       await seedAllDataToFirestore(events, guests, staff, notifications, scanLogs, user, checkins);
-      showToast('✓ Successfully sent!', 'success');
+      showToast('✓ Settings saved successfully!', 'success');
     } catch (e) {
       console.warn('Data sync notice:', e);
-      showToast('✓ Successfully saved locally.', 'info');
+      showToast('✓ Settings saved locally.', 'info');
     }
   };
 

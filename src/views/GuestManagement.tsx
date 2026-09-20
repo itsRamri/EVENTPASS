@@ -96,8 +96,6 @@ export const GuestManagement: React.FC = () => {
 
   // Target Event State for Modal
   const [guestEventId, setGuestEventId] = useState(selectedEventId && selectedEventId !== 'all' && myEventIds.has(selectedEventId) ? selectedEventId : (myEvents[0]?.id || ''));
-  const targetModalEvt = myEvents.find(e => e.id === guestEventId) || myEvents[0];
-  const [tokensToGrant, setTokensToGrant] = useState<number>(targetModalEvt?.tokenSettings?.tokensPerUser || 1);
 
   // Document Upload & Bulk Parse State
   const [docFile, setDocFile] = useState<File | null>(null);
@@ -187,7 +185,7 @@ export const GuestManagement: React.FC = () => {
         rollNo: '',
         status: 'invited', // Waiting for guest acceptance & details
         token: '', // No token issued yet
-        tokenCount: tokensToGrant || targetEvt.tokenSettings?.tokensPerUser || 1,
+        tokenCount: targetEvt.tokenSettings?.tokensPerUser || 1,
         usedTokens: 0,
         passId: '',
         registrationDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' • ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
@@ -214,7 +212,7 @@ export const GuestManagement: React.FC = () => {
     setIsAddGuestModalOpen(false);
     setQuickEmailInput('');
     setQuickInviteNote('');
-    showToast(`✓ Invitation sent to ${validEmails.length} guest(s) (${tokensToGrant || 1} tokens allocated)!`, 'success');
+    showToast(`✓ Invitation sent to ${validEmails.length} guest(s)!`, 'success');
   };
 
   // 2. Send Mobile Invite
@@ -257,7 +255,7 @@ export const GuestManagement: React.FC = () => {
         rollNo: '',
         status: 'invited',
         token: '',
-        tokenCount: tokensToGrant || targetEvt.tokenSettings?.tokensPerUser || 1,
+        tokenCount: targetEvt.tokenSettings?.tokensPerUser || 1,
         usedTokens: 0,
         passId: '',
         registrationDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' • ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
@@ -373,7 +371,7 @@ export const GuestManagement: React.FC = () => {
         rollNo: '',
         status: 'invited', // Waiting for attendee to fill details
         token: '',
-        tokenCount: tokensToGrant || targetEvt.tokenSettings?.tokensPerUser || 1,
+        tokenCount: targetEvt.tokenSettings?.tokensPerUser || 1,
         usedTokens: 0,
         passId: '',
         registrationDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' • ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
@@ -841,46 +839,20 @@ export const GuestManagement: React.FC = () => {
               <button className="icon-btn" onClick={() => setIsAddGuestModalOpen(false)}>✕</button>
             </div>
 
-            {/* Target Event & Token Allocation Selector */}
-            <div style={{ padding: '0.65rem 1.15rem', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.65rem', flexShrink: 0 }}>
-              <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0F172A', display: 'block', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  ASSIGN TO EVENT
-                </label>
-                <select 
-                  value={guestEventId} 
-                  onChange={e => {
-                    const newId = e.target.value;
-                    setGuestEventId(newId);
-                    const selEvt = events.find(ev => ev.id === newId);
-                    if (selEvt?.tokenSettings?.tokensPerUser) {
-                      setTokensToGrant(selEvt.tokenSettings.tokensPerUser);
-                    }
-                  }}
-                  style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-sm)', color: '#0F172A', fontWeight: 700, border: '1.5px solid #CBD5E1', background: '#FFFFFF', fontSize: '0.85rem' }}
-                >
-                  {myEvents.map(ev => (
-                    <option key={ev.id} value={ev.id}>{ev.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0F172A', display: 'block', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  🎟️ TOKENS TO GRANT / USER
-                </label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <select
-                    value={tokensToGrant}
-                    onChange={e => setTokensToGrant(parseInt(e.target.value, 10))}
-                    style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-sm)', color: '#1D4ED8', fontWeight: 800, border: '1.5px solid #93C5FD', background: '#EFF6FF', fontSize: '0.85rem' }}
-                  >
-                    {[1, 2, 5, 10, 15, 20].map(n => (
-                      <option key={n} value={n}>{n === 15 ? '⭐ 15 Tokens' : `${n} Token${n > 1 ? 's' : ''}`}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+            {/* Target Event Selector */}
+            <div style={{ padding: '0.65rem 1.15rem', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', flexShrink: 0 }}>
+              <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0F172A', display: 'block', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                ASSIGN TO EVENT
+              </label>
+              <select 
+                value={guestEventId} 
+                onChange={e => setGuestEventId(e.target.value)}
+                style={{ width: '100%', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-sm)', color: '#0F172A', fontWeight: 700, border: '1.5px solid #CBD5E1', background: '#FFFFFF', fontSize: '0.85rem' }}
+              >
+                {myEvents.map(ev => (
+                  <option key={ev.id} value={ev.id}>{ev.name}</option>
+                ))}
+              </select>
             </div>
 
 

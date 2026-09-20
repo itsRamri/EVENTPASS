@@ -84,6 +84,9 @@ export const GuestHome: React.FC = () => {
 
   const myRegistrations = guests.filter(g => {
     if (g.status === 'invited') return false;
+    const evt = events.find(e => e.id === g.eventId);
+    if (!evt) return false;
+
     const gEmail = (g.email || '').toLowerCase().trim();
     const gMobile = (g.mobile || '').replace(/\D/g, '');
     const gName = (g.name || '').toLowerCase().trim();
@@ -791,7 +794,7 @@ export const GuestHome: React.FC = () => {
                           textOverflow: 'ellipsis'
                         }}
                       >
-                        {evt?.name || 'Exclusive Event'}
+                        {evt?.name || 'Event'}
                       </h4>
 
                       <span 
