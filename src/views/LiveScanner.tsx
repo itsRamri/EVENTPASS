@@ -790,11 +790,13 @@ export const LiveScanner: React.FC = () => {
             }}
             onClick={e => e.stopPropagation()}
           >
-            {/* Top Green Rounded Cap Accent Bar */}
+            {/* Top Rounded Cap Accent Bar */}
             <div 
               style={{
                 height: 24,
-                background: scanResult.type === 'verified' || scanResult.guest?.status === 'approved' || scanResult.guest?.status === 'checkedin'
+                background: scanResult.type === 'already_checkedin'
+                  ? 'linear-gradient(90deg, #F87171 0%, #EF4444 100%)'
+                  : scanResult.type === 'verified' || scanResult.guest?.status === 'approved'
                   ? 'linear-gradient(90deg, #34D399 0%, #10B981 100%)'
                   : scanResult.type === 'rejected'
                   ? 'linear-gradient(90deg, #F87171 0%, #EF4444 100%)'
@@ -814,39 +816,56 @@ export const LiveScanner: React.FC = () => {
                   (guest.documents?.find(d => d.type === 'image' || (d.url && (d.url.startsWith('data:image') || d.url.includes('firebasestorage'))))?.url || '') ||
                   (guest.avatar ? guest.avatar : '');
 
-                const isCheckedIn = guest.status === 'checkedin';
+                const isAlreadyCheckedIn = scanResult.type === 'already_checkedin' || guest.status === 'checkedin';
                 const tokenNo = scanResult.scannedTokenCode || guest.token || 'N/A';
                 const passIdVal = guest.passId ? (guest.passId.startsWith('#') ? guest.passId : `#${guest.passId}`) : '#EP20251234';
 
                 return (
                   <>
-                    {/* Inner Green Bordered Box (Exactly Matching Screenshot 2) */}
+                    {/* Inner Box with Dynamic Border Color */}
                     <div 
                       style={{
-                        border: '1.5px solid #86EFAC',
+                        border: isAlreadyCheckedIn ? '1.5px solid #FCA5A5' : '1.5px solid #86EFAC',
                         borderRadius: 22,
                         padding: '1.25rem 1.15rem 1.15rem',
                         background: '#FFFFFF',
                         marginBottom: '1.25rem',
-                        boxShadow: '0 2px 8px rgba(16, 185, 129, 0.04)'
+                        boxShadow: isAlreadyCheckedIn ? '0 2px 8px rgba(239, 68, 68, 0.04)' : '0 2px 8px rgba(16, 185, 129, 0.04)'
                       }}
                     >
-                      {/* Top Center Verified Badge */}
+                      {/* Top Center Badge */}
                       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '0.85rem' }}>
-                        <div 
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.45rem',
-                            color: '#10B981',
-                            fontWeight: 800,
-                            fontSize: '1.15rem',
-                            letterSpacing: '-0.01em'
-                          }}
-                        >
-                          <CheckCircle2 size={22} color="#10B981" strokeWidth={2.8} />
-                          <span>Verified</span>
-                        </div>
+                        {isAlreadyCheckedIn ? (
+                          <div 
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.45rem',
+                              color: '#DC2626',
+                              fontWeight: 800,
+                              fontSize: '1.1rem',
+                              letterSpacing: '-0.01em'
+                            }}
+                          >
+                            <AlertTriangle size={22} color="#DC2626" strokeWidth={2.8} />
+                            <span>Aapka QR Expire Ho Chuka Hai</span>
+                          </div>
+                        ) : (
+                          <div 
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.45rem',
+                              color: '#10B981',
+                              fontWeight: 800,
+                              fontSize: '1.15rem',
+                              letterSpacing: '-0.01em'
+                            }}
+                          >
+                            <CheckCircle2 size={22} color="#10B981" strokeWidth={2.8} />
+                            <span>Verified</span>
+                          </div>
+                        )}
                       </div>
 
                       {/* Centered Rectangular Photo */}
@@ -860,7 +879,7 @@ export const LiveScanner: React.FC = () => {
                               height: 125,
                               borderRadius: 18,
                               objectFit: 'cover',
-                              border: '2.5px solid #FFFFFF',
+                              border: isAlreadyCheckedIn ? '2.5px solid #FEE2E2' : '2.5px solid #FFFFFF',
                               boxShadow: '0 6px 18px rgba(15, 23, 42, 0.1)',
                               background: '#F1F5F9'
                             }}
@@ -896,7 +915,7 @@ export const LiveScanner: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* 2-Column Grid: Token No & Pass ID (Exactly Matching Screenshot 2) */}
+                      {/* 2-Column Grid: Token No & Pass ID */}
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', paddingTop: '0.85rem', borderTop: '1px solid #F1F5F9' }}>
                         {/* Left: Token No. */}
                         <div>
@@ -909,16 +928,16 @@ export const LiveScanner: React.FC = () => {
                               display: 'inline-flex',
                               alignItems: 'center',
                               gap: 4,
-                              background: '#DCFCE7',
-                              color: '#16A34A',
+                              background: isAlreadyCheckedIn ? '#FEE2E2' : '#DCFCE7',
+                              color: isAlreadyCheckedIn ? '#DC2626' : '#16A34A',
                               fontSize: '0.725rem',
                               fontWeight: 700,
                               padding: '2px 8px',
                               borderRadius: 100,
-                              border: '1px solid #BBF7D0'
+                              border: isAlreadyCheckedIn ? '1px solid #FCA5A5' : '1px solid #BBF7D0'
                             }}
                           >
-                            ✿ Approved
+                            {isAlreadyCheckedIn ? '✕ Expired' : '✿ Approved'}
                           </span>
                         </div>
 
@@ -933,50 +952,90 @@ export const LiveScanner: React.FC = () => {
                               display: 'inline-flex',
                               alignItems: 'center',
                               gap: 4,
-                              background: isCheckedIn ? '#DCFCE7' : '#F1F5F9',
-                              color: isCheckedIn ? '#166534' : '#475569',
+                              background: isAlreadyCheckedIn ? '#FEE2E2' : '#EFF6FF',
+                              color: isAlreadyCheckedIn ? '#DC2626' : '#2563EB',
                               fontSize: '0.725rem',
                               fontWeight: 700,
                               padding: '2px 8px',
                               borderRadius: 100,
-                              border: isCheckedIn ? '1px solid #BBF7D0' : '1px solid #E2E8F0'
+                              border: isAlreadyCheckedIn ? '1px solid #FCA5A5' : '1px solid #BFDBFE'
                             }}
                           >
-                            ❖ {isCheckedIn ? 'Checked In' : 'Not Checked In'}
+                            ❖ {isAlreadyCheckedIn ? 'Already Checked In' : 'Not Checked In'}
                           </span>
                         </div>
                       </div>
+
+                      {/* Expired Re-entry Warning Notice */}
+                      {isAlreadyCheckedIn && (
+                        <div style={{ marginTop: '0.85rem', padding: '0.65rem 0.85rem', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 12, color: '#991B1B', fontSize: '0.8rem', fontWeight: 700, textAlign: 'center' }}>
+                          ⚠️ Yeh QR Code already check-in ho chuka hai at {guest.checkInTime || 'earlier'}. Re-entry allow nahi hai.
+                        </div>
+                      )}
                     </div>
 
-                    {/* Primary Button: Check In Guest (Matching Screenshot 2) */}
-                    <button 
-                      type="button"
-                      onClick={() => handleCheckIn(guest)}
-                      style={{
-                        width: '100%',
-                        padding: '0.95rem 1.5rem',
-                        background: '#2563EB',
-                        color: '#FFFFFF',
-                        fontSize: '1.05rem',
-                        fontWeight: 800,
-                        borderRadius: 100,
-                        border: 'none',
-                        cursor: 'pointer',
-                        boxShadow: '0 6px 18px rgba(37, 99, 235, 0.35)',
-                        transition: 'all 0.2s ease',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        letterSpacing: '0.01em'
-                      }}
-                    >
-                      Check In Guest
-                    </button>
+                    {/* Primary Button: Check In Guest OR Expired Dismiss Button */}
+                    {!isAlreadyCheckedIn ? (
+                      <>
+                        <button 
+                          type="button"
+                          onClick={() => handleCheckIn(guest)}
+                          style={{
+                            width: '100%',
+                            padding: '0.95rem 1.5rem',
+                            background: '#2563EB',
+                            color: '#FFFFFF',
+                            fontSize: '1.05rem',
+                            fontWeight: 800,
+                            borderRadius: 100,
+                            border: 'none',
+                            cursor: 'pointer',
+                            boxShadow: '0 6px 18px rgba(37, 99, 235, 0.35)',
+                            transition: 'all 0.2s ease',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            letterSpacing: '0.01em'
+                          }}
+                        >
+                          Check In Guest
+                        </button>
 
-                    {/* Caption below button (Exact text from Screenshot 2) */}
-                    <div style={{ textAlign: 'center', fontSize: '0.785rem', color: '#64748B', marginTop: '0.85rem', fontWeight: 500 }}>
-                      Make sure the guest is present at the venue.
-                    </div>
+                        <div style={{ textAlign: 'center', fontSize: '0.785rem', color: '#64748B', marginTop: '0.85rem', fontWeight: 500 }}>
+                          Make sure the guest is present at the venue.
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <button 
+                          type="button"
+                          onClick={() => setScanResult(null)}
+                          style={{
+                            width: '100%',
+                            padding: '0.95rem 1.5rem',
+                            background: '#DC2626',
+                            color: '#FFFFFF',
+                            fontSize: '1.025rem',
+                            fontWeight: 800,
+                            borderRadius: 100,
+                            border: 'none',
+                            cursor: 'pointer',
+                            boxShadow: '0 6px 18px rgba(220, 38, 38, 0.35)',
+                            transition: 'all 0.2s ease',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            letterSpacing: '0.01em'
+                          }}
+                        >
+                          QR Expired — Scan Next Guest
+                        </button>
+
+                        <div style={{ textAlign: 'center', fontSize: '0.785rem', color: '#DC2626', marginTop: '0.85rem', fontWeight: 600 }}>
+                          Duplicate entry strictly blocked.
+                        </div>
+                      </>
+                    )}
                   </>
                 );
               })() : (
