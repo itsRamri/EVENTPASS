@@ -102,6 +102,8 @@ export const App: React.FC = () => {
       // Shared Views
       case 'notifications':
         return <NotificationsView />;
+      case 'settings':
+      case 'support':
       case 'profile':
         return <ProfileView />;
 

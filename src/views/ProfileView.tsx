@@ -56,7 +56,9 @@ export const ProfileView: React.FC = () => {
     openDigitalPass,
     profileSubpage, 
     setProfileSubpage,
-    addNotification
+    addNotification,
+    syncAllDataToCloud,
+    currentView
   } = useApp();
 
   const userEmail = (user.email || '').toLowerCase().trim();
@@ -248,7 +250,7 @@ export const ProfileView: React.FC = () => {
   }
 
   // SUBPAGE 2: SETTINGS
-  if (profileSubpage === 'settings') {
+  if (profileSubpage === 'settings' || currentView === 'settings') {
     return (
       <div className="animate-fade" style={{ maxWidth: 540, margin: '0 auto', width: '100%', padding: '0 0.75rem 5rem' }}>
         {/* Scanner & Audio Preferences Card */}
@@ -436,12 +438,40 @@ export const ProfileView: React.FC = () => {
               <span style={{ fontWeight: 700, color: '#2563EB' }}>Anti-Duplication Guard Active</span>
             </div>
           </div>
+
+          <div style={{ marginTop: '0.85rem' }}>
+            <button
+              type="button"
+              onClick={() => syncAllDataToCloud()}
+              style={{
+                background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)',
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: 12,
+                padding: '0.75rem 1rem',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                width: '100%',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)'
+              }}
+            >
+              <RefreshCw size={16} /> Sync All App Data to Cloud Database
+            </button>
+          </div>
         </div>
 
         {/* Back to Profile Button */}
         <button
           type="button"
-          onClick={() => setProfileSubpage(null)}
+          onClick={() => {
+            setProfileSubpage(null);
+            navigate('profile');
+          }}
           style={{
             background: '#F1F5F9',
             color: '#334155',
@@ -461,7 +491,7 @@ export const ProfileView: React.FC = () => {
   }
 
   // SUBPAGE 3: HELP & SUPPORT
-  if (profileSubpage === 'support') {
+  if (profileSubpage === 'support' || currentView === 'support') {
     const faqs = [
       {
         q: 'How do I scan attendee QR passes at the entrance?',
@@ -656,7 +686,10 @@ export const ProfileView: React.FC = () => {
         {/* Back Button */}
         <button
           type="button"
-          onClick={() => setProfileSubpage(null)}
+          onClick={() => {
+            setProfileSubpage(null);
+            navigate('profile');
+          }}
           style={{
             background: '#F1F5F9',
             color: '#334155',

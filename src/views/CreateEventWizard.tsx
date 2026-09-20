@@ -659,7 +659,7 @@ export const CreateEventWizard: React.FC = () => {
       </div>
 
       {/* Wizard Footer Controls */}
-      <div className="flex-between">
+      <div className="flex-between wizard-footer-actions">
         <button 
           className="btn btn-secondary" 
           onClick={() => setStep(prev => Math.max(1, prev - 1))}

@@ -12,6 +12,16 @@ dist
 dist-ssr
 *.local
 
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Google services credentials
+google-services.json
+android/app/google-services.json
+
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -14,6 +14,14 @@ export interface UserProfile {
   avatar: string;
   college?: string;
   branch?: string;
+  preferences?: {
+    soundBeep?: boolean;
+    vibration?: boolean;
+    highPerfCam?: boolean;
+    pushNotifs?: boolean;
+    emailAlerts?: boolean;
+    offlineSync?: boolean;
+  };
 }
 
 export interface RequirementField {

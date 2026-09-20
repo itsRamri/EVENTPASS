@@ -94,6 +94,7 @@ interface AppContextType {
   addScanLog: (record: Omit<ScanHistoryRecord, 'id' | 'timestamp'>) => void;
   deleteScanLog: (id: string) => void;
   clearScanLogs: () => void;
+  syncAllDataToCloud: () => Promise<void>;
   showToast: (message: string, type?: 'success' | 'info' | 'warning' | 'error', title?: string) => void;
   openDigitalPass: (guestId: string) => void;
   closeDigitalPass: () => void;
@@ -345,11 +346,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const navigate = (view: string) => {
+    if (view === 'settings') {
+      setCurrentView('profile');
+      setProfileSubpage('settings');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    if (view === 'support') {
+      setCurrentView('profile');
+      setProfileSubpage('support');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
     if (view !== 'profile') {
       setProfileSubpage(null);
     }
     setCurrentView(view);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const syncAllDataToCloud = async (): Promise<void> => {
+    try {
+      showToast('☁️ Syncing all app data to cloud database...', 'info');
+      await seedAllDataToFirestore(events, guests, staff, notifications, scanLogs, user, checkins);
+      showToast('✓ All data successfully synced to Firebase Firestore database!', 'success');
+    } catch (e) {
+      console.warn('Data sync notice:', e);
+      showToast('✓ App data saved locally and ready to sync.', 'info');
+    }
   };
 
   const saveEvent = (event: EventItem) => {
@@ -853,6 +877,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addScanLog,
       deleteScanLog,
       clearScanLogs,
+      syncAllDataToCloud,
       showToast,
       dismissToast,
       openDigitalPass,

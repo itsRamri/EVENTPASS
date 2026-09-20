@@ -36,20 +36,22 @@ export const Navbar: React.FC = () => {
   const isGuestApprovalView = currentView === 'guests';
   const isStaffAccessView = currentView === 'staff';
   const isNotificationsView = currentView === 'notifications';
-  const isProfileSubpage = currentView === 'profile' && profileSubpage !== null;
+  const isProfileSubpage = (currentView === 'profile' && profileSubpage !== null) || currentView === 'settings' || currentView === 'support';
 
   const getProfileSubpageTitle = () => {
+    if (currentView === 'settings' || profileSubpage === 'settings') {
+      return 'SETTINGS';
+    }
+    if (currentView === 'support' || profileSubpage === 'support') {
+      return 'HELP & SUPPORT';
+    }
     switch (profileSubpage) {
       case 'my_tickets':
         return 'MY TICKETS';
       case 'history':
         return 'REGISTRATION HISTORY';
-      case 'settings':
-        return 'SETTINGS';
       case 'my_events':
         return 'MY EVENTS';
-      case 'support':
-        return 'HELP & SUPPORT';
       default:
         return 'PROFILE';
     }
@@ -208,6 +210,7 @@ export const Navbar: React.FC = () => {
             type="button"
             onClick={() => {
               setProfileSubpage(null);
+              navigate('profile');
             }}
             style={{
               background: '#F8FAFC',
