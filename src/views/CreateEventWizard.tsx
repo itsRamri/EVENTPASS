@@ -133,7 +133,7 @@ export const CreateEventWizard: React.FC = () => {
       label: newReqLabel.trim(),
       type: newReqType,
       required: newReqRequired,
-      description: `Custom ${newReqType} requirement`
+      description: ''
     };
 
     setEventData(prev => ({

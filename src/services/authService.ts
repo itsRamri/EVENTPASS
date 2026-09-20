@@ -30,9 +30,16 @@ const withTimeout = <T>(promise: Promise<T>, timeoutMs: number = 1500): Promise<
 export const getUserProfileFromFirestore = async (uid: string, fallbackEmail: string): Promise<UserProfile | null> => {
   try {
     const userDocRef = doc(db, COLLECTIONS_USERS, uid);
-    const snap = await withTimeout(getDoc(userDocRef), 1200);
+    const snap = await withTimeout(getDoc(userDocRef), 2000);
     if (snap && snap.exists()) {
       return snap.data() as UserProfile;
+    }
+    if (fallbackEmail) {
+      const emailDocRef = doc(db, COLLECTIONS_USERS, fallbackEmail.trim());
+      const emailSnap = await withTimeout(getDoc(emailDocRef), 2000);
+      if (emailSnap && emailSnap.exists()) {
+        return emailSnap.data() as UserProfile;
+      }
     }
   } catch (err) {
     console.log('Fast profile fetch fallback:', err);
@@ -70,9 +77,10 @@ export const firebaseSignIn = async (
     // Try to get profile from Firestore first
     const existingProfile = await getUserProfileFromFirestore(fbUser.uid, fbUser.email || email);
     
-    // Check localStorage saved accounts for exact registered name
+    // Check localStorage saved accounts for exact registered name & preferences
     let savedName = '';
     let savedMobile = '';
+    let savedPrefs: any = undefined;
     try {
       const savedAccounts = localStorage.getItem('ep_accounts_db');
       if (savedAccounts) {
@@ -81,6 +89,7 @@ export const firebaseSignIn = async (
         if (match) {
           savedName = match.name || '';
           savedMobile = match.mobile || '';
+          savedPrefs = match.preferences;
         }
       }
     } catch (e) {}
@@ -99,7 +108,10 @@ export const firebaseSignIn = async (
       mobile: existingProfile?.mobile || savedMobile || '',
       role: existingProfile?.role || preferredRole,
       status: 'active',
-      avatar: hasCustomAvatar ? existingProfile.avatar : (hasFbPhoto ? fbUser.photoURL! : '')
+      avatar: hasCustomAvatar ? existingProfile.avatar : (hasFbPhoto ? fbUser.photoURL! : ''),
+      college: existingProfile?.college || '',
+      branch: existingProfile?.branch || '',
+      preferences: existingProfile?.preferences || savedPrefs || undefined
     };
 
     // 2. Sync to Firestore in the background without making user wait

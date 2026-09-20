@@ -99,37 +99,62 @@ export const subscribeToEvents = (callback: (events: EventItem[]) => void) => {
 
 export const fetchEventFromDbById = async (idOrQuery: string): Promise<EventItem | null> => {
   try {
-    const clean = idOrQuery.trim();
-    if (!clean) return null;
+    const raw = idOrQuery.trim();
+    if (!raw) return null;
 
-    // 1. Try direct doc lookup
-    const docRef = doc(db, COLLECTIONS.EVENTS, clean);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      return docSnap.data() as EventItem;
+    // Clean query (strip URL query params, hash symbols, etc.)
+    let clean = raw;
+    if (clean.includes('eventId=')) {
+      clean = clean.split('eventId=')[1].split('&')[0];
     }
-
-    // 2. Scan events collection in case query is case-insensitive, prefix, or name
-    const q = query(collection(db, COLLECTIONS.EVENTS));
-    const querySnap = await getDocs(q);
-    let matched: EventItem | null = null;
+    clean = clean.replace(/^#/, '').trim();
     const lowerClean = clean.toLowerCase();
     const cleanAlphanumeric = lowerClean.replace(/[^a-z0-9]/g, '');
 
+    // 1. Try direct doc lookup with raw query
+    const docRef = doc(db, COLLECTIONS.EVENTS, clean);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      const data = docSnap.data() as EventItem;
+      return { ...data, id: data.id || docSnap.id };
+    }
+
+    // 2. Try doc lookup with evt_ prefix if missing
+    if (!lowerClean.startsWith('evt_')) {
+      try {
+        const docRefPrefixed = doc(db, COLLECTIONS.EVENTS, `evt_${clean}`);
+        const docSnapPrefixed = await getDoc(docRefPrefixed);
+        if (docSnapPrefixed.exists()) {
+          const data = docSnapPrefixed.data() as EventItem;
+          return { ...data, id: data.id || docSnapPrefixed.id };
+        }
+      } catch (_) {}
+    }
+
+    // 3. Scan events collection for ID, prefix, name, or alphanumeric match
+    const q = query(collection(db, COLLECTIONS.EVENTS));
+    const querySnap = await getDocs(q);
+    let matched: EventItem | null = null;
+
     querySnap.forEach((d) => {
       const item = d.data() as EventItem;
-      const itemId = (item.id || '').toLowerCase();
+      const itemId = (item.id || d.id || '').toLowerCase();
+      const itemCleanId = itemId.replace(/[^a-z0-9]/g, '');
       const itemName = (item.name || '').toLowerCase();
       const itemPrefix = (item.tokenSettings?.prefix || '').toLowerCase();
 
       if (
         itemId === lowerClean ||
-        (cleanAlphanumeric && itemId.replace(/[^a-z0-9]/g, '') === cleanAlphanumeric) ||
+        (cleanAlphanumeric && itemCleanId === cleanAlphanumeric) ||
+        (cleanAlphanumeric && itemCleanId.includes(cleanAlphanumeric)) ||
+        (cleanAlphanumeric && cleanAlphanumeric.includes(itemCleanId)) ||
+        (cleanAlphanumeric && ('evt' + cleanAlphanumeric) === itemCleanId) ||
+        (cleanAlphanumeric && itemCleanId === ('evt' + cleanAlphanumeric)) ||
         (itemPrefix && itemPrefix === lowerClean) ||
         itemName === lowerClean ||
         itemName.includes(lowerClean)
       ) {
-        matched = item;
+        matched = { ...item, id: item.id || d.id };
       }
     });
 

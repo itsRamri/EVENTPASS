@@ -65,29 +65,115 @@ export const ProfileView: React.FC = () => {
   const userMobile = (user.mobile || '').replace(/\D/g, '');
   const userName = (user.name || '').toLowerCase().trim();
 
-  // Local Settings State
-  const [soundBeep, setSoundBeep] = useState(() => localStorage.getItem('ep_sound_beep') !== 'false');
-  const [vibration, setVibration] = useState(() => localStorage.getItem('ep_vibration') !== 'false');
-  const [highPerfCam, setHighPerfCam] = useState(true);
-  const [pushNotifs, setPushNotifs] = useState(true);
-  const [emailAlerts, setEmailAlerts] = useState(true);
-  const [offlineSync, setOfflineSync] = useState(true);
+  // Local Settings State (synced with user profile & cloud)
+  const [soundBeep, setSoundBeep] = useState(() => user.preferences?.soundBeep ?? (localStorage.getItem('ep_sound_beep') !== 'false'));
+  const [vibration, setVibration] = useState(() => user.preferences?.vibration ?? (localStorage.getItem('ep_vibration') !== 'false'));
+  const [highPerfCam, setHighPerfCam] = useState(() => user.preferences?.highPerfCam ?? true);
+  const [pushNotifs, setPushNotifs] = useState(() => user.preferences?.pushNotifs ?? true);
+  const [emailAlerts, setEmailAlerts] = useState(() => user.preferences?.emailAlerts ?? true);
+  const [offlineSync, setOfflineSync] = useState(() => user.preferences?.offlineSync ?? true);
 
   // Support FAQ State
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [faqSearch, setFaqSearch] = useState('');
 
-  // Toggle helpers
+  // Toggle helpers with automatic database save
   const handleToggleSound = () => {
     const next = !soundBeep;
     setSoundBeep(next);
     localStorage.setItem('ep_sound_beep', String(next));
+    updateUser({
+      preferences: {
+        ...(user.preferences || {}),
+        soundBeep: next,
+        vibration,
+        highPerfCam,
+        pushNotifs,
+        emailAlerts,
+        offlineSync
+      }
+    });
   };
 
   const handleToggleVibration = () => {
     const next = !vibration;
     setVibration(next);
     localStorage.setItem('ep_vibration', String(next));
+    updateUser({
+      preferences: {
+        ...(user.preferences || {}),
+        soundBeep,
+        vibration: next,
+        highPerfCam,
+        pushNotifs,
+        emailAlerts,
+        offlineSync
+      }
+    });
+  };
+
+  const handleToggleHighPerfCam = () => {
+    const next = !highPerfCam;
+    setHighPerfCam(next);
+    updateUser({
+      preferences: {
+        ...(user.preferences || {}),
+        soundBeep,
+        vibration,
+        highPerfCam: next,
+        pushNotifs,
+        emailAlerts,
+        offlineSync
+      }
+    });
+  };
+
+  const handleTogglePushNotifs = () => {
+    const next = !pushNotifs;
+    setPushNotifs(next);
+    updateUser({
+      preferences: {
+        ...(user.preferences || {}),
+        soundBeep,
+        vibration,
+        highPerfCam,
+        pushNotifs: next,
+        emailAlerts,
+        offlineSync
+      }
+    });
+  };
+
+  const handleToggleEmailAlerts = () => {
+    const next = !emailAlerts;
+    setEmailAlerts(next);
+    updateUser({
+      preferences: {
+        ...(user.preferences || {}),
+        soundBeep,
+        vibration,
+        highPerfCam,
+        pushNotifs,
+        emailAlerts: next,
+        offlineSync
+      }
+    });
+  };
+
+  const handleToggleOfflineSync = () => {
+    const next = !offlineSync;
+    setOfflineSync(next);
+    updateUser({
+      preferences: {
+        ...(user.preferences || {}),
+        soundBeep,
+        vibration,
+        highPerfCam,
+        pushNotifs,
+        emailAlerts,
+        offlineSync: next
+      }
+    });
   };
 
   // Events joined / registered by the logged-in user
@@ -321,7 +407,7 @@ export const ProfileView: React.FC = () => {
               <input 
                 type="checkbox" 
                 checked={highPerfCam} 
-                onChange={() => setHighPerfCam(!highPerfCam)}
+                onChange={handleToggleHighPerfCam}
                 style={switchStyle}
               />
             </div>
@@ -361,7 +447,7 @@ export const ProfileView: React.FC = () => {
               <input 
                 type="checkbox" 
                 checked={pushNotifs} 
-                onChange={() => setPushNotifs(!pushNotifs)}
+                onChange={handleTogglePushNotifs}
                 style={switchStyle}
               />
             </div>
@@ -377,7 +463,7 @@ export const ProfileView: React.FC = () => {
               <input 
                 type="checkbox" 
                 checked={emailAlerts} 
-                onChange={() => setEmailAlerts(!emailAlerts)}
+                onChange={handleToggleEmailAlerts}
                 style={switchStyle}
               />
             </div>
@@ -393,7 +479,7 @@ export const ProfileView: React.FC = () => {
               <input 
                 type="checkbox" 
                 checked={offlineSync} 
-                onChange={() => setOfflineSync(!offlineSync)}
+                onChange={handleToggleOfflineSync}
                 style={switchStyle}
               />
             </div>
@@ -442,7 +528,19 @@ export const ProfileView: React.FC = () => {
           <div style={{ marginTop: '0.85rem' }}>
             <button
               type="button"
-              onClick={() => syncAllDataToCloud()}
+              onClick={async () => {
+                updateUser({
+                  preferences: {
+                    soundBeep,
+                    vibration,
+                    highPerfCam,
+                    pushNotifs,
+                    emailAlerts,
+                    offlineSync
+                  }
+                });
+                await syncAllDataToCloud();
+              }}
               style={{
                 background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)',
                 color: '#FFFFFF',
@@ -460,7 +558,7 @@ export const ProfileView: React.FC = () => {
                 boxShadow: '0 4px 12px rgba(37, 99, 235, 0.25)'
               }}
             >
-              <RefreshCw size={16} /> Sync All App Data to Cloud Database
+              <RefreshCw size={16} /> Save & Sync Cloud Data
             </button>
           </div>
         </div>

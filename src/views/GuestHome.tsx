@@ -39,6 +39,14 @@ const getInitials = (name?: string, email?: string): string => {
   return 'EP';
 };
 
+const getCleanDescription = (desc?: string): string => {
+  if (!desc) return '';
+  const trimmed = desc.trim();
+  if (/^custom\s+[\w_]+\s+requirement$/i.test(trimmed)) return '';
+  if (/^custom\s+requirement$/i.test(trimmed)) return '';
+  return trimmed;
+};
+
 export const GuestHome: React.FC = () => {
   const { user, events, guests, saveEvent, saveGuest, openDigitalPass, addNotification, showToast } = useApp();
 
@@ -105,6 +113,11 @@ export const GuestHome: React.FC = () => {
   });
 
   const handleOpenRegistration = (evt: EventItem, existingInviteId?: string, defaultEmail?: string, defaultMobile?: string) => {
+    if (user.role === 'manager') {
+      showToast('You are not allowed to join or register for events.', 'warning');
+      return;
+    }
+
     // Check if user has already joined / registered for this event
     if (!existingInviteId) {
       const alreadyJoined = guests.find(g => 
@@ -131,38 +144,51 @@ export const GuestHome: React.FC = () => {
     setFormErrors({});
     setIsSubmitting(false);
 
-    const initialFormData: Record<string, any> = {};
-    const reqs = evt.requirements || [];
+    // Prefill form
+    const prefill: Record<string, any> = {};
+    if (user.name) prefill['Full Name'] = user.name;
+    if (defaultEmail || user.email) prefill['Email Address'] = defaultEmail || user.email;
+    if (defaultMobile || user.mobile) prefill['Mobile Number'] = defaultMobile || user.mobile;
+    if (user.college) prefill['College / Institute'] = user.college;
+    if (user.branch) prefill['Department / Branch'] = user.branch;
 
-    reqs.forEach(req => {
-      const lower = req.label.toLowerCase();
-      if (req.type === 'email' || lower.includes('email')) {
-        initialFormData[req.label] = defaultEmail || user.email || '';
-      } else if (req.type === 'mobile' || lower.includes('mobile') || lower.includes('phone')) {
-        initialFormData[req.label] = defaultMobile || user.mobile || '';
-      } else if (lower.includes('name')) {
-        initialFormData[req.label] = user.name && user.name !== 'Pending Guest Submission' ? user.name : '';
-      } else {
-        initialFormData[req.label] = '';
+    // Prefill answers from existing invitation if present
+    if (existingInviteId) {
+      const invRecord = guests.find(g => g.id === existingInviteId);
+      if (invRecord?.answers) {
+        Object.assign(prefill, invRecord.answers);
       }
-    });
+    }
 
-    setFormData(initialFormData);
+    setFormData(prefill);
     setUploadedFiles([]);
   };
 
   const handleJoinByEventId = async (e: React.FormEvent) => {
     e.preventDefault();
-    const query = inputEventId.trim();
-    if (!query) return;
+    const raw = inputEventId.trim();
+    if (!raw) return;
+
+    if (user.role === 'manager') {
+      showToast('You are not allowed to join or register for events.', 'warning');
+      return;
+    }
+
+    let query = raw;
+    if (query.includes('eventId=')) {
+      query = query.split('eventId=')[1].split('&')[0];
+    }
+    query = query.replace(/^#/, '').trim();
+    const lowerQuery = query.toLowerCase();
+    const cleanAlpha = lowerQuery.replace(/[^a-z0-9]/g, '');
 
     // 1. Check if user entered a specific Token Code, Pass ID, or Guest ID
     const tokenMatchedGuest = guests.find(g => 
-      (g.token && g.token.toLowerCase() === query.toLowerCase()) ||
-      (g.passId && g.passId.toLowerCase() === query.toLowerCase()) ||
-      (g.id && g.id.toLowerCase() === query.toLowerCase()) ||
-      (g.tokens && g.tokens.some(t => t.toLowerCase() === query.toLowerCase())) ||
-      (g.tokenList && g.tokenList.some(item => item.tokenCode.toLowerCase() === query.toLowerCase()))
+      (g.token && g.token.toLowerCase() === lowerQuery) ||
+      (g.passId && g.passId.toLowerCase() === lowerQuery) ||
+      (g.id && g.id.toLowerCase() === lowerQuery) ||
+      (g.tokens && g.tokens.some(t => t.toLowerCase() === lowerQuery)) ||
+      (g.tokenList && g.tokenList.some(item => item.tokenCode.toLowerCase() === lowerQuery))
     );
 
     let matchedEvent: EventItem | undefined;
@@ -171,20 +197,49 @@ export const GuestHome: React.FC = () => {
       matchedEvent = events.find(e => e.id === tokenMatchedGuest.eventId);
     }
 
-    // 2. Check if user entered Event ID, Prefix, or Event Name in local state
-    if (!matchedEvent) {
-      const lowerQuery = query.toLowerCase();
-      const cleanAlpha = lowerQuery.replace(/[^a-z0-9]/g, '');
-      matchedEvent = events.find(evt => 
-        evt.id.toLowerCase() === lowerQuery ||
-        (cleanAlpha && evt.id.toLowerCase().replace(/[^a-z0-9]/g, '') === cleanAlpha) ||
-        (evt.tokenSettings?.prefix && evt.tokenSettings.prefix.toLowerCase() === lowerQuery) ||
-        evt.name.toLowerCase() === lowerQuery ||
-        evt.name.toLowerCase().includes(lowerQuery)
+    const isEventMatch = (evt: EventItem) => {
+      if (!evt) return false;
+      const evtId = (evt.id || '').toLowerCase();
+      const evtCleanId = evtId.replace(/[^a-z0-9]/g, '');
+      const evtName = (evt.name || '').toLowerCase();
+      const evtPrefix = (evt.tokenSettings?.prefix || '').toLowerCase();
+
+      return (
+        evtId === lowerQuery ||
+        (cleanAlpha && evtCleanId === cleanAlpha) ||
+        (cleanAlpha && evtCleanId.includes(cleanAlpha)) ||
+        (cleanAlpha && cleanAlpha.includes(evtCleanId)) ||
+        (cleanAlpha && ('evt' + cleanAlpha) === evtCleanId) ||
+        (cleanAlpha && evtCleanId === ('evt' + cleanAlpha)) ||
+        (evtPrefix && evtPrefix === lowerQuery) ||
+        evtName === lowerQuery ||
+        evtName.includes(lowerQuery)
       );
+    };
+
+    // 2. Check in local context events
+    if (!matchedEvent) {
+      matchedEvent = events.find(isEventMatch);
     }
 
-    // 3. If not found in local memory, search directly in Firestore
+    // 3. Check in localStorage cache if not in memory
+    if (!matchedEvent) {
+      try {
+        const localSaved = localStorage.getItem('ep_react_events') || localStorage.getItem('eventpass_events');
+        if (localSaved) {
+          const parsed: EventItem[] = JSON.parse(localSaved);
+          if (Array.isArray(parsed)) {
+            const foundLocal = parsed.find(isEventMatch);
+            if (foundLocal) {
+              matchedEvent = foundLocal;
+              saveEvent(foundLocal);
+            }
+          }
+        }
+      } catch (err) {}
+    }
+
+    // 4. If not found in local memory, search directly in database
     if (!matchedEvent) {
       try {
         const remoteEvt = await fetchEventFromDbById(query);
@@ -198,11 +253,11 @@ export const GuestHome: React.FC = () => {
     }
 
     if (!matchedEvent) {
-      showToast(`No party/event found with ID / Code "${query}". Please verify the Event ID.`, 'error');
+      showToast(`No party/event found with ID / Code "${raw}". Please verify the Event ID.`, 'error');
       return;
     }
 
-    // 4. Check if current user has an existing registration or invitation for this event
+    // 5. Check if current user has an existing registration or invitation for this event
     const userExistingReg = guests.find(g => 
       g.eventId === matchedEvent!.id && (
         (tokenMatchedGuest && tokenMatchedGuest.id === g.id) ||
@@ -236,7 +291,7 @@ export const GuestHome: React.FC = () => {
       }
     }
 
-    // 5. Open registration form to join the party
+    // 6. Open registration form to join the party
     showToast(`Joining "${matchedEvent.name}"... Please fill event requirements.`, 'success');
     handleOpenRegistration(matchedEvent);
     setInputEventId('');
@@ -876,8 +931,8 @@ export const GuestHome: React.FC = () => {
                           <div className="form-hint" style={{ color: '#DC2626', fontWeight: 700, marginTop: 4 }}>
                             ⚠️ {formErrors[req.label]}
                           </div>
-                        ) : req.description ? (
-                          <div className="form-hint">{req.description}</div>
+                        ) : getCleanDescription(req.description) ? (
+                          <div className="form-hint">{getCleanDescription(req.description)}</div>
                         ) : null}
                       </div>
                     );
@@ -914,8 +969,8 @@ export const GuestHome: React.FC = () => {
                           <div className="form-hint" style={{ color: '#DC2626', fontWeight: 700, marginTop: 4 }}>
                             ⚠️ {formErrors[req.label]}
                           </div>
-                        ) : req.description ? (
-                          <div className="form-hint">{req.description}</div>
+                        ) : getCleanDescription(req.description) ? (
+                          <div className="form-hint">{getCleanDescription(req.description)}</div>
                         ) : null}
                       </div>
                     );
@@ -1056,7 +1111,7 @@ export const GuestHome: React.FC = () => {
                                     )}
                                   </div>
                                   <div className="form-hint" style={{ marginTop: '0.25rem', color: hasError ? '#B91C1C' : undefined }}>
-                                    {req.description || (isPdf ? 'Supports official .PDF files up to 10MB' : 'Supports JPG, PNG, WEBP files')}
+                                    {getCleanDescription(req.description) || (isPdf ? 'Supports official .PDF files up to 10MB' : 'Supports JPG, PNG, WEBP files')}
                                   </div>
                                 </div>
                               )}
@@ -1118,8 +1173,8 @@ export const GuestHome: React.FC = () => {
                           <div className="form-hint" style={{ color: '#DC2626', fontWeight: 700 }}>
                             ⚠️ {formErrors[req.label]}
                           </div>
-                        ) : req.description ? (
-                          <div className="form-hint">{req.description}</div>
+                        ) : getCleanDescription(req.description) ? (
+                          <div className="form-hint">{getCleanDescription(req.description)}</div>
                         ) : null}
                       </div>
                     );
@@ -1153,8 +1208,8 @@ export const GuestHome: React.FC = () => {
                         <div className="form-hint" style={{ color: '#DC2626', fontWeight: 700, marginTop: 4 }}>
                           ⚠️ {formErrors[req.label]}
                         </div>
-                      ) : req.description ? (
-                        <div className="form-hint">{req.description}</div>
+                      ) : getCleanDescription(req.description) ? (
+                        <div className="form-hint">{getCleanDescription(req.description)}</div>
                       ) : null}
                     </div>
                   );

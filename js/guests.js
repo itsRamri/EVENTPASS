@@ -157,6 +157,7 @@ class GuestModule {
 
     const reqAttr = req.required ? 'required' : '';
     const reqStar = req.required ? '<span class="required-star">*</span>' : '<span style="font-size:0.75rem;color:var(--text-muted);">(Optional)</span>';
+    const cleanDesc = (req.description && !/^custom\s+[\w_]+\s+requirement$/i.test(req.description.trim()) && !/^custom\s+requirement$/i.test(req.description.trim())) ? req.description.trim() : '';
 
     if (req.type === 'dropdown' && req.options) {
       return `
@@ -166,7 +167,7 @@ class GuestModule {
             <option value="">Select option...</option>
             ${req.options.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
           </select>
-          ${req.description ? `<div class="form-hint">${req.description}</div>` : ''}
+          ${cleanDesc ? `<div class="form-hint">${cleanDesc}</div>` : ''}
         </div>
       `;
     }
@@ -183,7 +184,7 @@ class GuestModule {
               </label>
             `).join('')}
           </div>
-          ${req.description ? `<div class="form-hint">${req.description}</div>` : ''}
+          ${cleanDesc ? `<div class="form-hint">${cleanDesc}</div>` : ''}
         </div>
       `;
     }
@@ -195,7 +196,7 @@ class GuestModule {
           <div class="glass-panel" style="padding: 1rem; text-align: center; border: 1px dashed rgba(99,102,241,0.4); cursor: pointer;" onclick="document.getElementById('file-input-${idx}').click()">
             <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">📤</div>
             <div style="font-size: 0.85rem; font-weight: 600;" id="file-label-${idx}">Click to upload file / photo</div>
-            <div class="form-hint">${req.description || 'Supports PDF, JPG, PNG up to 5MB'}</div>
+            <div class="form-hint">${cleanDesc || 'Supports PDF, JPG, PNG up to 5MB'}</div>
             <input type="file" id="file-input-${idx}" style="display: none;" onchange="guest.handleFileUpload(event, '${req.label}', 'file-label-${idx}')" />
           </div>
         </div>
@@ -206,7 +207,7 @@ class GuestModule {
       <div class="form-group">
         <label class="form-label">${req.label} ${reqStar}</label>
         <input type="${req.type === 'number' ? 'number' : 'text'}" name="${req.label}" placeholder="Enter ${req.label}..." ${reqAttr} />
-        ${req.description ? `<div class="form-hint">${req.description}</div>` : ''}
+        ${cleanDesc ? `<div class="form-hint">${cleanDesc}</div>` : ''}
       </div>
     `;
   }

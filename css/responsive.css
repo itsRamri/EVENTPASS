@@ -446,11 +446,18 @@
 body.keyboard-open .floating-dock-wrapper,
 body.keyboard-open .bottom-nav,
 body.keyboard-open .quick-dock-overlay,
-body.keyboard-open .desktop-sidebar,
-body.keyboard-open .wizard-footer-actions {
+body.keyboard-open .desktop-sidebar {
   display: none !important;
   opacity: 0 !important;
   pointer-events: none !important;
+}
+
+body.keyboard-open .wizard-footer-actions {
+  display: flex !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  margin-top: 1.25rem !important;
+  padding-bottom: 2rem !important;
 }
 
 body.keyboard-open .app-wrapper {

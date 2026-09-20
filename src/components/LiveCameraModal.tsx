@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Camera, RefreshCw, Check, X, AlertCircle, SwitchCamera } from 'lucide-react';
 
 interface LiveCameraModalProps {
@@ -143,19 +144,20 @@ export const LiveCameraModal: React.FC<LiveCameraModalProps> = ({
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div 
       className="modal-overlay active" 
       style={{ 
         position: 'fixed',
         inset: 0,
-        zIndex: 99999,
+        zIndex: 100000,
         background: 'rgba(15, 23, 42, 0.75)',
         backdropFilter: 'blur(6px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         padding: '1rem',
+        overflowY: 'auto',
         touchAction: 'none'
       }} 
       onClick={onClose}
@@ -166,6 +168,7 @@ export const LiveCameraModal: React.FC<LiveCameraModalProps> = ({
         style={{ 
           maxWidth: 400, 
           width: '100%', 
+          maxHeight: 'min(92vh, 600px)',
           background: '#FFFFFF', 
           borderRadius: 24, 
           overflow: 'hidden', 
@@ -175,11 +178,12 @@ export const LiveCameraModal: React.FC<LiveCameraModalProps> = ({
           flexDirection: 'column',
           border: '1.5px solid #E2E8F0',
           touchAction: 'auto',
-          transform: 'none'
+          transform: 'none',
+          margin: 'auto'
         }}
       >
         {/* Modal Header */}
-        <div style={{ padding: '1rem 1.25rem', background: '#0F172A', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+        <div style={{ padding: '0.9rem 1.15rem', background: '#0F172A', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
             <Camera size={19} color="#38BDF8" />
             <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: '#FFFFFF' }}>
@@ -208,7 +212,7 @@ export const LiveCameraModal: React.FC<LiveCameraModalProps> = ({
 
         {/* STEP 1: LIVE CAMERA STREAM */}
         {step === 'camera' && (
-          <div style={{ padding: '1.25rem', textAlign: 'center' }}>
+          <div style={{ padding: '1rem 1.15rem', textAlign: 'center', overflowY: 'auto' }}>
             {cameraError ? (
               <div style={{ padding: '1.75rem 1rem', background: '#FEF2F2', borderRadius: 16, border: '1px solid #FECACA', color: '#991B1B' }}>
                 <AlertCircle size={38} color="#DC2626" style={{ margin: '0 auto 0.75rem' }} />
@@ -230,12 +234,12 @@ export const LiveCameraModal: React.FC<LiveCameraModalProps> = ({
                   style={{ 
                     position: 'relative', 
                     width: '100%', 
-                    height: 270, 
+                    height: 'min(235px, 32vh)', 
                     borderRadius: 18, 
                     overflow: 'hidden', 
                     background: '#0F172A',
                     boxShadow: 'inset 0 0 20px rgba(0,0,0,0.5)',
-                    margin: '0 auto 0.85rem'
+                    margin: '0 auto 0.75rem'
                   }}
                 >
                   <video 
@@ -258,8 +262,8 @@ export const LiveCameraModal: React.FC<LiveCameraModalProps> = ({
                       top: '50%', 
                       left: '50%', 
                       transform: 'translate(-50%, -50%)', 
-                      width: 155, 
-                      height: 200, 
+                      width: 140, 
+                      height: 180, 
                       borderRadius: '50%', 
                       border: '2.5px dashed rgba(56, 189, 248, 0.9)', 
                       boxShadow: '0 0 0 9999px rgba(15, 23, 42, 0.35)', 
@@ -300,7 +304,7 @@ export const LiveCameraModal: React.FC<LiveCameraModalProps> = ({
                   )}
                 </div>
 
-                <p style={{ fontSize: '0.8rem', color: '#64748B', margin: '0 0 1rem', fontWeight: 600 }}>
+                <p style={{ fontSize: '0.775rem', color: '#64748B', margin: '0 0 0.85rem', fontWeight: 600 }}>
                   📸 Position your face inside the frame and tap capture.
                 </p>
 
@@ -336,13 +340,13 @@ export const LiveCameraModal: React.FC<LiveCameraModalProps> = ({
 
         {/* STEP 2: PHOTO PREVIEW & UPLOAD (STABLE & DIRECT) */}
         {step === 'preview' && capturedImage && (
-          <div style={{ padding: '1.25rem', textAlign: 'center' }}>
+          <div style={{ padding: '1.25rem', textAlign: 'center', overflowY: 'auto' }}>
             {/* Captured Image Preview Box */}
             <div 
               style={{ 
                 position: 'relative', 
-                width: 210, 
-                height: 210, 
+                width: 200, 
+                height: 200, 
                 margin: '0 auto 1rem', 
                 borderRadius: 20, 
                 overflow: 'hidden', 
@@ -399,6 +403,7 @@ export const LiveCameraModal: React.FC<LiveCameraModalProps> = ({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
