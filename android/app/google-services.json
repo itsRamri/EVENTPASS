@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "464339617563",
+    "project_id": "eventpass-ad141",
+    "storage_bucket": "eventpass-ad141.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:464339617563:android:0bab8a4ed84718b9c575be",
+        "android_client_info": {
+          "package_name": "com.EVENTPASS.RSK"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBi0SGNVXJN6xzN_zaUpZYQUfADaiP-joA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
