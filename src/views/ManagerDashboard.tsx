@@ -15,6 +15,22 @@ import {
 } from 'lucide-react';
 import { EventItem } from '../types';
 
+// Helper to get initials from user name or email
+const getInitials = (name?: string, email?: string): string => {
+  if (name && name.trim().length > 0) {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 1) {
+      return parts[0].slice(0, 2).toUpperCase();
+    }
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  if (email && email.trim().length > 0) {
+    const clean = email.trim().split('@')[0];
+    return clean.slice(0, 2).toUpperCase();
+  }
+  return 'EP';
+};
+
 export const ManagerDashboard: React.FC = () => {
   const { 
     user, 
@@ -117,16 +133,27 @@ export const ManagerDashboard: React.FC = () => {
                   width: 'clamp(68px, 18vw, 82px)', 
                   height: 'clamp(68px, 18vw, 82px)', 
                   borderRadius: '50%', 
-                  background: 'linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)',
+                  background: 'linear-gradient(135deg, #1E40AF 0%, #2563EB 100%)',
                   border: '3.5px solid #2563EB',
-                  boxShadow: '0 6px 18px rgba(37, 99, 235, 0.2)',
+                  boxShadow: '0 6px 18px rgba(37, 99, 235, 0.25)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: '#2563EB'
+                  color: '#FFFFFF',
+                  overflow: 'hidden'
                 }} 
               >
-                <User size={38} strokeWidth={2.3} />
+                {user.avatar && !user.avatar.includes('unsplash.com') ? (
+                  <img
+                    src={user.avatar}
+                    alt={user.name || 'User'}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                ) : (
+                  <span style={{ fontSize: 'clamp(1.35rem, 3.8vw, 1.75rem)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    {getInitials(user.name, user.email)}
+                  </span>
+                )}
               </div>
               <span 
                 style={{ 

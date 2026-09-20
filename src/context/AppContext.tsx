@@ -737,11 +737,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const showToast = (message: string, type: 'success' | 'info' | 'warning' | 'error' = 'info', title?: string) => {
-    const id = 'toast_' + Date.now() + Math.random();
-    setToasts(prev => [...prev.slice(-4), { id, message, type, title }]);
+    const id = 'toast_' + Date.now();
+    // Keep single active toast to prevent screen-flooding stacks
+    setToasts([{ id, message, type, title }]);
     setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id));
-    }, 4200);
+    }, 3800);
   };
 
   const dismissToast = (id: string) => {

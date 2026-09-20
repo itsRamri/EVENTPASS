@@ -23,6 +23,22 @@ import {
 import { compressImageFile, readFileAsDataUrl } from '../utils/image';
 import { fetchEventFromDbById } from '../services/dbService';
 
+// Helper to get initials from user name or email
+const getInitials = (name?: string, email?: string): string => {
+  if (name && name.trim().length > 0) {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 1) {
+      return parts[0].slice(0, 2).toUpperCase();
+    }
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  if (email && email.trim().length > 0) {
+    const clean = email.trim().split('@')[0];
+    return clean.slice(0, 2).toUpperCase();
+  }
+  return 'EP';
+};
+
 export const GuestHome: React.FC = () => {
   const { user, events, guests, saveEvent, saveGuest, openDigitalPass, addNotification, showToast } = useApp();
 
@@ -390,20 +406,31 @@ export const GuestHome: React.FC = () => {
         <div className="welcome-greeting" style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
           <div 
             style={{ 
-              width: 46, 
-              height: 46, 
+              width: 48, 
+              height: 48, 
               borderRadius: 'var(--radius-md)', 
-              background: 'linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)', 
+              background: 'linear-gradient(135deg, #1E40AF 0%, #2563EB 100%)', 
               border: '2px solid #38BDF8', 
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center', 
-              color: '#2563EB',
+              color: '#FFFFFF',
               flexShrink: 0,
-              boxShadow: '0 4px 12px rgba(56, 189, 248, 0.2)'
+              boxShadow: '0 4px 12px rgba(56, 189, 248, 0.25)',
+              overflow: 'hidden'
             }}
           >
-            <User size={24} strokeWidth={2.3} />
+            {user.avatar && !user.avatar.includes('unsplash.com') ? (
+              <img
+                src={user.avatar}
+                alt={user.name || 'User'}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            ) : (
+              <span style={{ fontSize: '1.05rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+                {getInitials(user.name, user.email)}
+              </span>
+            )}
           </div>
           <div className="greeting-text">
             <h1 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
