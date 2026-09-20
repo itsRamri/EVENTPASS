@@ -1054,7 +1054,7 @@ export const LiveScanner: React.FC = () => {
                         gap: '0.5rem'
                       }}
                     >
-                      <CheckCircle2 size={20} /> Check In Inside Gate
+                      <CheckCircle2 size={20} /> Check In
                     </button>
                   ) : (
                     <div style={{ padding: '0.75rem', background: '#F1F5F9', borderRadius: 12, color: '#64748B', fontWeight: 700, fontSize: '0.85rem', textAlign: 'center' }}>
