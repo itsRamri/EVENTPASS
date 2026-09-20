@@ -105,33 +105,41 @@ export const LiveScanner: React.FC = () => {
     try {
       if (raw.startsWith('{') && raw.endsWith('}')) {
         const parsed = JSON.parse(raw);
-        extractedCode = (parsed.token || parsed.passId || parsed.code || q).toUpperCase();
+        extractedCode = (parsed.token || parsed.passId || parsed.code || parsed.id || parsed.guestId || q).toUpperCase();
       } else if (raw.includes('?')) {
         const urlParams = new URLSearchParams(raw.split('?')[1]);
-        const paramToken = urlParams.get('token') || urlParams.get('pass') || urlParams.get('passId');
+        const paramToken = urlParams.get('token') || urlParams.get('pass') || urlParams.get('passId') || urlParams.get('guestId') || urlParams.get('id') || urlParams.get('code') || urlParams.get('t');
         if (paramToken) extractedCode = paramToken.toUpperCase();
       }
     } catch {}
 
+    const baseExtracted = extractedCode.replace(/-\d+$/, '');
+    const baseQ = q.replace(/-\d+$/, '');
+
     // 1. Search in local guests array
     let guest = guests.find(g => 
       (g.token && g.token.toUpperCase() === extractedCode) || 
-      (g.tokens && g.tokens.some(t => t.toUpperCase() === extractedCode)) ||
-      (g.tokenList && g.tokenList.some(t => (t.tokenCode || '').toUpperCase() === extractedCode)) ||
-      (g.passId && g.passId.toUpperCase() === extractedCode) ||
-      (g.id && g.id.toUpperCase() === extractedCode) ||
+      (g.token && g.token.toUpperCase() === baseExtracted) ||
+      (g.tokens && g.tokens.some(t => t.toUpperCase() === extractedCode || t.toUpperCase() === baseExtracted)) ||
+      (g.tokenList && g.tokenList.some(t => (t.tokenCode || '').toUpperCase() === extractedCode || (t.tokenCode || '').toUpperCase() === baseExtracted)) ||
+      (g.passId && (g.passId.toUpperCase() === extractedCode || g.passId.toUpperCase() === baseExtracted)) ||
+      (g.id && (g.id.toUpperCase() === extractedCode || g.id.toUpperCase() === baseExtracted)) ||
       (g.token && g.token.toUpperCase() === q) || 
-      (g.tokens && g.tokens.some(t => t.toUpperCase() === q)) ||
-      (g.tokenList && g.tokenList.some(t => (t.tokenCode || '').toUpperCase() === q)) ||
-      (g.passId && g.passId.toUpperCase() === q) ||
-      (g.id && g.id.toUpperCase() === q) ||
+      (g.token && g.token.toUpperCase() === baseQ) ||
+      (g.tokens && g.tokens.some(t => t.toUpperCase() === q || t.toUpperCase() === baseQ)) ||
+      (g.tokenList && g.tokenList.some(t => (t.tokenCode || '').toUpperCase() === q || (t.tokenCode || '').toUpperCase() === baseQ)) ||
+      (g.passId && (g.passId.toUpperCase() === q || g.passId.toUpperCase() === baseQ)) ||
+      (g.id && (g.id.toUpperCase() === q || g.id.toUpperCase() === baseQ)) ||
+      (g.token && (extractedCode.startsWith(g.token.toUpperCase()) || g.token.toUpperCase().startsWith(extractedCode))) ||
+      (g.passId && (extractedCode.startsWith(g.passId.toUpperCase()) || g.passId.toUpperCase().startsWith(extractedCode))) ||
+      (g.id && (extractedCode.startsWith(g.id.toUpperCase()) || g.id.toUpperCase().startsWith(extractedCode))) ||
       (g.name && g.name.toUpperCase().includes(q) && q.length > 3)
     );
 
     // 2. If not found in local memory, search directly in Firestore database
     if (!guest) {
       try {
-        const dbGuest = await fetchGuestFromDbByToken(extractedCode) || await fetchGuestFromDbByToken(q);
+        const dbGuest = await fetchGuestFromDbByToken(extractedCode) || await fetchGuestFromDbByToken(baseExtracted) || await fetchGuestFromDbByToken(q);
         if (dbGuest) {
           guest = dbGuest;
           saveGuest(dbGuest);

@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 
 export const DigitalPassModal: React.FC = () => {
-  const { activePassGuestId, closeDigitalPass, guests, events, showToast } = useApp();
+  const { activePassGuestId, closeDigitalPass, guests, events, saveGuest, showToast } = useApp();
   const [selectedTokenIdx, setSelectedTokenIdx] = useState(0);
 
   if (!activePassGuestId) return null;
@@ -30,6 +30,11 @@ export const DigitalPassModal: React.FC = () => {
     tokenSettings: { prefix: 'EP-PASS' }
   };
 
+  // Derive stable fallback token code tied to this guest if guest.token is missing
+  const activeGuestToken = guest.token && guest.token.trim() !== ''
+    ? guest.token
+    : (guest.passId && guest.passId.trim() !== '' ? guest.passId : `${event.tokenSettings?.prefix || 'EP-PASS'}-${guest.id.replace(/[^a-zA-Z0-9]/g, '').slice(-6).toUpperCase()}`);
+
   // Multiple Tokens Support (e.g. 15 tokens per user)
   const tokensList = guest.tokenList && guest.tokenList.length > 0
     ? guest.tokenList
@@ -42,7 +47,7 @@ export const DigitalPassModal: React.FC = () => {
             scannedBy: guest.scannedBy
           }))
         : [{
-            tokenCode: guest.token || `${event.tokenSettings?.prefix || 'EP-PASS'}-1001`,
+            tokenCode: activeGuestToken,
             index: 1,
             status: (guest.status === 'checkedin' ? 'used' : 'valid') as 'valid' | 'used',
             checkInTime: guest.checkInTime,
