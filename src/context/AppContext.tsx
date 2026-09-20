@@ -407,18 +407,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const updateGuestStatus = (guestId: string, status: GuestStatus, scannerName?: string) => {
     const formattedTime = getFormattedTimestamp();
     const activeStaff = scannerName || `${user.name} (${user.role === 'manager' ? 'Manager' : 'Staff'})`;
+    let targetGuest: GuestRegistration | null = null;
+
     setGuests(prev => prev.map(g => {
       if (g.id === guestId) {
         const evt = events.find(e => e.id === g.eventId);
         const prefix = evt?.tokenSettings?.prefix || 'EP-PASS';
         const perUserTokens = g.tokenCount || evt?.tokenSettings?.tokensPerUser || 1;
 
-        // Generate base unique token code
-        const baseToken = g.token && g.token.trim() !== '' 
-          ? g.token.split('-')[0] + '-' + g.token.split('-').slice(1, 3).join('-')
-          : `${prefix}-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+        // Generate clean base unique token code
+        const baseToken = (g.token && g.token.trim() !== '') 
+          ? g.token.replace(/-\d+$/, '')
+          : `${prefix}-${Date.now().toString(36).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
         
-        const uniquePassId = g.passId && g.passId.trim() !== '' 
+        const uniquePassId = (g.passId && g.passId.trim() !== '') 
           ? g.passId 
           : `PASS-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
 
@@ -445,7 +447,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const updatedGuest: GuestRegistration = {
           ...g,
           status,
-          token: status === 'approved' || status === 'checkedin' ? tokens[0] || baseToken : g.token,
+          token: (status === 'approved' || status === 'checkedin') ? (tokens[0] || baseToken) : (g.token || baseToken),
           tokens: tokens,
           tokenList: tokenList,
           tokenCount: perUserTokens,
@@ -455,6 +457,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           scanTimestamp: formattedTime,
           scannedBy: status === 'checkedin' ? activeStaff : g.scannedBy
         };
+
+        targetGuest = updatedGuest;
         syncGuestToDb(updatedGuest);
 
         if (status === 'approved') {
@@ -473,7 +477,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return g;
     }));
 
-    updateGuestStatusInDb(guestId, status, status === 'checkedin' ? formattedTime : undefined, status === 'checkedin' ? activeStaff : undefined);
+    if (targetGuest) {
+      const tg: GuestRegistration = targetGuest;
+      updateGuestStatusInDb(
+        guestId, 
+        status, 
+        status === 'checkedin' ? formattedTime : undefined, 
+        status === 'checkedin' ? activeStaff : undefined,
+        {
+          token: tg.token,
+          tokens: tg.tokens,
+          tokenList: tg.tokenList,
+          tokenCount: tg.tokenCount,
+          passId: tg.passId,
+          usedTokens: tg.usedTokens
+        }
+      );
+    } else {
+      updateGuestStatusInDb(guestId, status, status === 'checkedin' ? formattedTime : undefined, status === 'checkedin' ? activeStaff : undefined);
+    }
 
     // Create immutable audit record upon successful check-in
     if (status === 'checkedin') {

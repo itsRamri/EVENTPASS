@@ -1,6 +1,6 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
-import { Bell, Sparkles, ChevronLeft } from 'lucide-react';
+import { Bell, ChevronLeft } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
   const { 
@@ -42,7 +42,7 @@ export const Navbar: React.FC = () => {
   return (
     <header className="top-nav">
       {isCreateEventView ? (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
           <button
             type="button"
             onClick={() => {
@@ -50,20 +50,20 @@ export const Navbar: React.FC = () => {
               navigate(user.role === 'guest' ? 'guest_home' : 'dashboard');
             }}
             style={{
-              background: 'transparent',
-              border: 'none',
+              background: '#F8FAFC',
+              border: '1px solid #E2E8F0',
               color: '#0F172A',
-              padding: '0.35rem',
-              borderRadius: '8px',
+              padding: '0.4rem',
+              borderRadius: '10px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
-              transition: 'background 0.2s ease',
+              transition: 'all 0.2s ease',
             }}
             aria-label="Go Back"
           >
-            <ChevronLeft size={24} strokeWidth={2.6} />
+            <ChevronLeft size={22} strokeWidth={2.6} />
           </button>
           <h1 
             style={{ 
@@ -79,27 +79,27 @@ export const Navbar: React.FC = () => {
           </h1>
         </div>
       ) : isGuestApprovalView ? (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
           <button
             type="button"
             onClick={() => {
               navigate(user.role === 'guest' ? 'guest_home' : 'dashboard');
             }}
             style={{
-              background: 'transparent',
-              border: 'none',
+              background: '#F8FAFC',
+              border: '1px solid #E2E8F0',
               color: '#0F172A',
-              padding: '0.35rem',
-              borderRadius: '8px',
+              padding: '0.4rem',
+              borderRadius: '10px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
-              transition: 'background 0.2s ease',
+              transition: 'all 0.2s ease',
             }}
             aria-label="Go Back"
           >
-            <ChevronLeft size={24} strokeWidth={2.6} />
+            <ChevronLeft size={22} strokeWidth={2.6} />
           </button>
           <h1 
             style={{ 
@@ -115,27 +115,27 @@ export const Navbar: React.FC = () => {
           </h1>
         </div>
       ) : isStaffAccessView ? (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
           <button
             type="button"
             onClick={() => {
               navigate(user.role === 'guest' ? 'guest_home' : 'dashboard');
             }}
             style={{
-              background: 'transparent',
-              border: 'none',
+              background: '#F8FAFC',
+              border: '1px solid #E2E8F0',
               color: '#0F172A',
-              padding: '0.35rem',
-              borderRadius: '8px',
+              padding: '0.4rem',
+              borderRadius: '10px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
-              transition: 'background 0.2s ease',
+              transition: 'all 0.2s ease',
             }}
             aria-label="Go Back"
           >
-            <ChevronLeft size={24} strokeWidth={2.6} />
+            <ChevronLeft size={22} strokeWidth={2.6} />
           </button>
           <h1 
             style={{ 
@@ -151,27 +151,27 @@ export const Navbar: React.FC = () => {
           </h1>
         </div>
       ) : isNotificationsView ? (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
           <button
             type="button"
             onClick={() => {
               navigate(user.role === 'guest' ? 'guest_home' : 'dashboard');
             }}
             style={{
-              background: 'transparent',
-              border: 'none',
+              background: '#F8FAFC',
+              border: '1px solid #E2E8F0',
               color: '#0F172A',
-              padding: '0.35rem',
-              borderRadius: '8px',
+              padding: '0.4rem',
+              borderRadius: '10px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
-              transition: 'background 0.2s ease',
+              transition: 'all 0.2s ease',
             }}
             aria-label="Go Back"
           >
-            <ChevronLeft size={24} strokeWidth={2.6} />
+            <ChevronLeft size={22} strokeWidth={2.6} />
           </button>
           <h1 
             style={{ 
@@ -187,27 +187,27 @@ export const Navbar: React.FC = () => {
           </h1>
         </div>
       ) : isProfileSubpage ? (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
           <button
             type="button"
             onClick={() => {
               setProfileSubpage(null);
             }}
             style={{
-              background: 'transparent',
-              border: 'none',
+              background: '#F8FAFC',
+              border: '1px solid #E2E8F0',
               color: '#0F172A',
-              padding: '0.35rem',
-              borderRadius: '8px',
+              padding: '0.4rem',
+              borderRadius: '10px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
-              transition: 'background 0.2s ease',
+              transition: 'all 0.2s ease',
             }}
             aria-label="Go Back to Profile"
           >
-            <ChevronLeft size={24} strokeWidth={2.6} />
+            <ChevronLeft size={22} strokeWidth={2.6} />
           </button>
           <h1 
             style={{ 
@@ -228,7 +228,20 @@ export const Navbar: React.FC = () => {
           onClick={() => navigate(user.role === 'guest' ? 'guest_home' : user.role === 'scanner' ? 'scanner' : 'dashboard')} 
           style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem' }}
         >
-          <div className="brand-icon-box" style={{ width: '44px', height: '44px', borderRadius: '12px', overflow: 'hidden', padding: '3px', background: '#FFFFFF', border: '1.5px solid #E2E8F0', boxShadow: '0 2px 10px rgba(0,0,0,0.06)', flexShrink: 0 }}>
+          <div 
+            className="brand-icon-box" 
+            style={{ 
+              width: '42px', 
+              height: '42px', 
+              borderRadius: '12px', 
+              overflow: 'hidden', 
+              padding: '2px', 
+              background: '#FFFFFF', 
+              border: '1.5px solid #E2E8F0', 
+              boxShadow: '0 2px 8px rgba(15, 23, 42, 0.06)', 
+              flexShrink: 0 
+            }}
+          >
             <img src="/logo.png" alt="EventPass" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -244,10 +257,38 @@ export const Navbar: React.FC = () => {
           className="icon-btn" 
           onClick={() => navigate('notifications')}
           title="Notifications"
-          style={{ width: '42px', height: '42px', borderRadius: '50%', background: '#F8FAFC', border: '1.5px solid #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1E293B', position: 'relative', cursor: 'pointer', transition: 'all 0.2s ease', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}
+          style={{ 
+            width: '42px', 
+            height: '42px', 
+            borderRadius: '50%', 
+            background: '#F8FAFC', 
+            border: '1.5px solid #E2E8F0', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            color: '#334155', 
+            position: 'relative', 
+            cursor: 'pointer', 
+            transition: 'all 0.2s ease', 
+            boxShadow: '0 2px 6px rgba(15, 23, 42, 0.04)' 
+          }}
         >
-          <Bell size={21} strokeWidth={2.2} />
-          {unreadCount > 0 && <span className="notification-badge-dot" style={{ position: 'absolute', top: 3, right: 3, width: 9, height: 9, borderRadius: '50%', background: '#EF4444', border: '2px solid #FFFFFF' }} />}
+          <Bell size={20} strokeWidth={2.2} />
+          {unreadCount > 0 && (
+            <span 
+              className="notification-badge-dot" 
+              style={{ 
+                position: 'absolute', 
+                top: 4, 
+                right: 4, 
+                width: 9, 
+                height: 9, 
+                borderRadius: '50%', 
+                background: '#EF4444', 
+                border: '2px solid #FFFFFF' 
+              }} 
+            />
+          )}
         </button>
       </div>
     </header>

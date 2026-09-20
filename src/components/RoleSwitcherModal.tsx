@@ -14,21 +14,21 @@ export const RoleSwitcherModal: React.FC = () => {
       title: '👑 Event Manager',
       desc: 'Create events, customize requirement fields, review guest requests, issue passes & configure staff permissions.',
       icon: <Sparkles size={20} />,
-      color: '#818CF8'
+      color: '#2563EB'
     },
     {
       role: 'guest',
       title: '🎟️ Guest / Student',
       desc: 'Browse flagship campus events, submit dynamic registration forms, track approval state & view luxury digital QR pass.',
       icon: <Shield size={20} />,
-      color: '#06B6D4'
+      color: '#0284C7'
     },
     {
       role: 'scanner',
       title: '📷 Scanner / Gate Staff',
       desc: 'High-speed camera scanner, anti-fraud duplicate detection, instant guest check-in & verification.',
       icon: <QrCode size={20} />,
-      color: '#10B981'
+      color: '#059669'
     }
   ];
 
@@ -55,7 +55,7 @@ export const RoleSwitcherModal: React.FC = () => {
                     padding: '1.1rem',
                     cursor: 'pointer',
                     borderColor: isActive ? 'var(--accent-primary)' : 'var(--border-subtle)',
-                    background: isActive ? 'rgba(99, 102, 241, 0.12)' : 'var(--bg-card)',
+                    background: isActive ? 'rgba(37, 99, 235, 0.08)' : 'var(--bg-card)',
                     transition: 'all 0.2s ease'
                   }}
                   onClick={() => {

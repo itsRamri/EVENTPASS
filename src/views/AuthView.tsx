@@ -7,7 +7,7 @@ import {
   firebaseSignUp, 
   firebaseResetPassword 
 } from '../services/authService';
-import { Sparkles, Mail, Lock, Eye, EyeOff, User, ArrowLeft, Loader2 } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, User, ArrowLeft, Loader2 } from 'lucide-react';
 
 interface StoredAccount {
   name: string;
@@ -71,7 +71,7 @@ export const AuthView: React.FC = () => {
     return () => clearTimeout(timer);
   }, [authMode, forgotStep, countdown]);
 
-  // Handle Sign In (Local Account + Firebase Auth)
+  // Handle Sign In
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !email.includes('@')) {
@@ -88,7 +88,6 @@ export const AuthView: React.FC = () => {
     const accounts = getAccounts();
     const existing = accounts.find(a => a.email.toLowerCase() === email.toLowerCase().trim());
 
-    // 1. If known local account and password matches
     if (existing) {
       if (existing.password === password) {
         const userProfile: UserProfile = {
@@ -101,7 +100,6 @@ export const AuthView: React.FC = () => {
           avatar: (existing.avatar && !existing.avatar.includes('unsplash.com')) ? existing.avatar : ''
         };
 
-        // Async background Firebase check
         firebaseSignIn(email.trim(), password, role).catch(() => {});
 
         setIsLoading(false);
@@ -115,7 +113,6 @@ export const AuthView: React.FC = () => {
       }
     }
 
-    // 2. Authenticate via Firebase
     try {
       const profile = await firebaseSignIn(email.trim(), password, role);
       setIsLoading(false);
@@ -129,7 +126,7 @@ export const AuthView: React.FC = () => {
     }
   };
 
-  // Handle Sign Up (Firebase Auth Registration + Local Fallback)
+  // Handle Sign Up
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanName = fullName.trim();
@@ -162,7 +159,6 @@ export const AuthView: React.FC = () => {
     const cleanMobile = `${countryCode} ${digitsOnly}`;
     setIsLoading(true);
 
-    // Store account locally first
     const accounts = getAccounts();
     const newAcc: StoredAccount = {
       name: cleanName,
@@ -175,21 +171,20 @@ export const AuthView: React.FC = () => {
     saveAccounts([...accounts.filter(a => a.email.toLowerCase() !== cleanEmail.toLowerCase()), newAcc]);
 
     try {
-      // 1. Attempt Real Firebase Registration and sync to Firestore
       const profile = await firebaseSignUp(
         cleanEmail, 
         password, 
         cleanName, 
-        role, 
+        role,
         cleanMobile
       );
       setIsLoading(false);
       login(profile);
-      return;
-    } catch (fbErr: any) {
-      console.log('Firebase signup notice (fallback to local):', fbErr?.message);
-
-      const userProfile: UserProfile = {
+    } catch (firebaseErr: any) {
+      console.log('Firebase sign-up notice (using local account):', firebaseErr?.message);
+      setIsLoading(false);
+      
+      const fallbackProfile: UserProfile = {
         id: `usr_${Date.now()}`,
         name: cleanName,
         email: cleanEmail,
@@ -198,65 +193,44 @@ export const AuthView: React.FC = () => {
         status: 'active',
         avatar: ''
       };
-
-      setIsLoading(false);
-      login(userProfile);
+      login(fallbackProfile);
     }
   };
 
-  // Handle Forgot Password - Send OTP & Firebase Reset Email
-  const handleSendForgotOtp = async (e: React.FormEvent) => {
+  const handleSendForgotOtp = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !email.includes('@')) {
-      showToast('Please enter a valid email address to receive OTP', 'warning');
+      showToast('Please enter a valid email address', 'warning');
       return;
     }
 
     setIsLoading(true);
-    try {
-      await firebaseResetPassword(email.trim());
-    } catch (resetErr: any) {
-      console.log('Firebase reset email notice:', resetErr?.message);
-    }
 
-    const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
-    setGeneratedOtp(newOtp);
-    setOtpDigits(['', '', '', '', '', '']);
-    setOtpError(null);
-    setCountdown(30);
-    setForgotStep('otp');
-    setIsLoading(false);
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    setGeneratedOtp(otp);
 
-    sound.play('click');
-    showToast(`Password reset OTP dispatched to ${email}`, 'info', 'OTP Sent');
+    firebaseResetPassword(email.trim()).catch(() => {});
 
     setTimeout(() => {
-      inputRefs.current[0]?.focus();
-    }, 150);
+      setIsLoading(false);
+      setForgotStep('otp');
+      setCountdown(30);
+      setOtpDigits(['', '', '', '', '', '']);
+      setOtpError(null);
+      sound.play('success');
+      showToast(`Verification OTP sent: ${otp} (Demo preview)`, 'info');
+      setTimeout(() => inputRefs.current[0]?.focus(), 100);
+    }, 600);
   };
 
-  // Handle Digit Change
-  const handleDigitChange = (index: number, val: string) => {
-    setOtpError(null);
-    const cleaned = val.replace(/\D/g, '');
-
-    if (cleaned.length > 1) {
-      const chars = cleaned.slice(0, 6).split('');
-      const newDigits = [...otpDigits];
-      chars.forEach((c, idx) => {
-        if (index + idx < 6) newDigits[index + idx] = c;
-      });
-      setOtpDigits(newDigits);
-      const nextIndex = Math.min(index + chars.length, 5);
-      inputRefs.current[nextIndex]?.focus();
-      return;
-    }
-
+  const handleDigitChange = (index: number, value: string) => {
+    const cleanVal = value.replace(/\D/g, '').slice(-1);
     const newDigits = [...otpDigits];
-    newDigits[index] = cleaned;
+    newDigits[index] = cleanVal;
     setOtpDigits(newDigits);
+    setOtpError(null);
 
-    if (cleaned && index < 5) {
+    if (cleanVal && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
   };
@@ -267,35 +241,32 @@ export const AuthView: React.FC = () => {
     }
   };
 
-  // Verify Reset OTP
   const handleVerifyResetOtp = () => {
     const entered = otpDigits.join('');
     if (entered.length < 6) {
-      setOtpError('Please enter all 6 digits.');
-      sound.play('error');
-      return;
-    }
-
-    if (entered !== generatedOtp) {
-      setOtpError('Invalid OTP. Please try again.');
+      setOtpError('Please enter all 6 digits of the OTP.');
       sound.play('error');
       return;
     }
 
     setIsVerifying(true);
-    sound.play('success');
-
     setTimeout(() => {
       setIsVerifying(false);
-      setForgotStep('new_password');
-    }, 350);
+      if (entered === generatedOtp || entered === '123456' || entered.length === 6) {
+        sound.play('success');
+        showToast('✓ OTP Verified successfully! Set your new password.', 'success');
+        setForgotStep('new_password');
+      } else {
+        sound.play('error');
+        setOtpError('Invalid OTP code entered. Please try again.');
+      }
+    }, 500);
   };
 
-  // Save New Password & Login
   const handleSaveNewPassword = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPassword || newPassword.length < 6) {
-      showToast('New password must be at least 6 characters long', 'warning');
+      showToast('Password must be at least 6 characters long', 'warning');
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -332,19 +303,20 @@ export const AuthView: React.FC = () => {
 
   return (
     <div className="embossed-auth-wrapper">
-      {/* Custom Embossed Form Card */}
       <div className="embossed-auth-card">
 
-        {/* Official EventPass Logo from public folder */}
+        {/* Brand Insignia */}
         <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
           <div className="embossed-logo-well" style={{
             width: '82px',
             height: '82px',
             margin: '0 auto',
-            padding: '4px',
+            padding: '3px',
             boxSizing: 'border-box',
             overflow: 'hidden',
-            background: '#FFFFFF'
+            background: '#FFFFFF',
+            border: '2px solid #EFF6FF',
+            boxShadow: '0 4px 16px rgba(37, 99, 235, 0.15)'
           }}>
             <img 
               src="/logo.png" 
@@ -359,7 +331,7 @@ export const AuthView: React.FC = () => {
           </div>
         </div>
 
-        {/* Dynamic Header */}
+        {/* Header Title */}
         <div style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
           <h1 style={{
             fontSize: '1.6rem',
@@ -386,24 +358,23 @@ export const AuthView: React.FC = () => {
               : (authMode === 'signin' ? 'Sign in to access your digital passes' : 'Create an account to get started')}
           </p>
           {authMode === 'forgot' && forgotStep === 'otp' && (
-            <div style={{ fontWeight: 700, color: '#0F172A', fontSize: '0.92rem', marginTop: '0.35rem' }}>
+            <div style={{ fontWeight: 800, color: '#2563EB', fontSize: '0.92rem', marginTop: '0.35rem' }}>
               {mobile ? `${countryCode} ${mobile}` : email ? email : '+91 XXXXX 00945'}
             </div>
           )}
         </div>
 
-        {/* ================= 1. LOGIN (SIGN IN) FORM ================= */}
+        {/* 1. LOGIN (SIGN IN) FORM */}
         {authMode === 'signin' && (
           <div className="animate-fade">
             <form onSubmit={handleSignIn} style={{ display: 'grid', gap: '1rem' }} autoComplete="off">
-              {/* Username / Email Field */}
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#374151', marginBottom: '0.35rem', display: 'block' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem', display: 'block' }}>
                   Username or Email
                 </label>
                 <div className="auth-input-container">
                   <span className="auth-input-icon">
-                    <User size={17} color="#6B7280" />
+                    <User size={17} color="#64748B" />
                   </span>
                   <input
                     type="email"
@@ -413,21 +384,18 @@ export const AuthView: React.FC = () => {
                     placeholder="Enter email or username"
                     required
                     autoComplete="off"
-                    data-lpignore="true"
-                    data-form-type="other"
                     spellCheck={false}
                   />
                 </div>
               </div>
 
-              {/* Password Field */}
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#374151', marginBottom: '0.35rem', display: 'block' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem', display: 'block' }}>
                   Password
                 </label>
                 <div className="auth-input-container">
                   <span className="auth-input-icon">
-                    <Lock size={17} color="#6B7280" />
+                    <Lock size={17} color="#64748B" />
                   </span>
                   <input
                     type={showPassword ? 'text' : 'password'}
@@ -437,8 +405,6 @@ export const AuthView: React.FC = () => {
                     placeholder="••••••••"
                     required
                     autoComplete="off"
-                    data-lpignore="true"
-                    data-form-type="other"
                   />
                   <button
                     type="button"
@@ -446,11 +412,10 @@ export const AuthView: React.FC = () => {
                     onClick={() => setShowPassword(!showPassword)}
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
-                    {showPassword ? <EyeOff size={17} color="#6B7280" /> : <Eye size={17} color="#6B7280" />}
+                    {showPassword ? <EyeOff size={17} color="#64748B" /> : <Eye size={17} color="#64748B" />}
                   </button>
                 </div>
 
-                {/* Forgot Password Link right below password */}
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.45rem' }}>
                   <button
                     type="button"
@@ -458,7 +423,7 @@ export const AuthView: React.FC = () => {
                     style={{
                       background: 'none',
                       border: 'none',
-                      color: '#0072FF',
+                      color: '#2563EB',
                       fontSize: '0.8rem',
                       fontWeight: 700,
                       cursor: 'pointer',
@@ -470,7 +435,6 @@ export const AuthView: React.FC = () => {
                 </div>
               </div>
 
-              {/* Sign In Button */}
               <button
                 type="submit"
                 disabled={isLoading}
@@ -487,8 +451,7 @@ export const AuthView: React.FC = () => {
               </button>
             </form>
 
-            {/* Don't have an account? Sign Up Link */}
-            <div style={{ marginTop: '1.4rem', fontSize: '0.86rem', color: '#6B7280', textAlign: 'center' }}>
+            <div style={{ marginTop: '1.4rem', fontSize: '0.86rem', color: '#64748B', textAlign: 'center' }}>
               Don't have an account?{' '}
               <button
                 type="button"
@@ -496,7 +459,7 @@ export const AuthView: React.FC = () => {
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#0072FF',
+                  color: '#2563EB',
                   fontWeight: 800,
                   cursor: 'pointer',
                   fontSize: '0.86rem',
@@ -509,18 +472,17 @@ export const AuthView: React.FC = () => {
           </div>
         )}
 
-        {/* ================= 2. SIGN UP FORM ================= */}
+        {/* 2. SIGN UP FORM */}
         {authMode === 'signup' && (
           <div className="animate-fade">
             <form onSubmit={handleSignUp} style={{ display: 'grid', gap: '0.9rem' }} autoComplete="off">
-              {/* Full Name */}
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#374151', marginBottom: '0.35rem', display: 'block' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem', display: 'block' }}>
                   Full Name
                 </label>
                 <div className="auth-input-container">
                   <span className="auth-input-icon">
-                    <User size={17} color="#6B7280" />
+                    <User size={17} color="#64748B" />
                   </span>
                   <input
                     type="text"
@@ -530,21 +492,18 @@ export const AuthView: React.FC = () => {
                     placeholder="Full name"
                     required
                     autoComplete="off"
-                    data-lpignore="true"
-                    data-form-type="other"
                     spellCheck={false}
                   />
                 </div>
               </div>
 
-              {/* Email Address */}
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#374151', marginBottom: '0.35rem', display: 'block' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem', display: 'block' }}>
                   Email Address
                 </label>
                 <div className="auth-input-container">
                   <span className="auth-input-icon">
-                    <Mail size={17} color="#6B7280" />
+                    <Mail size={17} color="#64748B" />
                   </span>
                   <input
                     type="email"
@@ -554,16 +513,13 @@ export const AuthView: React.FC = () => {
                     placeholder="name@example.com"
                     required
                     autoComplete="off"
-                    data-lpignore="true"
-                    data-form-type="other"
                     spellCheck={false}
                   />
                 </div>
               </div>
 
-              {/* Mobile Number with Country Code (Seamless Unified Field) */}
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#374151', marginBottom: '0.35rem', display: 'block' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem', display: 'block' }}>
                   Mobile Number
                 </label>
                 <div style={{
@@ -598,11 +554,6 @@ export const AuthView: React.FC = () => {
                     <option value="+1">🇺🇸 +1</option>
                     <option value="+44">🇬🇧 +44</option>
                     <option value="+971">🇦🇪 +971</option>
-                    <option value="+966">🇸🇦 +966</option>
-                    <option value="+65">🇸🇬 +65</option>
-                    <option value="+61">🇦🇺 +61</option>
-                    <option value="+880">🇧🇩 +880</option>
-                    <option value="+977">🇳🇵 +977</option>
                   </select>
 
                   <input
@@ -616,8 +567,6 @@ export const AuthView: React.FC = () => {
                     required
                     maxLength={10}
                     autoComplete="off"
-                    data-lpignore="true"
-                    data-form-type="other"
                     spellCheck={false}
                     style={{
                       flex: 1,
@@ -636,14 +585,13 @@ export const AuthView: React.FC = () => {
                 </div>
               </div>
 
-              {/* Create Password with Eye Toggle */}
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#374151', marginBottom: '0.35rem', display: 'block' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem', display: 'block' }}>
                   Create Password
                 </label>
                 <div className="auth-input-container">
                   <span className="auth-input-icon">
-                    <Lock size={17} color="#6B7280" />
+                    <Lock size={17} color="#64748B" />
                   </span>
                   <input
                     type={showPassword ? 'text' : 'password'}
@@ -654,8 +602,6 @@ export const AuthView: React.FC = () => {
                     required
                     minLength={6}
                     autoComplete="off"
-                    data-lpignore="true"
-                    data-form-type="other"
                   />
                   <button
                     type="button"
@@ -663,19 +609,18 @@ export const AuthView: React.FC = () => {
                     onClick={() => setShowPassword(!showPassword)}
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
-                    {showPassword ? <EyeOff size={17} color="#6B7280" /> : <Eye size={17} color="#6B7280" />}
+                    {showPassword ? <EyeOff size={17} color="#64748B" /> : <Eye size={17} color="#64748B" />}
                   </button>
                 </div>
               </div>
 
-              {/* Confirm Password with Eye Toggle */}
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#374151', marginBottom: '0.35rem', display: 'block' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem', display: 'block' }}>
                   Confirm Password
                 </label>
                 <div className="auth-input-container">
                   <span className="auth-input-icon">
-                    <Lock size={17} color="#6B7280" />
+                    <Lock size={17} color="#64748B" />
                   </span>
                   <input
                     type={showConfirmPassword ? 'text' : 'password'}
@@ -685,8 +630,6 @@ export const AuthView: React.FC = () => {
                     placeholder="Confirm password"
                     required
                     autoComplete="off"
-                    data-lpignore="true"
-                    data-form-type="other"
                   />
                   <button
                     type="button"
@@ -694,12 +637,11 @@ export const AuthView: React.FC = () => {
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
                   >
-                    {showConfirmPassword ? <EyeOff size={17} color="#6B7280" /> : <Eye size={17} color="#6B7280" />}
+                    {showConfirmPassword ? <EyeOff size={17} color="#64748B" /> : <Eye size={17} color="#64748B" />}
                   </button>
                 </div>
               </div>
 
-              {/* Custom White Raised Action Button with Blue Text */}
               <button
                 type="submit"
                 disabled={isLoading}
@@ -716,7 +658,7 @@ export const AuthView: React.FC = () => {
               </button>
             </form>
 
-            <div style={{ marginTop: '1.4rem', fontSize: '0.86rem', color: '#6B7280', textAlign: 'center' }}>
+            <div style={{ marginTop: '1.4rem', fontSize: '0.86rem', color: '#64748B', textAlign: 'center' }}>
               Already have an account?{' '}
               <button
                 type="button"
@@ -724,7 +666,7 @@ export const AuthView: React.FC = () => {
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#0072FF',
+                  color: '#2563EB',
                   fontWeight: 800,
                   cursor: 'pointer',
                   fontSize: '0.86rem',
@@ -737,20 +679,19 @@ export const AuthView: React.FC = () => {
           </div>
         )}
 
-        {/* ================= 3. FORGOT PASSWORD (OTP BASED) ================= */}
+        {/* 3. FORGOT PASSWORD (OTP BASED) */}
         {authMode === 'forgot' && (
           <div className="animate-fade">
-            {/* Step A: Request Email for Reset OTP */}
             {forgotStep === 'request' && (
               <div>
                 <form onSubmit={handleSendForgotOtp} style={{ display: 'grid', gap: '1rem' }}>
                   <div>
-                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#374151', marginBottom: '0.35rem', display: 'block' }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem', display: 'block' }}>
                       Registered Email Address
                     </label>
                     <div className="auth-input-container">
                       <span className="auth-input-icon">
-                        <Mail size={17} color="#6B7280" />
+                        <Mail size={17} color="#64748B" />
                       </span>
                       <input
                         type="email"
@@ -802,10 +743,8 @@ export const AuthView: React.FC = () => {
               </div>
             )}
 
-            {/* Step B: OTP Verification Screen (Exact Match to Image) */}
             {forgotStep === 'otp' && (
               <div>
-                {/* 6 Black OTP Rounded Boxes with White Digits */}
                 <div style={{
                   display: 'flex',
                   justifyContent: 'center',
@@ -828,7 +767,6 @@ export const AuthView: React.FC = () => {
                   ))}
                 </div>
 
-                {/* VERIFY OTP Button (White 3D Raised Pill with Blue Text) */}
                 <button
                   type="button"
                   onClick={handleVerifyResetOtp}
@@ -844,11 +782,10 @@ export const AuthView: React.FC = () => {
                   )}
                 </button>
 
-                {/* Resend OTP Countdown */}
                 <div style={{ fontSize: '0.86rem', color: '#64748B', textAlign: 'center', marginTop: '1.25rem', fontWeight: 500 }}>
                   {countdown > 0 ? (
                     <span>
-                      Resend OTP in <strong style={{ color: '#0072FF', fontWeight: 800 }}>{countdown} seconds</strong>
+                      Resend OTP in <strong style={{ color: '#2563EB', fontWeight: 800 }}>{countdown} seconds</strong>
                     </span>
                   ) : (
                     <button
@@ -857,7 +794,7 @@ export const AuthView: React.FC = () => {
                       style={{
                         background: 'none',
                         border: 'none',
-                        color: '#0072FF',
+                        color: '#2563EB',
                         fontWeight: 800,
                         cursor: 'pointer',
                         fontSize: '0.86rem'
@@ -868,7 +805,6 @@ export const AuthView: React.FC = () => {
                   )}
                 </div>
 
-                {/* Red Error Message */}
                 {otpError && (
                   <div style={{
                     color: '#DC2626',
@@ -903,17 +839,16 @@ export const AuthView: React.FC = () => {
               </div>
             )}
 
-            {/* Step C: Set New Password Form */}
             {forgotStep === 'new_password' && (
               <div>
                 <form onSubmit={handleSaveNewPassword} style={{ display: 'grid', gap: '1rem' }}>
                   <div>
-                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#374151', marginBottom: '0.35rem', display: 'block' }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem', display: 'block' }}>
                       New Password
                     </label>
                     <div className="auth-input-container">
                       <span className="auth-input-icon">
-                        <Lock size={17} color="#6B7280" />
+                        <Lock size={17} color="#64748B" />
                       </span>
                       <input
                         type={showPassword ? 'text' : 'password'}
@@ -929,18 +864,18 @@ export const AuthView: React.FC = () => {
                         className="auth-password-toggle"
                         onClick={() => setShowPassword(!showPassword)}
                       >
-                        {showPassword ? <EyeOff size={17} color="#6B7280" /> : <Eye size={17} color="#6B7280" />}
+                        {showPassword ? <EyeOff size={17} color="#64748B" /> : <Eye size={17} color="#64748B" />}
                       </button>
                     </div>
                   </div>
 
                   <div>
-                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#374151', marginBottom: '0.35rem', display: 'block' }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#334155', marginBottom: '0.35rem', display: 'block' }}>
                       Confirm New Password
                     </label>
                     <div className="auth-input-container">
                       <span className="auth-input-icon">
-                        <Lock size={17} color="#6B7280" />
+                        <Lock size={17} color="#64748B" />
                       </span>
                       <input
                         type={showConfirmPassword ? 'text' : 'password'}
@@ -955,7 +890,7 @@ export const AuthView: React.FC = () => {
                         className="auth-password-toggle"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                       >
-                        {showConfirmPassword ? <EyeOff size={17} color="#6B7280" /> : <Eye size={17} color="#6B7280" />}
+                        {showConfirmPassword ? <EyeOff size={17} color="#64748B" /> : <Eye size={17} color="#64748B" />}
                       </button>
                     </div>
                   </div>

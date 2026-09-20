@@ -628,7 +628,7 @@ export const GuestHome: React.FC = () => {
               : 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=400&q=80';
 
             return (
-              /* App-Themed Clean Event Pass Card */
+              /* App-Themed Clean White Event Pass Card */
               <div 
                 key={reg.id} 
                 style={{
@@ -636,7 +636,7 @@ export const GuestHome: React.FC = () => {
                   borderRadius: 20,
                   border: '1.5px solid #E2E8F0',
                   padding: '1.25rem',
-                  boxShadow: '0 4px 16px rgba(15, 23, 42, 0.06)',
+                  boxShadow: '0 4px 20px rgba(15, 23, 42, 0.05)',
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
@@ -693,7 +693,7 @@ export const GuestHome: React.FC = () => {
                           borderRadius: 6,
                           textTransform: 'uppercase',
                           background: reg.status === 'approved' || reg.status === 'checkedin' ? '#DCFCE7' : '#FEF3C7',
-                          color: reg.status === 'approved' || reg.status === 'checkedin' ? '#166534' : '#92400E',
+                          color: reg.status === 'approved' || reg.status === 'checkedin' ? '#15803D' : '#92400E',
                           border: reg.status === 'approved' || reg.status === 'checkedin' ? '1px solid #BBF7D0' : '1px solid #FCD34D'
                         }}
                       >
@@ -708,12 +708,12 @@ export const GuestHome: React.FC = () => {
                       </div>
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                        <Clock size={13} color="#8B5CF6" />
+                        <Clock size={13} color="#2563EB" />
                         <span>Location: {evt?.location || 'Central Venue'}</span>
                       </div>
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                        <MapPin size={13} color="#EC4899" />
+                        <MapPin size={13} color="#2563EB" />
                         <span>{evt?.venue || 'Main Park Arena'}</span>
                       </div>
                     </div>
@@ -725,7 +725,7 @@ export const GuestHome: React.FC = () => {
                   type="button"
                   onClick={() => openDigitalPass(reg.id)}
                   style={{
-                    background: '#2563EB',
+                    background: 'var(--accent-gradient)',
                     color: '#FFFFFF',
                     fontWeight: 800,
                     fontSize: '0.95rem',
@@ -743,8 +743,6 @@ export const GuestHome: React.FC = () => {
                     gap: '0.4rem',
                     letterSpacing: '0.01em'
                   }}
-                  onMouseEnter={e => (e.currentTarget.style.background = '#1D4ED8')}
-                  onMouseLeave={e => (e.currentTarget.style.background = '#2563EB')}
                 >
                   <Ticket size={16} /> View Digital Pass
                 </button>

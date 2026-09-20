@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { 
   Home, 
-  Users, 
   Plus, 
   Search, 
   User, 
@@ -87,8 +86,7 @@ export const BottomNav: React.FC = () => {
   const unreadCount = notifications.filter(n => !n.read).length;
 
   // Guest Tab mappings
-  const isGuestHome = currentView === 'guest_home' && !currentView.includes('events');
-  const isMyEvents = currentView === 'my_events' || (currentView === 'guest_home');
+  const isGuestHome = currentView === 'guest_home';
   const isTickets = currentView === 'my_passes';
   const isNotifs = currentView === 'notifications';
   const isProfile = currentView === 'profile';
@@ -96,7 +94,6 @@ export const BottomNav: React.FC = () => {
   // Manager Tab mappings
   const isManagerHome = currentView === 'dashboard';
   const isEvent = currentView === 'create_event';
-  const isGuests = currentView === 'guests' || currentView === 'staff';
   const isSearch = currentView === 'guest_home' || currentView === 'my_events' || currentView === 'my_passes';
 
   if (isGuestRole) {
@@ -108,9 +105,11 @@ export const BottomNav: React.FC = () => {
           left: 0,
           right: 0,
           width: '100%',
-          background: '#FFFFFF',
+          background: 'rgba(255, 255, 255, 0.96)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
           borderTop: '1px solid #E2E8F0',
-          boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.08)',
+          boxShadow: '0 -4px 20px rgba(15, 23, 42, 0.08)',
           zIndex: 90,
           padding: '0.5rem 1rem max(0.6rem, env(safe-area-inset-bottom))'
         }}
@@ -136,18 +135,18 @@ export const BottomNav: React.FC = () => {
               flexDirection: 'column',
               alignItems: 'center',
               gap: 3,
-              color: currentView === 'guest_home' ? '#2563EB' : '#94A3B8',
+              color: isGuestHome ? '#2563EB' : '#64748B',
               cursor: 'pointer',
               padding: '4px 10px',
               fontSize: '0.725rem',
-              fontWeight: currentView === 'guest_home' ? 700 : 500
+              fontWeight: isGuestHome ? 700 : 500
             }}
           >
-            <Home size={20} strokeWidth={currentView === 'guest_home' ? 2.5 : 2} />
+            <Home size={20} strokeWidth={isGuestHome ? 2.6 : 2} />
             <span>Home</span>
           </button>
 
-          {/* 2. My Events */}
+          {/* 2. Tickets */}
           <button
             type="button"
             onClick={() => navigate('guest_home')}
@@ -158,40 +157,18 @@ export const BottomNav: React.FC = () => {
               flexDirection: 'column',
               alignItems: 'center',
               gap: 3,
-              color: currentView === 'my_events' ? '#2563EB' : '#94A3B8',
+              color: isTickets ? '#2563EB' : '#64748B',
               cursor: 'pointer',
               padding: '4px 10px',
               fontSize: '0.725rem',
-              fontWeight: currentView === 'my_events' ? 700 : 500
+              fontWeight: isTickets ? 700 : 500
             }}
           >
-            <Calendar size={20} strokeWidth={currentView === 'my_events' ? 2.5 : 2} />
-            <span>My Events</span>
+            <Ticket size={20} strokeWidth={isTickets ? 2.6 : 2} />
+            <span>Passes</span>
           </button>
 
-          {/* 3. Tickets */}
-          <button
-            type="button"
-            onClick={() => navigate('guest_home')}
-            style={{
-              background: 'none',
-              border: 'none',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 3,
-              color: currentView === 'my_passes' ? '#2563EB' : '#94A3B8',
-              cursor: 'pointer',
-              padding: '4px 10px',
-              fontSize: '0.725rem',
-              fontWeight: currentView === 'my_passes' ? 700 : 500
-            }}
-          >
-            <Ticket size={20} strokeWidth={currentView === 'my_passes' ? 2.5 : 2} />
-            <span>Tickets</span>
-          </button>
-
-          {/* 4. Notifications */}
+          {/* 3. Notifications */}
           <button
             type="button"
             onClick={() => navigate('notifications')}
@@ -202,16 +179,16 @@ export const BottomNav: React.FC = () => {
               flexDirection: 'column',
               alignItems: 'center',
               gap: 3,
-              color: currentView === 'notifications' ? '#2563EB' : '#94A3B8',
+              color: isNotifs ? '#2563EB' : '#64748B',
               cursor: 'pointer',
               padding: '4px 10px',
               position: 'relative',
               fontSize: '0.725rem',
-              fontWeight: currentView === 'notifications' ? 700 : 500
+              fontWeight: isNotifs ? 700 : 500
             }}
           >
             <div style={{ position: 'relative' }}>
-              <Bell size={20} strokeWidth={currentView === 'notifications' ? 2.5 : 2} />
+              <Bell size={20} strokeWidth={isNotifs ? 2.6 : 2} />
               {unreadCount > 0 && (
                 <span 
                   style={{
@@ -222,7 +199,7 @@ export const BottomNav: React.FC = () => {
                     height: 8,
                     borderRadius: '50%',
                     background: '#EF4444',
-                    border: '1.5px solid #FFF'
+                    border: '1.5px solid #FFFFFF'
                   }}
                 />
               )}
@@ -230,7 +207,7 @@ export const BottomNav: React.FC = () => {
             <span>Notifications</span>
           </button>
 
-          {/* 5. Profile */}
+          {/* 4. Profile */}
           <button
             type="button"
             onClick={() => navigate('profile')}
@@ -241,14 +218,14 @@ export const BottomNav: React.FC = () => {
               flexDirection: 'column',
               alignItems: 'center',
               gap: 3,
-              color: isProfile ? '#2563EB' : '#94A3B8',
+              color: isProfile ? '#2563EB' : '#64748B',
               cursor: 'pointer',
               padding: '4px 10px',
               fontSize: '0.725rem',
               fontWeight: isProfile ? 700 : 500
             }}
           >
-            <User size={20} strokeWidth={isProfile ? 2.5 : 2} />
+            <User size={20} strokeWidth={isProfile ? 2.6 : 2} />
             <span>Profile</span>
           </button>
         </div>
@@ -258,9 +235,8 @@ export const BottomNav: React.FC = () => {
 
   return (
     <>
-      {/* Modern Solid Grounded Bottom Dock Navigation for Managers / Staff */}
+      {/* Modern Clean Floating Bottom Dock */}
       <div className="floating-dock-wrapper">
-        {/* Navigation Items Container */}
         <nav className="dock-inner-nav">
           {/* 1. Home / Dashboard */}
           <button
@@ -283,10 +259,10 @@ export const BottomNav: React.FC = () => {
             <div className="dock-tab-icon-wrap">
               <Calendar size={18} strokeWidth={isEvent ? 2.6 : 2} />
             </div>
-            <span className="dock-tab-label">Event</span>
+            <span className="dock-tab-label">Create</span>
           </button>
 
-          {/* 3. Center Glowing Orb Action Button */}
+          {/* 3. Center Elevated Glowing Orb */}
           <div className="dock-center-slot">
             <button
               type="button"
@@ -296,13 +272,12 @@ export const BottomNav: React.FC = () => {
             >
               <div className="dock-orb-glow"></div>
               <div className="dock-orb-body">
-                <div className="dock-orb-gloss"></div>
                 <Plus size={24} strokeWidth={2.8} className={`dock-orb-plus ${showQuickMenu ? 'rotated' : ''}`} />
               </div>
             </button>
           </div>
 
-          {/* 4. Search */}
+          {/* 4. Search / Explore */}
           <button
             type="button"
             className={`dock-tab ${isSearch ? 'active' : ''}`}
@@ -311,7 +286,7 @@ export const BottomNav: React.FC = () => {
             <div className="dock-tab-icon-wrap">
               <Search size={18} strokeWidth={isSearch ? 2.6 : 2} />
             </div>
-            <span className="dock-tab-label">Search</span>
+            <span className="dock-tab-label">Explore</span>
           </button>
 
           {/* 5. Profile */}
@@ -328,17 +303,20 @@ export const BottomNav: React.FC = () => {
         </nav>
       </div>
 
-
-      {/* Quick Action Bottom Sheet / Modal */}
+      {/* Quick Action Bottom Sheet */}
       {showQuickMenu && (
         <div className="quick-dock-overlay" onClick={() => setShowQuickMenu(false)}>
           <div className="quick-dock-menu" onClick={e => e.stopPropagation()}>
             <div className="quick-dock-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <div className="quick-dock-badge-dot"></div>
-                <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#FFFFFF' }}>Quick Actions</span>
+                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#2563EB', boxShadow: '0 0 8px rgba(37, 99, 235, 0.6)' }}></div>
+                <span style={{ fontWeight: 800, fontSize: '0.95rem', color: '#0F172A' }}>Quick Actions</span>
               </div>
-              <button className="icon-btn-subtle" onClick={() => setShowQuickMenu(false)}>
+              <button 
+                type="button" 
+                onClick={() => setShowQuickMenu(false)}
+                style={{ background: 'none', border: 'none', color: '#64748B', cursor: 'pointer', padding: 4 }}
+              >
                 <X size={18} />
               </button>
             </div>
@@ -351,14 +329,14 @@ export const BottomNav: React.FC = () => {
                   navigate('scanner');
                 }}
               >
-                <div className="quick-action-icon" style={{ background: 'linear-gradient(135deg, #4E65FF, #92EFFD)' }}>
+                <div className="quick-action-icon" style={{ background: 'linear-gradient(135deg, #2563EB, #38BDF8)' }}>
                   <QrCode size={18} color="#FFF" />
                 </div>
                 <div className="quick-action-info">
                   <div className="quick-action-title">Gate QR Scanner</div>
                   <div className="quick-action-sub">Scan attendee pass & verify</div>
                 </div>
-                <ArrowRight size={16} className="quick-action-arrow" />
+                <ArrowRight size={16} color="#64748B" />
               </button>
 
               <button 
@@ -368,14 +346,14 @@ export const BottomNav: React.FC = () => {
                   navigate('staff');
                 }}
               >
-                <div className="quick-action-icon" style={{ background: 'linear-gradient(135deg, #10B981, #34D399)' }}>
+                <div className="quick-action-icon" style={{ background: 'linear-gradient(135deg, #059669, #10B981)' }}>
                   <ShieldCheck size={18} color="#FFF" />
                 </div>
                 <div className="quick-action-info">
                   <div className="quick-action-title">Staff Access</div>
                   <div className="quick-action-sub">Manage scanner access & staff</div>
                 </div>
-                <ArrowRight size={16} className="quick-action-arrow" />
+                <ArrowRight size={16} color="#64748B" />
               </button>
             </div>
           </div>

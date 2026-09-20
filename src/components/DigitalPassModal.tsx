@@ -3,23 +3,17 @@ import { useApp } from '../context/AppContext';
 import { QRCodeSVG } from '../utils/qr';
 import { 
   Sparkles, 
-  CheckCircle2, 
   Calendar, 
   MapPin, 
-  Clock, 
-  GraduationCap, 
   Ticket, 
   ChevronLeft, 
   ChevronRight, 
-  Copy, 
-  Check,
   AlertCircle
 } from 'lucide-react';
 
 export const DigitalPassModal: React.FC = () => {
   const { activePassGuestId, closeDigitalPass, guests, events, showToast } = useApp();
   const [selectedTokenIdx, setSelectedTokenIdx] = useState(0);
-  const [copiedToken, setCopiedToken] = useState(false);
 
   if (!activePassGuestId) return null;
 
@@ -61,29 +55,15 @@ export const DigitalPassModal: React.FC = () => {
   const usedCount = tokensList.filter(t => t.status === 'used').length;
   const remainingCount = totalTokens - usedCount;
 
-  // Extract extra answers filled by guest (excluding standard keys)
-  const standardKeys = ['Full Name', 'Email Address', 'Mobile Number', 'College / Institute', 'Department / Branch', 'Student Roll Number', 'ID Proof', 'capturedAvatar'];
-  const extraAnswers = guest.answers 
-    ? Object.entries(guest.answers).filter(([key, val]) => !standardKeys.includes(key) && typeof val === 'string' && val.trim().length > 0 && !val.includes('Attached'))
-    : [];
-
-  const handleCopyCurrentToken = () => {
-    if (!currentTokenItem?.tokenCode) return;
-    navigator.clipboard.writeText(currentTokenItem.tokenCode);
-    setCopiedToken(true);
-    showToast(`✓ Copied Token: ${currentTokenItem.tokenCode}`, 'success');
-    setTimeout(() => setCopiedToken(false), 2000);
-  };
-
   return (
     <div className="modal-overlay active" onClick={closeDigitalPass}>
       <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 480, width: '92%', background: 'transparent', boxShadow: 'none', border: 'none', padding: 0 }}>
-        <div className="digital-pass-card" style={{ maxWidth: 480 }}>
+        <div className="digital-pass-card" style={{ maxWidth: 480, background: '#FFFFFF', border: '1.5px solid #E2E8F0' }}>
           {/* Pass Header */}
-          <div className="pass-header">
+          <div className="pass-header" style={{ background: 'linear-gradient(135deg, #2563EB 0%, #3B82F6 100%)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
               <div style={{ fontWeight: 800, fontSize: '1.15rem', letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#FFFFFF' }}>
-                <Sparkles size={18} color="#93C5FD" />
+                <Sparkles size={18} color="#BFDBFE" />
                 DIGITAL EVENT PASS
               </div>
             </div>
@@ -109,7 +89,7 @@ export const DigitalPassModal: React.FC = () => {
             </div>
           </div>
 
-          {/* Pass Body (QR Scanner & Event Info Only) */}
+          {/* Pass Body */}
           <div className="pass-body" style={{ padding: '1.25rem 1rem', background: '#FFFFFF' }}>
             {/* Event Header Banner */}
             <div style={{ background: '#F8FAFC', padding: '0.85rem 1rem', borderRadius: 'var(--radius-lg)', border: '1.5px solid #E2E8F0', marginBottom: '1rem' }}>

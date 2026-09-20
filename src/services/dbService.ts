@@ -153,10 +153,10 @@ export const syncGuestToDb = async (guest: GuestRegistration): Promise<void> => 
   }
 };
 
-export const updateGuestStatusInDb = async (guestId: string, status: string, checkInTime?: string, scannedBy?: string): Promise<void> => {
+export const updateGuestStatusInDb = async (guestId: string, status: string, checkInTime?: string, scannedBy?: string, extraData?: Partial<GuestRegistration>): Promise<void> => {
   try {
     const docRef = doc(db, COLLECTIONS.GUESTS, guestId);
-    const updateData: any = { status };
+    const updateData: any = { status, ...(extraData || {}) };
     if (checkInTime) updateData.checkInTime = checkInTime;
     if (scannedBy) updateData.scannedBy = scannedBy;
     await updateDoc(docRef, updateData);
@@ -199,6 +199,7 @@ export const fetchGuestFromDbByToken = async (code: string): Promise<GuestRegist
     const raw = code.trim();
     if (!raw) return null;
     const q = raw.toUpperCase();
+    const baseQ = q.replace(/-\d+$/, '');
 
     // 1. Direct doc lookup by guest ID
     const docRef = doc(db, COLLECTIONS.GUESTS, raw);
@@ -221,14 +222,17 @@ export const fetchGuestFromDbByToken = async (code: string): Promise<GuestRegist
 
       if (
         gToken === q ||
+        gToken === baseQ ||
         gPassId === q ||
         gId === q ||
         gTokens.includes(q) ||
+        gTokens.includes(baseQ) ||
         gTokenList.includes(q) ||
+        gTokenList.includes(baseQ) ||
+        (gToken && (q.startsWith(gToken) || gToken.startsWith(q))) ||
+        (gPassId && (q.startsWith(gPassId) || gPassId.startsWith(q))) ||
         (g.email && g.email.toUpperCase() === q) ||
-        (g.mobile && g.mobile.replace(/\D/g, '') === q.replace(/\D/g, '')) ||
-        (q.length > 5 && gToken.includes(q)) ||
-        (gToken.length > 5 && q.includes(gToken))
+        (g.mobile && q.replace(/\D/g, '').length >= 10 && g.mobile.replace(/\D/g, '') === q.replace(/\D/g, ''))
       ) {
         matched = g;
       }

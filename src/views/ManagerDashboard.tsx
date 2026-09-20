@@ -10,11 +10,10 @@ import {
   Trash2, 
   Copy, 
   UserPlus, 
-  Sparkles, 
-  User
+  User,
+  Ticket
 } from 'lucide-react';
 import { EventItem } from '../types';
-
 
 export const ManagerDashboard: React.FC = () => {
   const { 
@@ -22,8 +21,6 @@ export const ManagerDashboard: React.FC = () => {
     events, 
     guests, 
     staff,
-    saveStaff,
-    deleteStaff,
     navigate, 
     setSelectedEventId, 
     deleteEvent, 
@@ -60,7 +57,6 @@ export const ManagerDashboard: React.FC = () => {
   const approvedCount = myGuests.filter(g => g.status === 'approved').length;
   const activeEventsCount = myEvents.filter(e => e.status === 'active').length;
   const checkInPercent = totalGuests > 0 ? Math.round((checkedInCount / totalGuests) * 100) : 0;
-  const approvedStaff = myStaff.filter(s => s.status === 'active');
 
   // Active events list for this manager
   const activeEvents = myEvents.filter(e => e.status === 'active');
@@ -73,13 +69,6 @@ export const ManagerDashboard: React.FC = () => {
     month: 'short',
     year: 'numeric'
   });
-
-  const handleCopyLink = (eventId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const link = `https://eventpass.io/register?eventId=${eventId}`;
-    navigator.clipboard.writeText(link);
-    showToast('Registration link copied to clipboard!', 'success');
-  };
 
   const handleCopyEventId = (eventId: string, eventName: string) => {
     navigator.clipboard.writeText(eventId);
@@ -104,15 +93,15 @@ export const ManagerDashboard: React.FC = () => {
 
   return (
     <div className="animate-fade">
-      {/* Top Welcome Header - Native App-like Executive Card */}
+      {/* Top Welcome Header - Native Executive Card */}
       <div 
         className="glass-panel" 
         style={{ 
           padding: '1.5rem', 
           marginBottom: '1.5rem', 
-          background: 'linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%)',
-          border: '1px solid #E2E8F0',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+          background: '#FFFFFF',
+          border: '1.5px solid #E2E8F0',
+          boxShadow: '0 4px 20px rgba(15, 23, 42, 0.04)',
           borderRadius: 'var(--radius-xl)',
           display: 'flex',
           flexDirection: 'column',
@@ -129,8 +118,8 @@ export const ManagerDashboard: React.FC = () => {
                   height: 'clamp(68px, 18vw, 82px)', 
                   borderRadius: '50%', 
                   background: 'linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)',
-                  border: '3.5px solid #38BDF8',
-                  boxShadow: '0 6px 18px rgba(56, 189, 248, 0.25)',
+                  border: '3.5px solid #2563EB',
+                  boxShadow: '0 6px 18px rgba(37, 99, 235, 0.2)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -149,7 +138,7 @@ export const ManagerDashboard: React.FC = () => {
                   borderRadius: '50%', 
                   background: '#10B981', 
                   border: '2.5px solid #FFFFFF',
-                  boxShadow: '0 0 8px #10B981'
+                  boxShadow: '0 0 8px rgba(16, 185, 129, 0.6)'
                 }} 
                 title="Online Active"
               />
@@ -165,7 +154,7 @@ export const ManagerDashboard: React.FC = () => {
                     padding: '0.2rem 0.55rem', 
                     borderRadius: '999px',
                     border: '1px solid #E2E8F0'
-                  }}
+                  }} 
                 >
                   📅 {formattedToday}
                 </span>
@@ -217,7 +206,7 @@ export const ManagerDashboard: React.FC = () => {
             alignItems: 'center',
             gap: '1.25rem',
             background: '#FFFFFF',
-            border: '1px solid #E2E8F0',
+            border: '1.5px solid #E2E8F0',
             borderRadius: 'var(--radius-lg)'
           }}
         >
@@ -228,7 +217,7 @@ export const ManagerDashboard: React.FC = () => {
                 cy="60"
                 r={radius}
                 fill="none"
-                stroke="#E2E8F0"
+                stroke="#F1F5F9"
                 strokeWidth="10"
               />
               <circle
@@ -255,7 +244,7 @@ export const ManagerDashboard: React.FC = () => {
           </div>
 
           <div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800 }}>
+            <div style={{ fontSize: '0.75rem', color: '#2563EB', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 800 }}>
               Live Check-in Status
             </div>
             <div style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0F172A', marginTop: '0.15rem' }}>
@@ -267,8 +256,7 @@ export const ManagerDashboard: React.FC = () => {
           </div>
         </div>
 
-
-        {/* Active Events & Limit Card */}
+        {/* Active Events Card */}
         <div 
           className="glass-panel"
           style={{
@@ -277,19 +265,22 @@ export const ManagerDashboard: React.FC = () => {
             flexDirection: 'column',
             justifyContent: 'space-between',
             background: '#FFFFFF',
-            border: '1px solid #E2E8F0',
+            border: '1.5px solid #E2E8F0',
             borderRadius: 'var(--radius-lg)'
           }}
         >
           <div className="flex-between">
             <span style={{ fontSize: '0.75rem', color: '#64748B', textTransform: 'uppercase', fontWeight: 700 }}>Total Events</span>
-            <span style={{ background: '#F0FDF4', color: '#16A34A', padding: '0.2rem 0.5rem', borderRadius: 'var(--radius-sm)', fontSize: '0.7rem', fontWeight: 800 }}>
+            <span style={{ background: '#F0FDF4', color: '#16A34A', border: '1px solid #BBF7D0', padding: '0.2rem 0.5rem', borderRadius: 'var(--radius-sm)', fontSize: '0.7rem', fontWeight: 800 }}>
               {activeEvents.length} ACTIVE
             </span>
           </div>
           <div style={{ fontSize: '1.75rem', fontWeight: 900, color: '#0F172A', marginTop: '0.35rem' }}>
             {myEvents.length}
-            <span style={{ fontSize: '0.85rem', color: '#64748B', fontWeight: 600, marginLeft: '0.4rem' }}>Parties</span>
+            <span style={{ fontSize: '0.85rem', color: '#64748B', fontWeight: 600, marginLeft: '0.4rem' }}>Organized</span>
+          </div>
+          <div style={{ fontSize: '0.78rem', color: '#2563EB', fontWeight: 700, marginTop: '0.5rem' }}>
+            {activeEventsCount} Active Gate Checkpoints Live
           </div>
         </div>
       </div>
@@ -328,8 +319,6 @@ export const ManagerDashboard: React.FC = () => {
             const approved = eventGuests.filter(g => g.status === 'approved').length;
             const pending = eventGuests.filter(g => g.status === 'pending').length;
             const checkedIn = eventGuests.filter(g => g.status === 'checkedin').length;
-            const limit = evt.tokenSettings?.totalLimit || 500;
-            const progressPercent = Math.min(100, Math.round((totalReg / limit) * 100));
 
             return (
               <div key={evt.id} className="event-card">
@@ -353,19 +342,19 @@ export const ManagerDashboard: React.FC = () => {
                       display: 'flex', 
                       alignItems: 'center', 
                       gap: '0.4rem', 
-                      background: 'var(--bg-tertiary)', 
-                      padding: '0.35rem 0.65rem', 
+                      background: '#F8FAFC', 
+                      padding: '0.4rem 0.65rem', 
                       borderRadius: 'var(--radius-sm)',
                       fontSize: '0.75rem',
                       cursor: 'pointer',
-                      border: '1px solid var(--border-subtle)'
+                      border: '1.5px solid #E2E8F0'
                     }}
                     onClick={() => handleCopyEventId(evt.id, evt.name)}
                     title="Click to copy Event ID for guest invitation"
                   >
-                    <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Event ID:</span>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--accent-primary)' }}>{evt.id}</span>
-                    <Copy size={12} style={{ marginLeft: 'auto', color: 'var(--text-secondary)' }} />
+                    <span style={{ color: '#64748B', fontWeight: 600 }}>Event ID:</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#2563EB' }}>{evt.id}</span>
+                    <Copy size={12} style={{ marginLeft: 'auto', color: '#64748B' }} />
                   </div>
 
                   <div className="event-meta-row">
@@ -378,13 +367,13 @@ export const ManagerDashboard: React.FC = () => {
                     </span>
                   </div>
 
-                  <div className="event-meta-row" style={{ color: 'var(--text-secondary)' }}>
+                  <div className="event-meta-row" style={{ color: '#475569' }}>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                       <MapPin size={14} /> {evt.venue}
                     </span>
                   </div>
 
-                  {/* Attendee Registrations & Tokens info (Unlimited Capacity) */}
+                  {/* Attendee Registrations & Tokens info */}
                   <div style={{ background: '#F8FAFC', padding: '0.55rem 0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid #E2E8F0', marginTop: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem' }}>
                     <span style={{ color: '#0F172A', fontWeight: 800 }}>
                       👥 {totalReg} Total Guests
@@ -460,4 +449,3 @@ export const ManagerDashboard: React.FC = () => {
     </div>
   );
 };
-
