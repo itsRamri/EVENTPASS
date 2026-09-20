@@ -102,6 +102,7 @@ export interface TokenItem {
 
 export interface GuestRegistration {
   id: string;
+  userId?: string;
   eventId: string;
   name: string;
   email: string;
@@ -159,6 +160,7 @@ export interface NotificationItem {
   type: 'success' | 'info' | 'warning' | 'error';
   timestamp: string;
   read: boolean;
+  recipientUserId?: string;
   recipientEmail?: string;
   recipientPhone?: string;
   recipientRole?: 'guest' | 'staff' | 'manager' | 'all';

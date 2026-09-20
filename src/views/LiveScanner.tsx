@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useApp, getFormattedTimestamp } from '../context/AppContext';
 import { GuestRegistration } from '../types';
 import { sound } from '../utils/audio';
+import { fetchGuestFromDbByToken } from '../services/dbService';
 import confetti from 'canvas-confetti';
 import jsQR from 'jsqr';
 import { 
@@ -12,7 +13,7 @@ import {
   Clock, 
   Ticket, 
   QrCode, 
-  ShieldCheck,
+  ShieldCheck, 
   ShieldAlert,
   Lock,
   Camera,
@@ -27,6 +28,7 @@ export const LiveScanner: React.FC = () => {
     guests, 
     events, 
     staff, 
+    saveGuest,
     updateGuestStatus, 
     checkInSingleToken,
     openDigitalPass,
@@ -64,10 +66,17 @@ export const LiveScanner: React.FC = () => {
   const streamRef = useRef<MediaStream | null>(null);
 
   // Check scanner authorization for current user
-  const matchedStaff = staff.find(s => 
-    (s.email && user.email && s.email.toLowerCase() === user.email.toLowerCase()) ||
-    (s.phone && user.mobile && s.phone.replace(/\D/g, '') === user.mobile.replace(/\D/g, ''))
-  );
+  const userCleanEmail = (user.email || '').toLowerCase().trim();
+  const userCleanMobile = (user.mobile || '').replace(/\D/g, '');
+
+  const matchedStaff = staff.find(s => {
+    const sEmail = (s.email || '').toLowerCase().trim();
+    const sPhone = (s.phone || '').replace(/\D/g, '');
+    return (
+      (sEmail && userCleanEmail && sEmail === userCleanEmail) ||
+      (sPhone && userCleanMobile && sPhone === userCleanMobile)
+    );
+  });
 
   const isManager = user.role === 'manager';
   const isStaffScanner = user.role === 'scanner' || (!!matchedStaff && matchedStaff.status === 'active' && matchedStaff.permissions?.canScan !== false);
@@ -83,19 +92,54 @@ export const LiveScanner: React.FC = () => {
   const activeStaffName = `${user.name} (${matchedStaff?.designation || (isManager ? 'Event Manager' : 'Authorized Gate Staff')})`;
   const checkedInGuests = guests.filter(g => g.status === 'checkedin');
 
-  const verifyToken = useCallback((code: string) => {
+  const verifyToken = useCallback(async (code: string) => {
     if (scanCooldown || scanResult || checkInSuccessGuest) return;
 
-    const q = code.trim().toUpperCase();
+    const raw = (code || '').trim();
+    if (!raw) return;
+    const q = raw.toUpperCase();
     const currentTimestamp = getFormattedTimestamp();
-    const guest = guests.find(g => 
+
+    // Extract code if JSON or URL parameter
+    let extractedCode = q;
+    try {
+      if (raw.startsWith('{') && raw.endsWith('}')) {
+        const parsed = JSON.parse(raw);
+        extractedCode = (parsed.token || parsed.passId || parsed.code || q).toUpperCase();
+      } else if (raw.includes('?')) {
+        const urlParams = new URLSearchParams(raw.split('?')[1]);
+        const paramToken = urlParams.get('token') || urlParams.get('pass') || urlParams.get('passId');
+        if (paramToken) extractedCode = paramToken.toUpperCase();
+      }
+    } catch {}
+
+    // 1. Search in local guests array
+    let guest = guests.find(g => 
+      (g.token && g.token.toUpperCase() === extractedCode) || 
+      (g.tokens && g.tokens.some(t => t.toUpperCase() === extractedCode)) ||
+      (g.tokenList && g.tokenList.some(t => (t.tokenCode || '').toUpperCase() === extractedCode)) ||
+      (g.passId && g.passId.toUpperCase() === extractedCode) ||
+      (g.id && g.id.toUpperCase() === extractedCode) ||
       (g.token && g.token.toUpperCase() === q) || 
       (g.tokens && g.tokens.some(t => t.toUpperCase() === q)) ||
-      (g.tokenList && g.tokenList.some(t => t.tokenCode.toUpperCase() === q)) ||
+      (g.tokenList && g.tokenList.some(t => (t.tokenCode || '').toUpperCase() === q)) ||
       (g.passId && g.passId.toUpperCase() === q) ||
       (g.id && g.id.toUpperCase() === q) ||
       (g.name && g.name.toUpperCase().includes(q) && q.length > 3)
     );
+
+    // 2. If not found in local memory, search directly in Firestore database
+    if (!guest) {
+      try {
+        const dbGuest = await fetchGuestFromDbByToken(extractedCode) || await fetchGuestFromDbByToken(q);
+        if (dbGuest) {
+          guest = dbGuest;
+          saveGuest(dbGuest);
+        }
+      } catch (err) {
+        console.warn('LiveScanner db lookup notice:', err);
+      }
+    }
 
     const eventName = guest ? (events.find(e => e.id === guest.eventId)?.name || 'Event') : 'Unknown Event';
 
@@ -106,7 +150,7 @@ export const LiveScanner: React.FC = () => {
       sound.play('error');
       addScanLog({
         guestName: 'Unregistered / Unknown',
-        token: code,
+        token: raw,
         passId: 'N/A',
         eventName: 'N/A',
         status: 'invalid',
@@ -116,43 +160,44 @@ export const LiveScanner: React.FC = () => {
       setScanResult({
         type: 'invalid',
         title: 'Invalid QR Pass ❌',
-        message: `No active VIP pass record found for "${code}". Please ensure the QR pass was issued officially by EVENTPASS.`,
-        scannedTokenCode: code,
+        message: `No active pass record found for "${raw}". Please verify the pass was issued officially.`,
+        scannedTokenCode: raw,
         scanTime: currentTimestamp
       });
       return;
     }
 
-    if (assignedEvent && guest.eventId !== assignedEvent.id) {
+    // Check event gate restrictions (Manager has access to all; Staff restricted if specifically assigned)
+    if (!isManager && assignedEvent && guest.eventId !== assignedEvent.id) {
       sound.play('error');
       setScanResult({
         type: 'invalid',
         title: 'Unauthorized Event Gate ⚠️',
         message: `You are authorized to scan passes for "${assignedEvent.name}", but this guest's pass is for "${eventName}".`,
         guest,
-        scannedTokenCode: code,
+        scannedTokenCode: extractedCode,
         scanTime: currentTimestamp
       });
       return;
     }
 
     const totalTokens = guest.tokenCount || guest.tokens?.length || (guest.tokenList?.length) || 1;
-    const matchingTokenItem = guest.tokenList?.find(t => t.tokenCode.toUpperCase() === q) ||
-      (guest.tokens?.includes(q) ? { 
-        tokenCode: q, 
-        index: guest.tokens.indexOf(q) + 1, 
+    const matchingTokenItem = guest.tokenList?.find(t => (t.tokenCode || '').toUpperCase() === extractedCode || (t.tokenCode || '').toUpperCase() === q) ||
+      (guest.tokens?.includes(extractedCode) ? { 
+        tokenCode: extractedCode, 
+        index: guest.tokens.indexOf(extractedCode) + 1, 
         status: guest.status === 'checkedin' ? ('used' as const) : ('valid' as const), 
         checkInTime: guest.checkInTime 
       } : null);
 
-    const tokenIdx = matchingTokenItem?.index || (guest.tokens ? Math.max(1, guest.tokens.indexOf(q) + 1) : 1);
+    const tokenIdx = matchingTokenItem?.index || (guest.tokens ? Math.max(1, guest.tokens.indexOf(extractedCode) + 1) : 1);
     const usedTokensCount = guest.usedTokens || (guest.tokenList ? guest.tokenList.filter(t => t.status === 'used').length : (guest.status === 'checkedin' ? totalTokens : 0));
     const isSpecificTokenUsed = matchingTokenItem ? matchingTokenItem.status === 'used' : (guest.status === 'checkedin');
     const remainingCount = Math.max(0, totalTokens - usedTokensCount);
 
     addScanLog({
       guestName: guest.name,
-      token: code || guest.token || 'N/A',
+      token: extractedCode || guest.token || 'N/A',
       passId: guest.passId || 'N/A',
       eventName: eventName,
       status: guest.status,
@@ -241,7 +286,7 @@ export const LiveScanner: React.FC = () => {
         scanTime: currentTimestamp
       });
     }
-  }, [guests, events, scanCooldown, scanResult, checkInSuccessGuest, activeStaffName, addScanLog, assignedEvent]);
+  }, [guests, events, scanCooldown, scanResult, checkInSuccessGuest, activeStaffName, addScanLog, assignedEvent, isManager, saveGuest]);
 
   // Real-time Camera Feed & QR Frame Decoder
   useEffect(() => {
@@ -367,7 +412,10 @@ export const LiveScanner: React.FC = () => {
     addNotification({
       title: checkinRes.totalTokens > 1 ? `Pass #${checkinRes.tokenIndex} Checked In ✅` : 'Party Check-in Completed ✅',
       message: msg,
-      type: 'success'
+      type: 'success',
+      recipientEmail: (g.email || '').toLowerCase().trim(),
+      recipientPhone: (g.mobile || '').replace(/\D/g, ''),
+      recipientRole: 'guest'
     });
     showToast(`✓ Check-in Confirmed! ${g.name} admitted to party.`, 'success');
   };
@@ -427,242 +475,248 @@ export const LiveScanner: React.FC = () => {
   }
 
   return (
-    <div className="animate-fade" style={{ maxWidth: 480, margin: '0 auto', width: '100%', padding: '0 0.5rem 5rem' }}>
-      
-      {/* ========================================================
-          TOP HEADER BAR (MATCHING SCREENSHOT WITH BACK BUTTON)
-          ======================================================== */}
+    <div 
+      style={{
+        position: 'fixed',
+        inset: 0,
+        width: '100vw',
+        height: '100dvh',
+        background: '#000000',
+        overflow: 'hidden',
+        zIndex: 999,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}
+    >
+      {/* 1. Full-Screen Live Camera Video Feed */}
+      <video 
+        ref={videoRef} 
+        autoPlay 
+        playsInline 
+        muted 
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          zIndex: 1
+        }}
+      />
+
+      {/* 2. Soft Radial Vignette Overlay for Focus */}
       <div 
-        style={{ 
-          background: '#0B0D14', 
-          borderRadius: '24px 24px 0 0',
-          padding: '1.25rem 1.25rem 0.75rem',
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.45) 70%, rgba(0,0,0,0.8) 100%)',
+          pointerEvents: 'none',
+          zIndex: 2
+        }}
+      />
+
+      {/* 3. Fallback when Camera is starting or permission pending */}
+      {!cameraActive && (
+        <div 
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'linear-gradient(180deg, #111420 0%, #080A10 100%)',
+            color: '#94A3B8',
+            padding: '2rem',
+            textAlign: 'center',
+            zIndex: 3
+          }}
+        >
+          <Camera size={52} color="#38BDF8" style={{ marginBottom: '1rem', opacity: 0.85 }} />
+          <div style={{ color: '#FFFFFF', fontWeight: 800, fontSize: '1.2rem', marginBottom: '0.4rem' }}>
+            Starting Camera...
+          </div>
+          <p style={{ fontSize: '0.85rem', color: '#94A3B8', maxWidth: 300, margin: '0 0 1.25rem' }}>
+            Point your device camera at the attendee's QR Pass to scan.
+          </p>
+        </div>
+      )}
+
+      {/* 4. Top Header with Upper-Left Back Button */}
+      <div 
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          padding: 'max(1rem, env(safe-area-inset-top, 1rem)) 1.25rem 1rem',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
+          zIndex: 20,
+          background: 'linear-gradient(180deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0) 100%)'
         }}
       >
-        {/* Back Button Circle */}
+        {/* Upper-Left Back Arrow Button */}
         <button
           type="button"
           onClick={() => navigate(user.role === 'manager' ? 'dashboard' : 'guest_home')}
           style={{
-            background: 'rgba(255, 255, 255, 0.1)',
-            border: '1px solid rgba(255, 255, 255, 0.15)',
+            background: 'rgba(15, 23, 42, 0.65)',
+            border: '1px solid rgba(255, 255, 255, 0.25)',
             color: '#FFFFFF',
-            width: 40,
-            height: 40,
+            width: 44,
+            height: 44,
             borderRadius: '50%',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            backdropFilter: 'blur(8px)'
+            boxShadow: '0 4px 14px rgba(0, 0, 0, 0.4)',
+            backdropFilter: 'blur(10px)',
+            transition: 'transform 0.15s ease'
           }}
           aria-label="Go Back"
+          title="Back to previous page"
         >
-          <ArrowLeft size={20} />
+          <ArrowLeft size={22} color="#FFFFFF" strokeWidth={2.5} />
         </button>
 
-        {/* Title: Scan Guest Pass */}
-        <h1 
-          style={{ 
-            fontSize: '1.25rem', 
-            fontWeight: 800, 
-            color: '#FFFFFF', 
-            margin: 0,
-            letterSpacing: '-0.01em'
-          }}
-        >
-          Scan Guest Pass
-        </h1>
+        {/* Title */}
+        <div style={{ textAlign: 'center' }}>
+          <h1 
+            style={{ 
+              fontSize: '1.1rem', 
+              fontWeight: 800, 
+              color: '#FFFFFF', 
+              margin: 0,
+              letterSpacing: '0.02em',
+              textShadow: '0 2px 8px rgba(0,0,0,0.8)'
+            }}
+          >
+            Scan QR Pass
+          </h1>
+          <div style={{ fontSize: '0.725rem', color: '#38BDF8', fontWeight: 700, marginTop: 1, textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>
+            Gate Entry Scanner
+          </div>
+        </div>
 
-        {/* Empty Spacer to balance Back button */}
-        <div style={{ width: 40 }} />
+        {/* Empty Spacer to balance */}
+        <div style={{ width: 44 }} />
       </div>
 
-      {/* ========================================================
-          IMMERSIVE CAMERA SCANNER VIEWPORT WITH CYAN CORNER BRACKETS
-          ======================================================== */}
+      {/* 5. Center Rectangular QR Scanning Target Box */}
       <div 
         style={{
           position: 'relative',
-          background: '#07080C',
-          overflow: 'hidden',
-          aspectRatio: '3/4',
-          maxHeight: 520,
-          width: '100%',
-          borderRadius: '0 0 24px 24px',
+          width: 'clamp(260px, 72vw, 320px)',
+          height: 'clamp(260px, 72vw, 320px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 12px 36px rgba(0, 0, 0, 0.6)'
+          zIndex: 10,
+          pointerEvents: 'none'
         }}
       >
-        {/* Live Camera Video Feed */}
-        <video 
-          ref={videoRef} 
-          autoPlay 
-          playsInline 
-          muted 
+        {/* Top-Left Corner Bracket */}
+        <div 
           style={{
             position: 'absolute',
-            inset: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover'
+            top: 0,
+            left: 0,
+            width: 48,
+            height: 48,
+            borderTop: '4px solid #38BDF8',
+            borderLeft: '4px solid #38BDF8',
+            borderTopLeftRadius: 20,
+            filter: 'drop-shadow(0 0 10px rgba(56, 189, 248, 0.9))'
           }}
         />
 
-        {/* Dark Vignette Overlay for scanner focus */}
+        {/* Top-Right Corner Bracket */}
         <div 
           style={{
             position: 'absolute',
-            inset: 0,
-            background: 'radial-gradient(circle at center, transparent 40%, rgba(7, 8, 12, 0.8) 85%)',
-            pointerEvents: 'none'
+            top: 0,
+            right: 0,
+            width: 48,
+            height: 48,
+            borderTop: '4px solid #38BDF8',
+            borderRight: '4px solid #38BDF8',
+            borderTopRightRadius: 20,
+            filter: 'drop-shadow(0 0 10px rgba(56, 189, 248, 0.9))'
           }}
         />
 
-        {/* Fallback Camera Placeholder when camera is initializing or off */}
-        {!cameraActive && (
-          <div 
-            style={{
-              position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'linear-gradient(180deg, #111420 0%, #080A10 100%)',
-              color: '#94A3B8',
-              padding: '2rem',
-              textAlign: 'center'
-            }}
-          >
-            <Camera size={44} color="#38BDF8" style={{ marginBottom: '0.75rem', opacity: 0.8 }} />
-            <div style={{ color: '#FFFFFF', fontWeight: 700, fontSize: '0.95rem', marginBottom: '0.35rem' }}>
-              Initializing Camera...
-            </div>
-            <p style={{ fontSize: '0.8rem', color: '#64748B', maxWidth: 280, margin: '0 0 1rem' }}>
-              Align the attendee's QR Pass inside the glowing frame.
-            </p>
-          </div>
-        )}
-
-        {/* ========================================================
-            EXACT SCANNER TARGET FRAME WITH CYAN GLOWING CORNERS
-            ======================================================== */}
-        <div 
-          style={{
-            position: 'relative',
-            width: 250,
-            height: 250,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 10,
-            pointerEvents: 'none'
-          }}
-        >
-          {/* Top-Left Corner Bracket */}
-          <div 
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: 44,
-              height: 44,
-              borderTop: '4px solid #38BDF8',
-              borderLeft: '4px solid #38BDF8',
-              borderTopLeftRadius: 18,
-              filter: 'drop-shadow(0 0 8px rgba(56, 189, 248, 0.8))'
-            }}
-          />
-
-          {/* Top-Right Corner Bracket */}
-          <div 
-            style={{
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              width: 44,
-              height: 44,
-              borderTop: '4px solid #38BDF8',
-              borderRight: '4px solid #38BDF8',
-              borderTopRightRadius: 18,
-              filter: 'drop-shadow(0 0 8px rgba(56, 189, 248, 0.8))'
-            }}
-          />
-
-          {/* Bottom-Left Corner Bracket */}
-          <div 
-            style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              width: 44,
-              height: 44,
-              borderBottom: '4px solid #38BDF8',
-              borderLeft: '4px solid #38BDF8',
-              borderBottomLeftRadius: 18,
-              filter: 'drop-shadow(0 0 8px rgba(56, 189, 248, 0.8))'
-            }}
-          />
-
-          {/* Bottom-Right Corner Bracket */}
-          <div 
-            style={{
-              position: 'absolute',
-              bottom: 0,
-              right: 0,
-              width: 44,
-              height: 44,
-              borderBottom: '4px solid #38BDF8',
-              borderRight: '4px solid #38BDF8',
-              borderBottomRightRadius: 18,
-              filter: 'drop-shadow(0 0 8px rgba(56, 189, 248, 0.8))'
-            }}
-          />
-
-          {/* Animated Laser Scanning Line */}
-          <div 
-            className="scanner-laser" 
-            style={{
-              position: 'absolute',
-              left: '5%',
-              width: '90%',
-              height: 2,
-              background: 'linear-gradient(90deg, transparent, #38BDF8, #22D3EE, #38BDF8, transparent)',
-              boxShadow: '0 0 14px 2px #38BDF8',
-              borderRadius: 2
-            }}
-          />
-        </div>
-
-        {/* Viewport Floating Status Badge */}
+        {/* Bottom-Left Corner Bracket */}
         <div 
           style={{
             position: 'absolute',
-            bottom: 16,
-            background: 'rgba(15, 23, 42, 0.75)',
-            backdropFilter: 'blur(8px)',
-            border: '1px solid rgba(56, 189, 248, 0.3)',
-            borderRadius: 100,
-            padding: '0.35rem 0.85rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            fontWeight: 700,
-            color: '#38BDF8',
-            zIndex: 15
+            bottom: 0,
+            left: 0,
+            width: 48,
+            height: 48,
+            borderBottom: '4px solid #38BDF8',
+            borderLeft: '4px solid #38BDF8',
+            borderBottomLeftRadius: 20,
+            filter: 'drop-shadow(0 0 10px rgba(56, 189, 248, 0.9))'
           }}
-        >
-          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10B981', boxShadow: '0 0 8px #10B981' }} />
-          Point Camera at QR Pass
-        </div>
+        />
+
+        {/* Bottom-Right Corner Bracket */}
+        <div 
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            right: 0,
+            width: 48,
+            height: 48,
+            borderBottom: '4px solid #38BDF8',
+            borderRight: '4px solid #38BDF8',
+            borderBottomRightRadius: 20,
+            filter: 'drop-shadow(0 0 10px rgba(56, 189, 248, 0.9))'
+          }}
+        />
+
+        {/* Animated Laser Scanning Line */}
+        <div 
+          className="scanner-laser" 
+          style={{
+            position: 'absolute',
+            left: '6%',
+            width: '88%',
+            height: 2.5,
+            background: 'linear-gradient(90deg, transparent, #38BDF8, #22D3EE, #38BDF8, transparent)',
+            boxShadow: '0 0 14px 3px #38BDF8',
+            borderRadius: 2
+          }}
+        />
+      </div>
+
+      {/* 6. Floating Status Helper Text Below Viewfinder */}
+      <div 
+        style={{
+          position: 'absolute',
+          bottom: 'clamp(2.5rem, 8vh, 4.5rem)',
+          background: 'rgba(15, 23, 42, 0.75)',
+          backdropFilter: 'blur(12px)',
+          border: '1px solid rgba(56, 189, 248, 0.35)',
+          borderRadius: 100,
+          padding: '0.55rem 1.15rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          fontWeight: 700,
+          color: '#38BDF8',
+          fontSize: '0.85rem',
+          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.5)',
+          zIndex: 15
+        }}
+      >
+        <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10B981', boxShadow: '0 0 10px #10B981' }} />
+        Scan Guest QR Ticket
       </div>
 
       {/* ========================================================
@@ -1145,12 +1199,12 @@ export const LiveScanner: React.FC = () => {
 const modalBackdropStyle: React.CSSProperties = {
   position: 'fixed',
   inset: 0,
-  background: 'rgba(15, 23, 42, 0.65)',
-  backdropFilter: 'blur(6px)',
+  background: 'rgba(15, 23, 42, 0.75)',
+  backdropFilter: 'blur(8px)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  zIndex: 1000,
+  zIndex: 10000,
   padding: '1rem'
 };
 

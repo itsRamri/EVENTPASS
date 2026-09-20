@@ -391,11 +391,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setGuests(prev => [guest, ...prev]);
     syncGuestToDb(guest);
     showToast(`Guest "${guest.name}" uploaded/added to event!`, 'success');
-    addNotification({
-      title: 'New Guest Added',
-      message: `${guest.name} was added directly by Event Manager with token ${guest.token}.`,
-      type: 'success'
-    });
+    if (user.id || user.email || user.mobile) {
+      addNotification({
+        title: 'Guest Added',
+        message: `${guest.name} was added to the event guest list.`,
+        type: 'success',
+        recipientUserId: user.id,
+        recipientEmail: user.email,
+        recipientPhone: user.mobile,
+        recipientRole: 'manager'
+      });
+    }
   };
 
   const updateGuestStatus = (guestId: string, status: GuestStatus, scannerName?: string) => {
@@ -450,6 +456,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           scannedBy: status === 'checkedin' ? activeStaff : g.scannedBy
         };
         syncGuestToDb(updatedGuest);
+
+        if (status === 'approved') {
+          addNotification({
+            title: '🎉 Entry Pass Approved!',
+            message: `Your pass request for "${evt?.name || 'Party Event'}" has been approved! Your QR pass is now active.`,
+            type: 'success',
+            recipientEmail: g.email,
+            recipientPhone: g.mobile,
+            recipientRole: 'guest'
+          });
+        }
+
         return updatedGuest;
       }
       return g;
@@ -730,26 +748,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const visibleNotifications = React.useMemo(() => {
+    const userEmail = (user.email || '').toLowerCase().trim();
+    const userPhone = (user.mobile || '').replace(/\D/g, '');
+    const userId = (user.id || '').trim();
+
     return notifications.filter(n => {
-      // 1. If targeted to a specific email
+      // 0. Targeted specifically by userId
+      if (n.recipientUserId) {
+        return Boolean(userId && n.recipientUserId === userId);
+      }
+
+      // 1. Targeted specifically to an email
       if (n.recipientEmail) {
-        if (!user.email) return false;
-        return n.recipientEmail.toLowerCase() === user.email.toLowerCase();
+        const notifEmail = n.recipientEmail.toLowerCase().trim();
+        return Boolean(userEmail && notifEmail === userEmail);
       }
-      // 2. If targeted to a specific phone number
+
+      // 2. Targeted specifically to a phone number
       if (n.recipientPhone) {
-        const userMobile = user.mobile || '';
-        if (!userMobile) return false;
-        const userClean = userMobile.replace(/\D/g, '');
-        const notifClean = n.recipientPhone.replace(/\D/g, '');
-        return userClean && notifClean && userClean === notifClean;
+        const notifPhone = n.recipientPhone.replace(/\D/g, '');
+        return Boolean(userPhone && notifPhone && userPhone === notifPhone);
       }
-      // 3. If targeted to a specific role
+
+      // 3. Targeted specifically to a role (only if not addressed to a specific person)
       if (n.recipientRole && n.recipientRole !== 'all') {
         return n.recipientRole === user.role;
       }
-      // 4. Broadcast notification for everyone
-      return true;
+
+      // 4. Untargeted / broadcast: Only show if recipientRole is explicitly 'all'
+      return n.recipientRole === 'all';
     });
   }, [notifications, user]);
 

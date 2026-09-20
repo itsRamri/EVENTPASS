@@ -14,23 +14,7 @@ export const Navbar: React.FC = () => {
     notifications 
   } = useApp();
 
-  const userEmail = (user.email || '').toLowerCase().trim();
-  const userPhone = (user.mobile || '').replace(/\D/g, '');
-
-  const myNotifications = notifications.filter(n => {
-    if (n.recipientEmail) {
-      return Boolean(userEmail && n.recipientEmail.toLowerCase().trim() === userEmail);
-    }
-    if (n.recipientPhone) {
-      return Boolean(userPhone && n.recipientPhone.replace(/\D/g, '') === userPhone);
-    }
-    if (n.recipientRole) {
-      return n.recipientRole === 'all' || n.recipientRole === user.role;
-    }
-    return true;
-  });
-
-  const unreadCount = myNotifications.filter(n => !n.read).length;
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   const isCreateEventView = currentView === 'create_event';
   const isGuestApprovalView = currentView === 'guests';

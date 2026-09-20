@@ -137,14 +137,33 @@ export const DigitalPassModal: React.FC = () => {
             </div>
 
             {/* Large QR Code Scanner Box */}
-            <div className="pass-qr-box" style={{ padding: '1.5rem 1rem', background: '#FFFFFF', borderRadius: 'var(--radius-xl)', margin: '0 0 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', border: '2px solid #E2E8F0', boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)' }}>
+            <div 
+              className="pass-qr-box" 
+              draggable={false}
+              onDragStart={e => e.preventDefault()}
+              onTouchMove={e => e.stopPropagation()}
+              style={{ 
+                padding: '1.5rem 1rem', 
+                background: '#FFFFFF', 
+                borderRadius: 'var(--radius-xl)', 
+                margin: '0 0 1rem', 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                border: '2px solid #E2E8F0', 
+                boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)',
+                userSelect: 'none',
+                WebkitUserSelect: 'none',
+                touchAction: 'none'
+              }}
+            >
               <QRCodeSVG value={currentTokenItem?.tokenCode || guest.token || guest.passId} size={220} />
               
-              <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+              <div style={{ marginTop: '1rem', textAlign: 'center', userSelect: 'none', WebkitUserSelect: 'none' }}>
                 <div style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                   GATE SCAN TOKEN
                 </div>
-                <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#2563EB', fontFamily: 'var(--font-mono)', letterSpacing: '0.05em', marginTop: 2 }}>
+                <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#2563EB', fontFamily: 'var(--font-mono)', letterSpacing: '0.05em', marginTop: 2, userSelect: 'text' }}>
                   {currentTokenItem?.tokenCode}
                 </div>
               </div>

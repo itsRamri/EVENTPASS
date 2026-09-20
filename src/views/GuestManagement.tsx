@@ -204,7 +204,8 @@ export const GuestManagement: React.FC = () => {
         title: '🎟️ You are Invited!',
         message: `You have been officially invited to "${targetEvt.name}"! Access and manage your entry passes.`,
         type: 'info',
-        recipientEmail: emailAddr
+        recipientEmail: emailAddr.toLowerCase().trim(),
+        recipientRole: 'guest'
       });
     });
 
@@ -240,13 +241,14 @@ export const GuestManagement: React.FC = () => {
 
     validPhones.forEach((phoneNum, i) => {
       const guestId = 'gst_mob_' + Date.now() + '_' + i;
+      const cleanPhone = phoneNum.replace(/\D/g, '');
 
       const newGuest: GuestRegistration = {
         id: guestId,
         eventId: targetEvt.id,
         name: 'Pending Guest Submission',
         email: '',
-        mobile: phoneNum,
+        mobile: cleanPhone,
         avatar: '',
         college: 'Awaiting Submission',
         branch: 'Pending Acceptance',
@@ -260,7 +262,7 @@ export const GuestManagement: React.FC = () => {
         checkInTime: null,
         scanTimestamp: null,
         answers: {
-          'Mobile Contact': phoneNum,
+          'Mobile Contact': cleanPhone,
           'Invite Channel': 'SMS / WhatsApp Request'
         },
         documents: []
@@ -272,7 +274,8 @@ export const GuestManagement: React.FC = () => {
         title: '🎟️ You are Invited!',
         message: `You have been officially invited to "${targetEvt.name}"! Access and manage your entry passes.`,
         type: 'info',
-        recipientPhone: phoneNum
+        recipientPhone: cleanPhone,
+        recipientRole: 'guest'
       });
     });
 
@@ -382,12 +385,24 @@ export const GuestManagement: React.FC = () => {
       };
 
       addDirectGuest(newGuest);
-    });
 
-    addNotification({
-      title: '🎟️ You are Invited!',
-      message: `You have been officially invited to "${targetEvt.name}"! Access and manage your entry passes.`,
-      type: 'info'
+      if (entry.type === 'email' && entry.value) {
+        addNotification({
+          title: '🎟️ You are Invited!',
+          message: `You have been officially invited to "${targetEvt.name}"! Access and manage your entry passes.`,
+          type: 'info',
+          recipientEmail: entry.value.toLowerCase().trim(),
+          recipientRole: 'guest'
+        });
+      } else if (entry.type === 'phone' && entry.value) {
+        addNotification({
+          title: '🎟️ You are Invited!',
+          message: `You have been officially invited to "${targetEvt.name}"! Access and manage your entry passes.`,
+          type: 'info',
+          recipientPhone: entry.value.replace(/\D/g, ''),
+          recipientRole: 'guest'
+        });
+      }
     });
 
     setIsAddGuestModalOpen(false);
@@ -546,34 +561,35 @@ export const GuestManagement: React.FC = () => {
                 key={g.id} 
                 className="glass-panel guest-item-card" 
                 style={{ 
-                  padding: '1.15rem 1.25rem', 
+                  padding: '1rem 1.15rem', 
                   display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'space-between', 
-                  gap: '1rem', 
-                  flexWrap: 'wrap',
+                  flexDirection: 'column',
+                  alignItems: 'flex-start', 
+                  justifyContent: 'flex-start', 
+                  gap: '0.65rem', 
                   background: isCheckedIn ? '#F8FAFC' : '#FFFFFF',
                   border: isCheckedIn ? '1px solid #CBD5E1' : '1px solid #E2E8F0',
                   borderRadius: 'var(--radius-lg)',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
                   maxWidth: '100%',
-                  boxSizing: 'border-box',
-                  overflow: 'hidden'
+                  height: 'auto',
+                  minHeight: 'unset',
+                  boxSizing: 'border-box'
                 }}
               >
-                {/* Left: Attendee Avatar & Primary Info */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1.15rem', flex: '1 1 300px', minWidth: 0, flexWrap: 'wrap' }}>
+                {/* Top: Attendee Avatar & Primary Info */}
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', width: '100%', minWidth: 0, flexWrap: 'wrap' }}>
                   <div style={{ position: 'relative', flexShrink: 0 }}>
                     {g.avatar && !g.avatar.includes('unsplash.com') ? (
                       <img 
                         src={g.avatar} 
                         style={{ 
-                          width: 'clamp(100px, 24vw, 135px)', 
-                          height: 'clamp(120px, 28vw, 155px)', 
+                          width: 'clamp(90px, 22vw, 125px)', 
+                          height: 'clamp(105px, 26vw, 145px)', 
                           borderRadius: 'var(--radius-md)', 
                           objectFit: 'cover', 
-                          border: '3px solid #E2E8F0',
-                          boxShadow: '0 6px 18px rgba(15, 23, 42, 0.12)',
+                          border: '2px solid #E2E8F0',
+                          boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
                           cursor: 'pointer'
                         }} 
                         alt={g.name}
@@ -583,8 +599,8 @@ export const GuestManagement: React.FC = () => {
                     ) : (
                       <div
                         style={{
-                          width: 'clamp(100px, 24vw, 135px)', 
-                          height: 'clamp(120px, 28vw, 155px)', 
+                          width: 'clamp(90px, 22vw, 125px)', 
+                          height: 'clamp(105px, 26vw, 145px)', 
                           borderRadius: 'var(--radius-md)', 
                           background: 'linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 100%)',
                           border: '2px dashed #CBD5E1',
@@ -597,7 +613,7 @@ export const GuestManagement: React.FC = () => {
                         }}
                       >
                         <User size={34} strokeWidth={2} color="#94A3B8" />
-                        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748B' }}>No Photo</span>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748B' }}>No Photo</span>
                       </div>
                     )}
                     {isCheckedIn && (
@@ -609,12 +625,12 @@ export const GuestManagement: React.FC = () => {
                           background: '#10B981', 
                           color: '#FFFFFF', 
                           borderRadius: '50%', 
-                          width: 26, 
-                          height: 26, 
+                          width: 24, 
+                          height: 24, 
                           display: 'flex', 
                           alignItems: 'center', 
                           justifyContent: 'center', 
-                          fontSize: '0.9rem', 
+                          fontSize: '0.85rem', 
                           fontWeight: 800, 
                           border: '2px solid #FFFFFF', 
                           boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
@@ -661,7 +677,6 @@ export const GuestManagement: React.FC = () => {
                       </span>
                     </div>
 
-
                     <div style={{ fontSize: '0.825rem', color: '#334155', marginTop: '0.2rem', fontWeight: 600, wordBreak: 'break-all' }}>
                       {isInvited ? (
                         <span>Invite: <strong style={{ color: '#0F172A' }}>{g.email || g.mobile}</strong></span>
@@ -672,54 +687,52 @@ export const GuestManagement: React.FC = () => {
 
                     <div style={{ fontSize: '0.775rem', color: '#64748B', marginTop: '0.25rem', display: 'flex', gap: '0.4rem', flexWrap: 'wrap', fontWeight: 600 }}>
                       <span>📍 {evt.name}</span>
-                      {isInvited ? (
+                      {!isInvited && (
                         <>
-                          <span>•</span>
-                          <span style={{ color: '#B45309', fontWeight: 700 }}>📝 Details will appear upon submission</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>•</span>
-                          <span>🎓 {g.college || 'Attendee'} ({g.branch || 'General'})</span>
+                          {(g.college || g.branch) && (
+                            <>
+                              <span>•</span>
+                              <span>🎓 {g.college || 'Attendee'} {g.branch ? `(${g.branch})` : ''}</span>
+                            </>
+                          )}
                           {g.rollNo && (
                             <>
                               <span>•</span>
                               <span>Roll: <strong style={{ color: '#0F172A' }}>{g.rollNo}</strong></span>
                             </>
                           )}
-                          <span>•</span>
-                          <span style={{ color: '#475569', fontWeight: 700 }}>📅 Registered: {formatRegistrationDateOnly(g.registrationDate)}</span>
+                          {g.registrationDate && (
+                            <>
+                              <span>•</span>
+                              <span style={{ color: '#475569', fontWeight: 700 }}>📅 {formatRegistrationDateOnly(g.registrationDate)}</span>
+                            </>
+                          )}
                         </>
                       )}
                     </div>
                   </div>
                 </div>
 
-                {/* Middle: Check-In Timestamp & Pass Status */}
-                <div style={{ flex: '1 1 160px', minWidth: 0, fontSize: '0.8rem' }}>
-                  {isCheckedIn ? (
-                    <div style={{ background: '#F1F5F9', padding: '0.55rem 0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid #CBD5E1' }}>
-                      <div style={{ fontSize: '0.725rem', color: '#64748B', fontWeight: 800, textTransform: 'uppercase' }}>CHECK-IN TIME & DATE</div>
-                      <div style={{ fontWeight: 800, color: '#0F172A', marginTop: 2, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                        <Clock size={14} color="var(--accent-primary)" /> {g.checkInTime}
+                {/* Middle: Check-In Timestamp & Pass Status (Only if checked-in or pending) */}
+                {(isCheckedIn || isPending) && (
+                  <div style={{ width: '100%', fontSize: '0.8rem', marginTop: '0.15rem' }}>
+                    {isCheckedIn ? (
+                      <div style={{ background: '#F1F5F9', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid #CBD5E1', display: 'inline-block' }}>
+                        <div style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 800, textTransform: 'uppercase' }}>CHECK-IN TIME</div>
+                        <div style={{ fontWeight: 800, color: '#0F172A', marginTop: 2, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                          <Clock size={13} color="var(--accent-primary)" /> {g.checkInTime}
+                        </div>
                       </div>
-                      <div style={{ fontSize: '0.725rem', color: '#475569', marginTop: 2, fontWeight: 600 }}>
-                        Scanned by: <strong style={{ color: '#0F172A' }}>{g.scannedBy || 'Gate Staff'}</strong>
+                    ) : (
+                      <div style={{ color: '#1E40AF', fontSize: '0.8rem', fontWeight: 700 }}>
+                        📋 Guest submitted details. Ready for Manager review.
                       </div>
-                    </div>
-                  ) : isPending ? (
-                    <div style={{ color: '#1E40AF', fontSize: '0.825rem', fontWeight: 700 }}>
-                      📋 Guest submitted details.<br />Ready for Manager review.
-                    </div>
-                  ) : (
-                    <div style={{ color: '#92400E', fontSize: '0.825rem', fontWeight: 700 }}>
-                      ✉️ Waiting for guest to accept & fill details.
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
+                )}
 
-                {/* Right: Actions */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                {/* Actions: Directly below info */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', width: '100%', paddingTop: '0.35rem', borderTop: '1px solid #F1F5F9' }}>
                   {/* If Invited: Manager can resend invite */}
                   {isInvited && (
                     <button 
@@ -755,23 +768,12 @@ export const GuestManagement: React.FC = () => {
                     </>
                   )}
 
-                  {/* If Approved: View Digital Pass */}
-                  {isApproved && (
-                    <button 
-                      className="btn btn-secondary btn-sm" 
-                      onClick={() => openDigitalPass(g.id)}
-                      style={{ fontWeight: 700, color: '#0F172A' }}
-                    >
-                      <QrCode size={14} /> View Digital Pass
-                    </button>
-                  )}
-
                   {/* View Full Dossier */}
                   <button 
                     className="btn btn-secondary btn-sm" 
                     onClick={() => setSelectedGuestDossier(g)}
                     title="View Full Details"
-                    style={{ fontWeight: 700 }}
+                    style={{ fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
                   >
                     <Eye size={14} /> Details
                   </button>
@@ -780,6 +782,7 @@ export const GuestManagement: React.FC = () => {
                     className="btn btn-danger btn-sm" 
                     onClick={() => handleDeleteAction(g)}
                     title="Delete Attendee"
+                    style={{ padding: '0.45rem 0.65rem' }}
                   >
                     <Trash2 size={14} />
                   </button>
@@ -1080,260 +1083,262 @@ export const GuestManagement: React.FC = () => {
       )}
 
       {/* Guest Dossier / Full Details Modal */}
-      {selectedGuestDossier && (
-        <div className="modal-overlay active" onClick={() => setSelectedGuestDossier(null)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 520, background: '#FFFFFF', maxHeight: '90vh', overflowY: 'auto' }}>
-            <div className="modal-header" style={{ borderBottom: '1px solid #E2E8F0' }}>
-              <div>
-                <h2 style={{ color: '#0F172A', fontWeight: 800, margin: 0 }}>Attendee Dossier & Pass Record</h2>
-                <div style={{ fontSize: '0.75rem', color: '#16A34A', fontWeight: 700, marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                  <ShieldCheck size={13} /> Stored in Cloud Firestore Database
+      {selectedGuestDossier && (() => {
+        // Resolve primary photo (avatar or first document image)
+        const primaryPhoto = (selectedGuestDossier.avatar && !selectedGuestDossier.avatar.includes('unsplash.com'))
+          ? selectedGuestDossier.avatar
+          : selectedGuestDossier.documents?.find(d => d.type === 'image' && d.url)?.url;
+
+        // Non-duplicate documents
+        const nonDuplicateDocs = selectedGuestDossier.documents?.filter(d => !primaryPhoto || d.url !== primaryPhoto) || [];
+
+        return (
+          <div className="modal-overlay active" onClick={() => setSelectedGuestDossier(null)}>
+            <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 420, width: '100%', background: '#FFFFFF', maxHeight: '88vh', overflowY: 'auto', borderRadius: 'var(--radius-lg)', padding: '1.15rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
+              
+              {/* Header */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.65rem' }}>
+                <div>
+                  <h2 style={{ color: '#0F172A', fontWeight: 800, margin: 0, fontSize: '1.15rem' }}>Attendee Details</h2>
+                  <div style={{ fontSize: '0.725rem', color: '#64748B', fontWeight: 600, marginTop: '0.1rem' }}>
+                    {currentSelectedEvent.name}
+                  </div>
                 </div>
+                <button 
+                  type="button" 
+                  onClick={() => setSelectedGuestDossier(null)}
+                  style={{
+                    background: '#F1F5F9',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: 30,
+                    height: 30,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    color: '#64748B',
+                    fontWeight: 700
+                  }}
+                >
+                  ✕
+                </button>
               </div>
-              <button className="icon-btn" onClick={() => setSelectedGuestDossier(null)}>✕</button>
-            </div>
-            <div className="modal-body">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-                <div style={{ position: 'relative', flexShrink: 0 }}>
-                  {selectedGuestDossier.avatar && !selectedGuestDossier.avatar.includes('unsplash.com') ? (
-                    <>
+
+              {/* Single Prominent Photo Section */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1rem', textAlign: 'center' }}>
+                <div style={{ position: 'relative', marginBottom: '0.6rem' }}>
+                  {primaryPhoto ? (
+                    <div style={{ position: 'relative', display: 'inline-block' }}>
                       <img 
-                        src={selectedGuestDossier.avatar} 
+                        src={primaryPhoto} 
                         style={{ 
-                          width: 'clamp(160px, 42vw, 210px)', 
-                          height: 'clamp(185px, 48vw, 240px)', 
+                          width: 'clamp(120px, 32vw, 160px)', 
+                          height: 'clamp(140px, 38vw, 190px)', 
                           borderRadius: 'var(--radius-lg)', 
                           objectFit: 'cover', 
-                          border: '4px solid #E2E8F0', 
-                          boxShadow: '0 8px 24px rgba(15, 23, 42, 0.16)', 
-                          flexShrink: 0,
+                          border: '3px solid #E2E8F0', 
+                          boxShadow: '0 6px 20px rgba(15, 23, 42, 0.12)', 
                           cursor: 'pointer' 
                         }} 
                         alt={selectedGuestDossier.name}
-                        onClick={() => setPreviewPhotoModal({ url: selectedGuestDossier.avatar, title: `${selectedGuestDossier.name}'s Profile / Live Photo` })}
-                        title="Click to view full high-res photo"
+                        onClick={() => setPreviewPhotoModal({ url: primaryPhoto, title: `${selectedGuestDossier.name}'s Photo` })}
+                        title="Click to view full photo"
                       />
                       <button
                         type="button"
-                        onClick={() => setPreviewPhotoModal({ url: selectedGuestDossier.avatar, title: `${selectedGuestDossier.name}'s Profile / Live Photo` })}
+                        onClick={() => setPreviewPhotoModal({ url: primaryPhoto, title: `${selectedGuestDossier.name}'s Photo` })}
                         style={{
                           position: 'absolute',
                           bottom: 6,
                           right: 6,
-                          background: 'rgba(15, 23, 42, 0.85)',
+                          background: 'rgba(15, 23, 42, 0.8)',
                           color: '#FFFFFF',
                           border: 'none',
                           borderRadius: '999px',
-                          padding: '6px',
+                          padding: '5px',
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.3)'
                         }}
                         title="Zoom Photo"
                       >
-                        <Eye size={14} />
+                        <Eye size={12} />
                       </button>
-                    </>
+                    </div>
                   ) : (
                     <div
                       style={{
-                        width: 'clamp(160px, 42vw, 210px)', 
-                        height: 'clamp(185px, 48vw, 240px)', 
+                        width: 'clamp(110px, 30vw, 140px)', 
+                        height: 'clamp(130px, 35vw, 165px)', 
                         borderRadius: 'var(--radius-lg)', 
                         background: 'linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 100%)',
-                        border: '2.5px dashed #CBD5E1',
+                        border: '2px dashed #CBD5E1',
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '0.5rem',
+                        gap: '0.35rem',
                         color: '#94A3B8'
                       }}
                     >
-                      <User size={52} strokeWidth={2} color="#94A3B8" />
-                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748B' }}>No Photo Uploaded</span>
+                      <User size={38} strokeWidth={1.8} color="#94A3B8" />
+                      <span style={{ fontSize: '0.725rem', fontWeight: 700, color: '#64748B' }}>No Photo Uploaded</span>
                     </div>
                   )}
                 </div>
-                <div style={{ flex: '1 1 180px', minWidth: 0 }}>
-                  <h3 style={{ fontSize: '1.3rem', color: '#0F172A', margin: 0, fontWeight: 800, wordBreak: 'break-word' }}>{selectedGuestDossier.name}</h3>
-                  <div style={{ fontSize: '0.9rem', color: '#334155', fontWeight: 600, wordBreak: 'break-all', marginTop: 2 }}>{selectedGuestDossier.email}</div>
-                  <div style={{ fontSize: '0.85rem', color: '#64748B', fontWeight: 600, marginTop: 2 }}>📱 {selectedGuestDossier.mobile}</div>
-                  <div style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 700, marginTop: 6 }}>
-                    📅 Registered: {formatRegistrationDateOnly(selectedGuestDossier.registrationDate)}
+
+                <h3 style={{ fontSize: '1.2rem', color: '#0F172A', margin: 0, fontWeight: 800, wordBreak: 'break-word' }}>
+                  {selectedGuestDossier.name}
+                </h3>
+                {selectedGuestDossier.email && (
+                  <div style={{ fontSize: '0.825rem', color: '#334155', fontWeight: 600, wordBreak: 'break-all', marginTop: 2 }}>
+                    {selectedGuestDossier.email}
                   </div>
-                </div>
+                )}
+                {selectedGuestDossier.mobile && (
+                  <div style={{ fontSize: '0.8rem', color: '#64748B', fontWeight: 600, marginTop: 2 }}>
+                    📱 {selectedGuestDossier.mobile}
+                  </div>
+                )}
               </div>
 
-              {/* Information Panel */}
-              <div className="glass-panel" style={{ padding: '1rem', fontSize: '0.85rem', display: 'grid', gap: '0.5rem', marginBottom: '1.25rem', background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                <div className="flex-between">
-                  <span style={{ color: '#64748B', fontWeight: 700 }}>Pass Status:</span>
+              {/* Information / Submitted Details Grid */}
+              <div style={{ background: '#F8FAFC', padding: '0.75rem 0.85rem', borderRadius: 'var(--radius-md)', border: '1px solid #E2E8F0', fontSize: '0.8rem', display: 'grid', gap: '0.45rem', marginBottom: '0.85rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#64748B', fontWeight: 700 }}>Status:</span>
                   <span className={`badge badge-${selectedGuestDossier.status === 'checkedin' ? 'checkedin' : selectedGuestDossier.status}`}>
                     {selectedGuestDossier.status.toUpperCase()}
                   </span>
                 </div>
-                <div className="flex-between">
-                  <span style={{ color: '#64748B', fontWeight: 700 }}>College / Dept:</span>
-                  <span style={{ fontWeight: 700, color: '#0F172A' }}>{selectedGuestDossier.college} • {selectedGuestDossier.branch}</span>
-                </div>
-                <div className="flex-between">
-                  <span style={{ color: '#64748B', fontWeight: 700 }}>Student Roll No:</span>
-                  <span style={{ fontWeight: 700, color: '#0F172A' }}>{selectedGuestDossier.rollNo || 'N/A'}</span>
-                </div>
-                <div className="flex-between">
-                  <span style={{ color: '#64748B', fontWeight: 700 }}>Allocated Tokens:</span>
+
+                {selectedGuestDossier.college && selectedGuestDossier.college !== 'Awaiting Submission' && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: '#64748B', fontWeight: 700 }}>College / Inst:</span>
+                    <span style={{ fontWeight: 700, color: '#0F172A', textAlign: 'right' }}>{selectedGuestDossier.college}</span>
+                  </div>
+                )}
+
+                {selectedGuestDossier.branch && selectedGuestDossier.branch !== 'Pending Acceptance' && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: '#64748B', fontWeight: 700 }}>Department / Branch:</span>
+                    <span style={{ fontWeight: 700, color: '#0F172A', textAlign: 'right' }}>{selectedGuestDossier.branch}</span>
+                  </div>
+                )}
+
+                {selectedGuestDossier.rollNo && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: '#64748B', fontWeight: 700 }}>Roll / Reg No:</span>
+                    <span style={{ fontWeight: 700, color: '#0F172A', textAlign: 'right' }}>{selectedGuestDossier.rollNo}</span>
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#64748B', fontWeight: 700 }}>Allocated Passes:</span>
                   <span style={{ fontWeight: 800, color: '#2563EB' }}>
-                    🎟️ {selectedGuestDossier.tokenCount || selectedGuestDossier.tokens?.length || 1} Passes ({Math.max(0, (selectedGuestDossier.tokenCount || selectedGuestDossier.tokens?.length || 1) - (selectedGuestDossier.usedTokens || 0))} Valid, {selectedGuestDossier.usedTokens || 0} Used)
+                    🎟️ {selectedGuestDossier.tokenCount || selectedGuestDossier.tokens?.length || 1} Token{(selectedGuestDossier.tokenCount || selectedGuestDossier.tokens?.length || 1) > 1 ? 's' : ''}
                   </span>
                 </div>
+
+                {selectedGuestDossier.registrationDate && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: '#64748B', fontWeight: 700 }}>Registered On:</span>
+                    <span style={{ fontWeight: 700, color: '#475569' }}>{formatRegistrationDateOnly(selectedGuestDossier.registrationDate)}</span>
+                  </div>
+                )}
+
                 {selectedGuestDossier.checkInTime && (
-                  <div className="flex-between" style={{ color: '#047857', fontWeight: 800 }}>
-                    <span>Check-in Timestamp:</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#047857', fontWeight: 800 }}>
+                    <span>Check-in Time:</span>
                     <span>{selectedGuestDossier.checkInTime}</span>
                   </div>
                 )}
               </div>
 
-              {/* Multi-Tokens List View */}
-              {(selectedGuestDossier.tokens && selectedGuestDossier.tokens.length > 0) && (
-                <div style={{ marginBottom: '1.25rem', background: '#F8FAFC', padding: '0.85rem', borderRadius: 'var(--radius-md)', border: '1px solid #E2E8F0' }}>
-                  <div style={{ fontSize: '0.825rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.45rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <Ticket size={15} color="#2563EB" /> Issued Token Codes ({selectedGuestDossier.tokens.length}):
+              {/* Form Answers (Only if present and has filled non-empty values) */}
+              {selectedGuestDossier.answers && Object.entries(selectedGuestDossier.answers).filter(([_, v]) => v !== undefined && v !== '' && v !== null).length > 0 && (
+                <div style={{ marginBottom: '1rem' }}>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <Sparkles size={13} color="#2563EB" /> Submitted Details:
                   </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
-                    {selectedGuestDossier.tokens.map((tk, idx) => {
-                      const item = selectedGuestDossier.tokenList?.[idx];
-                      const isUsed = item?.status === 'used';
-                      return (
-                        <span 
-                          key={idx}
-                          style={{
-                            padding: '0.25rem 0.6rem',
-                            borderRadius: 'var(--radius-sm)',
-                            fontSize: '0.75rem',
-                            fontWeight: 700,
-                            fontFamily: 'var(--font-mono)',
-                            background: isUsed ? '#FEE2E2' : '#EFF6FF',
-                            color: isUsed ? '#991B1B' : '#1E40AF',
-                            border: isUsed ? '1px solid #FECACA' : '1px solid #BFDBFE',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.3rem'
-                          }}
-                        >
-                          {isUsed ? '✕' : '✓'} #{idx + 1}: {tk}
-                        </span>
-                      );
-                    })}
+                  <div style={{ background: '#F8FAFC', padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid #E2E8F0', display: 'grid', gap: '0.4rem' }}>
+                    {Object.entries(selectedGuestDossier.answers)
+                      .filter(([_, val]) => val !== undefined && val !== '' && val !== null)
+                      .map(([key, val]) => (
+                        <div key={key} style={{ fontSize: '0.78rem', display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #E2E8F0', paddingBottom: '0.25rem' }}>
+                          <span style={{ color: '#64748B', fontWeight: 700 }}>{key}:</span>
+                          <span style={{ fontWeight: 700, color: '#0F172A', textAlign: 'right', maxWidth: '60%', wordBreak: 'break-word' }}>{String(val)}</span>
+                        </div>
+                      ))}
                   </div>
                 </div>
               )}
 
-
-              {/* Uploaded Documents / ID Cards from Database */}
-              {selectedGuestDossier.documents && selectedGuestDossier.documents.length > 0 && (
-                <div style={{ marginBottom: '1.25rem' }}>
-                  <div style={{ fontSize: '0.875rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.65rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <FileText size={16} color="#2563EB" /> Uploaded ID Proofs & Documents ({selectedGuestDossier.documents.length})
+              {/* Uploaded Documents (if any non-duplicate document exists) */}
+              {nonDuplicateDocs.length > 0 && (
+                <div style={{ marginBottom: '1rem' }}>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <FileText size={14} color="#2563EB" /> Uploaded Documents ({nonDuplicateDocs.length}):
                   </div>
-                  <div style={{ display: 'grid', gap: '0.85rem' }}>
-                    {selectedGuestDossier.documents.map((doc, idx) => (
+                  <div style={{ display: 'grid', gap: '0.5rem' }}>
+                    {nonDuplicateDocs.map((doc, idx) => (
                       <div 
                         key={idx} 
                         style={{ 
                           background: '#F8FAFC', 
-                          borderRadius: 'var(--radius-lg)', 
-                          border: '1.5px solid #CBD5E1',
-                          padding: '0.85rem',
-                          boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+                          borderRadius: 'var(--radius-md)', 
+                          border: '1px solid #CBD5E1',
+                          padding: '0.65rem 0.85rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: '0.5rem'
                         }}
                       >
-                        {doc.type === 'image' && doc.url ? (
-                          <div style={{ marginBottom: '0.65rem', textAlign: 'center' }}>
-                            <img 
-                              src={doc.url} 
-                              alt={doc.name} 
-                              style={{ 
-                                width: '100%', 
-                                maxHeight: 220, 
-                                borderRadius: 'var(--radius-md)', 
-                                objectFit: 'contain', 
-                                cursor: 'pointer', 
-                                border: '1px solid #94A3B8',
-                                background: '#0F172A'
-                              }}
-                              onClick={() => setPreviewPhotoModal({ url: doc.url!, title: `${selectedGuestDossier.name} - ${doc.name}` })} 
-                              title="Click for full-screen photo"
-                            />
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0F172A', wordBreak: 'break-word' }}>
+                            {doc.name}
                           </div>
-                        ) : null}
-
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap' }}>
-                          <div style={{ minWidth: 0, flex: 1 }}>
-                            <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0F172A', wordBreak: 'break-word' }}>
-                              {doc.name}
-                            </div>
-                            <div style={{ fontSize: '0.725rem', color: '#64748B', fontWeight: 600 }}>{doc.size}</div>
-                          </div>
-                          {doc.url && (
-                            <button
-                              type="button"
-                              className="btn btn-secondary btn-sm"
-                              onClick={() => {
-                                if (doc.type === 'image') {
-                                  setPreviewPhotoModal({ url: doc.url!, title: `${selectedGuestDossier.name} - ${doc.name}` });
-                                } else {
-                                  const win = window.open();
-                                  win?.document.write(`<iframe src="${doc.url}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
-                                }
-                              }}
-                              style={{ fontSize: '0.78rem', fontWeight: 800, padding: '0.35rem 0.8rem' }}
-                            >
-                              <ExternalLink size={13} /> Full Screen View
-                            </button>
-                          )}
+                          {doc.size && <div style={{ fontSize: '0.7rem', color: '#64748B' }}>{doc.size}</div>}
                         </div>
+                        {doc.url && (
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => {
+                              if (doc.type === 'image') {
+                                setPreviewPhotoModal({ url: doc.url!, title: `${selectedGuestDossier.name} - ${doc.name}` });
+                              } else {
+                                const win = window.open();
+                                win?.document.write(`<iframe src="${doc.url}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
+                              }
+                            }}
+                            style={{ fontSize: '0.75rem', fontWeight: 700, padding: '0.25rem 0.6rem' }}
+                          >
+                            <ExternalLink size={12} /> View
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Questionnaire / Custom Form Answers */}
-              {selectedGuestDossier.answers && Object.keys(selectedGuestDossier.answers).length > 0 && (
-                <div>
-                  <div style={{ fontSize: '0.825rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <Sparkles size={14} color="#2563EB" /> Custom Application Answers:
-                  </div>
-                  <div style={{ background: '#F8FAFC', padding: '0.85rem', borderRadius: 'var(--radius-md)', border: '1px solid #E2E8F0', display: 'grid', gap: '0.45rem' }}>
-                    {Object.entries(selectedGuestDossier.answers).map(([key, val]) => (
-                      <div key={key} style={{ fontSize: '0.8rem', display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #E2E8F0', paddingBottom: '0.3rem' }}>
-                        <span style={{ color: '#64748B', fontWeight: 700 }}>{key}:</span>
-                        <span style={{ fontWeight: 700, color: '#0F172A', textAlign: 'right', maxWidth: '60%', wordBreak: 'break-word' }}>{String(val)}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+              {/* Modal Footer */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', paddingTop: '0.75rem', borderTop: '1px solid #E2E8F0', marginTop: '0.5rem' }}>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => setSelectedGuestDossier(null)}
+                  style={{ fontWeight: 700, width: selectedGuestDossier.status === 'pending' ? 'auto' : '100%' }}
+                >
+                  Close
+                </button>
 
-            {/* Dossier Footer / Quick Actions */}
-            <div className="modal-footer" style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap', borderTop: '1px solid #E2E8F0' }}>
-              <button 
-                type="button" 
-                className="btn btn-secondary btn-sm"
-                onClick={() => setSelectedGuestDossier(null)}
-                style={{ fontWeight: 700 }}
-              >
-                Close Dossier
-              </button>
-
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
                 {selectedGuestDossier.status === 'pending' && (
-                  <>
+                  <div style={{ display: 'flex', gap: '0.4rem' }}>
                     <button 
                       type="button" 
                       className="btn btn-danger btn-sm"
@@ -1343,7 +1348,7 @@ export const GuestManagement: React.FC = () => {
                       }}
                       style={{ fontWeight: 800 }}
                     >
-                      <UserX size={14} /> Reject
+                      <UserX size={13} /> Reject
                     </button>
                     <button 
                       type="button" 
@@ -1354,26 +1359,16 @@ export const GuestManagement: React.FC = () => {
                       }}
                       style={{ background: '#10B981', borderColor: '#059669', fontWeight: 800 }}
                     >
-                      <UserCheck size={14} /> Approve & Issue Pass
+                      <UserCheck size={13} /> Approve
                     </button>
-                  </>
-                )}
-
-                {(selectedGuestDossier.status === 'approved' || selectedGuestDossier.status === 'checkedin') && (
-                  <button 
-                    type="button" 
-                    className="btn btn-primary btn-sm"
-                    onClick={() => openDigitalPass(selectedGuestDossier.id)}
-                    style={{ fontWeight: 800 }}
-                  >
-                    <QrCode size={14} /> View Digital Pass
-                  </button>
+                  </div>
                 )}
               </div>
+
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Full Photo / Document Lightbox Preview Modal */}
       {previewPhotoModal && (

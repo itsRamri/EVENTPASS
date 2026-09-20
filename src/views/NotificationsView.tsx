@@ -5,21 +5,7 @@ import { Bell, CheckCircle2, Trash2, ArrowLeft } from 'lucide-react';
 export const NotificationsView: React.FC = () => {
   const { user, navigate, notifications, markNotificationsRead, deleteNotification, clearAllNotifications } = useApp();
 
-  const userEmail = (user.email || '').toLowerCase().trim();
-  const userPhone = (user.mobile || '').replace(/\D/g, '');
-
-  const userNotifications = notifications.filter(n => {
-    if (n.recipientEmail) {
-      return Boolean(userEmail && n.recipientEmail.toLowerCase().trim() === userEmail);
-    }
-    if (n.recipientPhone) {
-      return Boolean(userPhone && n.recipientPhone.replace(/\D/g, '') === userPhone);
-    }
-    if (n.recipientRole) {
-      return n.recipientRole === 'all' || n.recipientRole === user.role;
-    }
-    return true;
-  });
+  const userNotifications = notifications;
 
   return (
     <div className="animate-fade" style={{ maxWidth: 640, margin: '0 auto', paddingBottom: '3rem' }}>

@@ -20,9 +20,10 @@ import {
 } from 'lucide-react';
 
 import { compressImageFile, readFileAsDataUrl } from '../utils/image';
+import { fetchEventFromDbById } from '../services/dbService';
 
 export const GuestHome: React.FC = () => {
-  const { user, events, guests, saveGuest, openDigitalPass, addNotification, showToast } = useApp();
+  const { user, events, guests, saveEvent, saveGuest, openDigitalPass, addNotification, showToast } = useApp();
 
   const [registeringEvent, setRegisteringEvent] = useState<EventItem | null>(null);
   const [targetInvitedGuestId, setTargetInvitedGuestId] = useState<string | null>(null);
@@ -59,6 +60,7 @@ export const GuestHome: React.FC = () => {
     const gMobile = (g.mobile || '').replace(/\D/g, '');
     const gName = (g.name || '').toLowerCase().trim();
 
+    if (user.id && g.userId && g.userId === user.id) return true;
     if (userEmail && gEmail && gEmail === userEmail) return true;
     if (userMobile && gMobile && gMobile === userMobile) return true;
     if (userName && gName && gName === userName && gName !== 'pending guest submission') return true;
@@ -76,22 +78,14 @@ export const GuestHome: React.FC = () => {
     return matchesEmail || matchesMobile;
   });
 
-  // Only show events where the user has actually registered/joined, or the organizer.
-  // Invitations are shown in the top "Pending Invitations" banner until the guest accepts.
+  // Only show events where this user has actually registered / joined as a guest.
+  // Events created by this account as a host/organizer will NOT appear in "My Joined Events"!
   const myVisibleEvents = events.filter(evt => {
     if (evt.status !== 'active') return false;
-    if (isEventOrganizer(evt)) return true;
-    if (myRegistrations.some(r => r.eventId === evt.id)) return true;
-    return false;
+    return myRegistrations.some(r => r.eventId === evt.id);
   });
 
   const handleOpenRegistration = (evt: EventItem, existingInviteId?: string, defaultEmail?: string, defaultMobile?: string) => {
-    // 0. Check if user is the creator/organizer of this event
-    if (isEventOrganizer(evt)) {
-      showToast(`⚠️ You created this party ("${evt.name}"). Event organizers cannot register as guests in their own party.`, 'warning');
-      return;
-    }
-
     // Check if user has already joined / registered for this event
     if (!existingInviteId) {
       const alreadyJoined = guests.find(g => 
@@ -136,7 +130,7 @@ export const GuestHome: React.FC = () => {
     setUploadedFiles([]);
   };
 
-  const handleJoinByEventId = (e: React.FormEvent) => {
+  const handleJoinByEventId = async (e: React.FormEvent) => {
     e.preventDefault();
     const query = inputEventId.trim();
     if (!query) return;
@@ -156,24 +150,34 @@ export const GuestHome: React.FC = () => {
       matchedEvent = events.find(e => e.id === tokenMatchedGuest.eventId);
     }
 
-    // 2. Check if user entered Event ID, Prefix, or Event Name
+    // 2. Check if user entered Event ID, Prefix, or Event Name in local state
     if (!matchedEvent) {
+      const lowerQuery = query.toLowerCase();
+      const cleanAlpha = lowerQuery.replace(/[^a-z0-9]/g, '');
       matchedEvent = events.find(evt => 
-        evt.id.toLowerCase() === query.toLowerCase() ||
-        (evt.tokenSettings?.prefix && evt.tokenSettings.prefix.toLowerCase() === query.toLowerCase()) ||
-        evt.name.toLowerCase() === query.toLowerCase()
+        evt.id.toLowerCase() === lowerQuery ||
+        (cleanAlpha && evt.id.toLowerCase().replace(/[^a-z0-9]/g, '') === cleanAlpha) ||
+        (evt.tokenSettings?.prefix && evt.tokenSettings.prefix.toLowerCase() === lowerQuery) ||
+        evt.name.toLowerCase() === lowerQuery ||
+        evt.name.toLowerCase().includes(lowerQuery)
       );
     }
 
+    // 3. If not found in local memory, search directly in Firestore
     if (!matchedEvent) {
-      showToast(`No event found with ID / Code "${query}". Please check the ID provided by your Event Manager.`, 'error');
-      return;
+      try {
+        const remoteEvt = await fetchEventFromDbById(query);
+        if (remoteEvt) {
+          matchedEvent = remoteEvt;
+          saveEvent(remoteEvt); // Cache locally
+        }
+      } catch (err) {
+        console.warn('Remote event lookup error:', err);
+      }
     }
 
-    // 3. Prevent Event Creator from joining their own party
-    if (isEventOrganizer(matchedEvent)) {
-      showToast(`⚠️ You created this party ("${matchedEvent.name}"). Event organizers manage their event from the Manager Dashboard.`, 'warning');
-      setInputEventId('');
+    if (!matchedEvent) {
+      showToast(`No party/event found with ID / Code "${query}". Please verify the Event ID.`, 'error');
       return;
     }
 
@@ -188,12 +192,12 @@ export const GuestHome: React.FC = () => {
 
     if (userExistingReg) {
       if (userExistingReg.status === 'approved' || userExistingReg.status === 'checkedin') {
-        showToast(`✓ You have already joined in this party ("${matchedEvent.name}")! Opening your digital pass...`, 'success');
+        showToast(`✓ You have already joined "${matchedEvent.name}"! Opening your digital pass...`, 'success');
         openDigitalPass(userExistingReg.id);
         setInputEventId('');
         return;
       } else if (userExistingReg.status === 'pending') {
-        showToast(`⏳ You have already joined in this party ("${matchedEvent.name}")! Your registration is currently pending manager approval.`, 'info');
+        showToast(`⏳ You have already joined "${matchedEvent.name}"! Your registration is pending manager approval.`, 'info');
         setInputEventId('');
         return;
       } else if (userExistingReg.status === 'invited') {
@@ -211,7 +215,7 @@ export const GuestHome: React.FC = () => {
       }
     }
 
-    // 5. If user hasn't joined this event, open registration form for this new event
+    // 5. Open registration form to join the party
     showToast(`Joining "${matchedEvent.name}"... Please fill event requirements.`, 'success');
     handleOpenRegistration(matchedEvent);
     setInputEventId('');
@@ -270,17 +274,6 @@ export const GuestHome: React.FC = () => {
     e.preventDefault();
     if (!registeringEvent) return;
 
-    // Check if user is the creator/organizer of this event
-    const submittedEmail = (formData['Email Address'] || user.email || '').toLowerCase().trim();
-    const submittedMobile = (formData['Mobile Number'] || user.mobile || '').replace(/\D/g, '');
-    const creatorEmail = (registeringEvent.creatorEmail || '').toLowerCase().trim();
-    const creatorMobile = (registeringEvent.creatorMobile || '').replace(/\D/g, '');
-
-    if (isEventOrganizer(registeringEvent) || (creatorEmail && submittedEmail === creatorEmail) || (creatorMobile && submittedMobile === creatorMobile)) {
-      showToast(`⚠️ You are the creator of "${registeringEvent.name}". Organizers cannot register as guests in their own party.`, 'error');
-      return;
-    }
-
     const existingGuest = targetInvitedGuestId ? guests.find(g => g.id === targetInvitedGuestId) : null;
 
     // Validate only requirements that are actually marked as required by the event creator
@@ -320,7 +313,7 @@ export const GuestHome: React.FC = () => {
     const resolvedEmail = (emailEntry ? (formData[emailEntry[0] || (emailEntry as any).label] || '') : (existingGuest?.email || user.email || '')).toLowerCase().trim();
 
     const mobileEntry = Object.entries(formData).find(([k]) => k.toLowerCase().includes('mobile') || k.toLowerCase().includes('phone')) || 
-                        reqs.find(r => r.type === 'mobile');
+                       reqs.find(r => r.type === 'mobile');
     const resolvedMobile = (mobileEntry ? (formData[mobileEntry[0] || (mobileEntry as any).label] || '') : (existingGuest?.mobile || user.mobile || '')).replace(/\D/g, '');
 
     const collegeEntry = Object.entries(formData).find(([k]) => k.toLowerCase().includes('college') || k.toLowerCase().includes('institute') || k.toLowerCase().includes('university'));
@@ -334,6 +327,7 @@ export const GuestHome: React.FC = () => {
 
     const updatedGuest: GuestRegistration = {
       id: guestId,
+      userId: user.id || existingGuest?.userId || undefined,
       eventId: registeringEvent.id,
       name: resolvedName,
       email: resolvedEmail || existingGuest?.email || user.email,
@@ -354,16 +348,19 @@ export const GuestHome: React.FC = () => {
       documents: uploadedFiles.length > 0 ? uploadedFiles : (existingGuest?.documents || [])
     };
 
-
     saveGuest(updatedGuest);
     setRegisteringEvent(null);
     setTargetInvitedGuestId(null);
     setSubmissionSuccessGuest(updatedGuest);
 
     addNotification({
-      title: 'Registration Submitted to Manager',
+      title: 'New Registration Submitted',
       message: `${updatedGuest.name} submitted registration for "${registeringEvent.name}". Awaiting manager approval.`,
-      type: 'info'
+      type: 'info',
+      recipientUserId: registeringEvent.creatorId,
+      recipientEmail: (registeringEvent.creatorEmail || '').toLowerCase().trim(),
+      recipientPhone: (registeringEvent.creatorMobile || '').replace(/\D/g, ''),
+      recipientRole: 'manager'
     });
     showToast(`✓ Details submitted! Awaiting Manager approval for "${registeringEvent.name}".`, 'success');
   };
@@ -475,7 +472,7 @@ export const GuestHome: React.FC = () => {
         <form onSubmit={handleJoinByEventId} style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap' }}>
           <input 
             type="text" 
-            placeholder="e.g. evt_fresher_2026"
+            placeholder="Paste Event ID (e.g. evt_172938...) or Party Name"
             value={inputEventId}
             onChange={e => setInputEventId(e.target.value)}
             style={{ flex: 1, minWidth: 220, fontFamily: 'var(--font-mono)' }}
@@ -487,8 +484,8 @@ export const GuestHome: React.FC = () => {
         </form>
       </div>
 
-      {/* My Joined Events Section */}
-      <h2 style={{ marginBottom: '1rem', fontSize: '1.25rem', fontWeight: 800 }}>My Joined Events</h2>
+      {/* My Events Section */}
+      <h2 style={{ marginBottom: '1rem', fontSize: '1.25rem', fontWeight: 800 }}>My Events</h2>
       {myVisibleEvents.length === 0 ? (
         <div className="empty-state" style={{ marginBottom: '2.5rem', background: 'var(--bg-card)', border: '1px dashed rgba(255,255,255,0.15)', borderRadius: 'var(--radius-lg)', padding: '2rem 1.5rem' }}>
           <div className="empty-icon-wrap" style={{ background: '#EFF6FF', color: '#2563EB' }}>
@@ -613,7 +610,7 @@ export const GuestHome: React.FC = () => {
       )}
 
       {/* Registration History & Joined Passes */}
-      <h2 style={{ marginBottom: '1rem', fontSize: '1.25rem', fontWeight: 800 }}>My Event Passes & Tickets</h2>
+      <h2 style={{ marginBottom: '1rem', fontSize: '1.25rem', fontWeight: 800 }}>My Passes & Tickets</h2>
       {myRegistrations.length === 0 ? (
         <div className="empty-state">
           <div className="empty-icon-wrap">

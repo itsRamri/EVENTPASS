@@ -314,8 +314,8 @@ class EventManagerModule {
         </div>
 
         <div class="form-group">
-          <label class="form-label">Short Tagline</label>
-          <input type="text" id="wiz-tagline" placeholder="e.g. Night of Music, Lights & Celebration" value="${this.newEvent.tagline}" />
+          <label class="form-label">Organization or College Name</label>
+          <input type="text" id="wiz-tagline" placeholder="e.g. Stanford University / Tech Club / Event Org" value="${this.newEvent.tagline}" />
         </div>
 
         <div class="form-group">

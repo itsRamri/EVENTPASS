@@ -2,6 +2,7 @@ import {
   collection, 
   doc, 
   setDoc, 
+  getDoc,
   getDocs, 
   deleteDoc, 
   onSnapshot, 
@@ -96,6 +97,49 @@ export const subscribeToEvents = (callback: (events: EventItem[]) => void) => {
   }
 };
 
+export const fetchEventFromDbById = async (idOrQuery: string): Promise<EventItem | null> => {
+  try {
+    const clean = idOrQuery.trim();
+    if (!clean) return null;
+
+    // 1. Try direct doc lookup
+    const docRef = doc(db, COLLECTIONS.EVENTS, clean);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data() as EventItem;
+    }
+
+    // 2. Scan events collection in case query is case-insensitive, prefix, or name
+    const q = query(collection(db, COLLECTIONS.EVENTS));
+    const querySnap = await getDocs(q);
+    let matched: EventItem | null = null;
+    const lowerClean = clean.toLowerCase();
+    const cleanAlphanumeric = lowerClean.replace(/[^a-z0-9]/g, '');
+
+    querySnap.forEach((d) => {
+      const item = d.data() as EventItem;
+      const itemId = (item.id || '').toLowerCase();
+      const itemName = (item.name || '').toLowerCase();
+      const itemPrefix = (item.tokenSettings?.prefix || '').toLowerCase();
+
+      if (
+        itemId === lowerClean ||
+        (cleanAlphanumeric && itemId.replace(/[^a-z0-9]/g, '') === cleanAlphanumeric) ||
+        (itemPrefix && itemPrefix === lowerClean) ||
+        itemName === lowerClean ||
+        itemName.includes(lowerClean)
+      ) {
+        matched = item;
+      }
+    });
+
+    return matched;
+  } catch (err) {
+    console.warn('Firestore fetchEventFromDbById error:', err);
+    return null;
+  }
+};
+
 // ==========================================
 // 3. GUESTS / PASSES TABLE (CRUD)
 // ==========================================
@@ -147,6 +191,53 @@ export const subscribeToGuests = (callback: (guests: GuestRegistration[]) => voi
   } catch (err) {
     console.warn('Guests subscription error:', err);
     return () => {};
+  }
+};
+
+export const fetchGuestFromDbByToken = async (code: string): Promise<GuestRegistration | null> => {
+  try {
+    const raw = code.trim();
+    if (!raw) return null;
+    const q = raw.toUpperCase();
+
+    // 1. Direct doc lookup by guest ID
+    const docRef = doc(db, COLLECTIONS.GUESTS, raw);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data() as GuestRegistration;
+    }
+
+    // 2. Query all guests from Firestore to match token / passId / tokenList
+    const querySnap = await getDocs(collection(db, COLLECTIONS.GUESTS));
+    let matched: GuestRegistration | null = null;
+
+    querySnap.forEach((d) => {
+      const g = d.data() as GuestRegistration;
+      const gToken = (g.token || '').toUpperCase();
+      const gPassId = (g.passId || '').toUpperCase();
+      const gId = (g.id || '').toUpperCase();
+      const gTokens = (g.tokens || []).map(t => t.toUpperCase());
+      const gTokenList = (g.tokenList || []).map(t => (t.tokenCode || '').toUpperCase());
+
+      if (
+        gToken === q ||
+        gPassId === q ||
+        gId === q ||
+        gTokens.includes(q) ||
+        gTokenList.includes(q) ||
+        (g.email && g.email.toUpperCase() === q) ||
+        (g.mobile && g.mobile.replace(/\D/g, '') === q.replace(/\D/g, '')) ||
+        (q.length > 5 && gToken.includes(q)) ||
+        (gToken.length > 5 && q.includes(gToken))
+      ) {
+        matched = g;
+      }
+    });
+
+    return matched;
+  } catch (err) {
+    console.warn('fetchGuestFromDbByToken notice:', err);
+    return null;
   }
 };
 

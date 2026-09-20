@@ -1704,17 +1704,24 @@ input:checked + .slider:before {
 /* Dedicated Full Page Scanner Mode */
 .app-wrapper.scanner-mode {
   margin-left: 0 !important;
+  padding: 0 !important;
   width: 100% !important;
   min-height: 100vh !important;
-  background: #07080C !important;
+  min-height: 100dvh !important;
+  background: #000000 !important;
+  overflow: hidden !important;
 }
 
 .main-content.scanner-main {
-  padding: 1rem 0.5rem 2rem !important;
+  padding: 0 !important;
+  margin: 0 !important;
   max-width: 100% !important;
+  width: 100% !important;
+  height: 100vh !important;
+  height: 100dvh !important;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
+  align-items: stretch;
+  justify-content: stretch;
+  overflow: hidden !important;
 }
 

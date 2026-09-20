@@ -22,7 +22,9 @@ export const QRCodeSVG: React.FC<QRCodeSVGProps> = ({ value, size = 180 }) => {
       }
     })
       .then((svg: string) => {
-        setSvgString(svg);
+        // Prevent drag, selection, and ghosting on mobile & desktop
+        const styledSvg = svg.replace('<svg ', '<svg draggable="false" style="user-select:none;-webkit-user-drag:none;-webkit-user-select:none;pointer-events:none;touch-action:none;display:block;width:100%;height:100%;" ');
+        setSvgString(styledSvg);
       })
       .catch((err: any) => {
         console.error('QR code generation error:', err);
@@ -40,7 +42,9 @@ export const QRCodeSVG: React.FC<QRCodeSVGProps> = ({ value, size = 180 }) => {
           justifyContent: 'center', 
           background: '#FFFFFF', 
           borderRadius: 8,
-          border: '1px solid #E2E8F0'
+          border: '1px solid #E2E8F0',
+          userSelect: 'none',
+          WebkitUserSelect: 'none'
         }}
       >
         <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600 }}>
@@ -52,6 +56,9 @@ export const QRCodeSVG: React.FC<QRCodeSVGProps> = ({ value, size = 180 }) => {
 
   return (
     <div
+      draggable={false}
+      onDragStart={e => e.preventDefault()}
+      onTouchMove={e => e.stopPropagation()}
       style={{
         width: size,
         height: size,
@@ -60,7 +67,11 @@ export const QRCodeSVG: React.FC<QRCodeSVGProps> = ({ value, size = 180 }) => {
         background: '#FFFFFF',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+        pointerEvents: 'none',
+        touchAction: 'none'
       }}
       dangerouslySetInnerHTML={{ __html: svgString }}
     />

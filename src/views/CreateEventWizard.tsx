@@ -198,7 +198,11 @@ export const CreateEventWizard: React.FC = () => {
     addNotification({
       title: isEdit ? 'Event Updated' : `Event ${status === 'active' ? 'Published' : 'Saved as Draft'}`,
       message: `"${finalEvent.name}" has been ${isEdit ? 'customized and updated' : 'created'} successfully.`,
-      type: 'success'
+      type: 'success',
+      recipientUserId: user.id || finalEvent.creatorId,
+      recipientEmail: (user.email || finalEvent.creatorEmail || '').toLowerCase().trim(),
+      recipientPhone: (user.mobile || finalEvent.creatorMobile || '').replace(/\D/g, ''),
+      recipientRole: 'manager'
     });
     setEditingEvent(null);
     navigate('dashboard');
@@ -297,10 +301,10 @@ export const CreateEventWizard: React.FC = () => {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Short Tagline</label>
+              <label className="form-label">Organization or College Name</label>
               <input 
                 type="text" 
-                placeholder="e.g. Night of Music, Lights & Celebration" 
+                placeholder="e.g. Stanford University / Tech Club / Event Org" 
                 value={eventData.tagline} 
                 onChange={e => setEventData({ ...eventData, tagline: e.target.value })} 
               />

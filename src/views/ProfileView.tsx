@@ -31,12 +31,12 @@ export const ProfileView: React.FC = () => {
     setProfileSubpage 
   } = useApp();
 
+  const userEmail = (user.email || '').toLowerCase().trim();
+  const userMobile = (user.mobile || '').replace(/\D/g, '');
+  const userName = (user.name || '').toLowerCase().trim();
+
   // Events created by the logged-in user
   const myCreatedEvents = events.filter(e => {
-    const userEmail = (user.email || '').toLowerCase().trim();
-    const userMobile = (user.mobile || '').replace(/\D/g, '');
-    const userName = (user.name || '').toLowerCase().trim();
-
     const creatorEmail = (e.creatorEmail || '').toLowerCase().trim();
     const creatorMobile = (e.creatorMobile || '').replace(/\D/g, '');
     const organizer = (e.organizer || '').toLowerCase().trim();
@@ -50,11 +50,18 @@ export const ProfileView: React.FC = () => {
   });
 
   // Events joined / registered by the logged-in user
-  const myRegistrations = guests.filter(g => 
-    (g.email && g.email.toLowerCase() === (user.email || '').toLowerCase()) || 
-    (g.name && g.name.toLowerCase() === (user.name || '').toLowerCase() && g.name !== 'Pending Guest Submission') ||
-    (g.mobile && g.mobile === user.mobile)
-  );
+  const myRegistrations = guests.filter(g => {
+    if (g.status === 'invited') return false;
+    const gEmail = (g.email || '').toLowerCase().trim();
+    const gMobile = (g.mobile || '').replace(/\D/g, '');
+    const gName = (g.name || '').toLowerCase().trim();
+
+    if (user.id && g.userId && g.userId === user.id) return true;
+    if (userEmail && gEmail && gEmail === userEmail) return true;
+    if (userMobile && gMobile && gMobile === userMobile) return true;
+    if (userName && gName && gName === userName && gName !== 'pending guest submission') return true;
+    return false;
+  });
 
   // ========================================================
   // SUBPAGE 1: FULL PAGE MY TICKETS
