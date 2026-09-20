@@ -122,6 +122,7 @@ export interface GuestRegistration {
   checkInTime: string | null;
   scanTimestamp?: string | null;
   scannedBy?: string | null;
+  scannedByEmail?: string | null;
   answers: Record<string, any>;
   documents: GuestDocument[];
 }

@@ -11,18 +11,52 @@ import {
   Ticket
 } from 'lucide-react';
 
-export const Sidebar: React.FC = () => {
-  const { user, currentView, navigate, logout } = useApp();
+const getInitials = (name?: string, email?: string): string => {
+  if (name && name.trim().length > 0) {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 1) {
+      return parts[0].slice(0, 2).toUpperCase();
+    }
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  if (email && email.trim().length > 0) {
+    const clean = email.trim().split('@')[0];
+    return clean.slice(0, 2).toUpperCase();
+  }
+  return 'EP';
+};
 
-  const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
-    { id: 'create_event', label: 'Create Event', icon: <PlusCircle size={18} /> },
-    { id: 'guest_home', label: 'My Passes & Invites', icon: <Ticket size={18} /> },
-    { id: 'scanner', label: 'Live Gate Scanner', icon: <QrCode size={18} /> },
-    { id: 'guests', label: 'Guests & Approvals', icon: <Users size={18} /> },
-    { id: 'staff', label: 'Staff & Scanner Access', icon: <ShieldCheck size={18} /> },
-    { id: 'profile', label: 'Profile Settings', icon: <User size={18} /> }
+export const Sidebar: React.FC = () => {
+  const { user, staff, currentView, navigate, logout } = useApp();
+
+  const userCleanEmail = (user.email || '').toLowerCase().trim();
+  const userCleanMobile = (user.mobile || '').replace(/\D/g, '');
+
+  const matchedStaff = staff.find(s => {
+    const sEmail = (s.email || '').toLowerCase().trim();
+    const sPhone = (s.phone || '').replace(/\D/g, '');
+    return (
+      (sEmail && userCleanEmail && sEmail === userCleanEmail) ||
+      (sPhone && userCleanMobile && sPhone === userCleanMobile)
+    );
+  });
+
+  const isManager = user.role === 'manager';
+  const hasStaffScanAccess = Boolean(matchedStaff && matchedStaff.status === 'active' && matchedStaff.permissions?.canScan === true);
+  const canScan = isManager || hasStaffScanAccess;
+  const canApprove = isManager || Boolean(matchedStaff && matchedStaff.permissions?.canApprove);
+
+  const allNavItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} />, show: isManager },
+    { id: 'create_event', label: 'Create Event', icon: <PlusCircle size={18} />, show: isManager },
+    { id: 'guest_home', label: 'My Passes & Invites', icon: <Ticket size={18} />, show: true },
+    { id: 'scanner', label: 'Live Gate Scanner', icon: <QrCode size={18} />, show: canScan },
+    { id: 'guests', label: 'Guests & Approvals', icon: <Users size={18} />, show: canApprove },
+    { id: 'staff', label: 'Staff & Scanner Access', icon: <ShieldCheck size={18} />, show: isManager },
+    { id: 'profile', label: 'Profile Settings', icon: <User size={18} />, show: true }
   ];
+
+  const navItems = allNavItems.filter(item => item.show);
 
   return (
     <aside className="desktop-sidebar">
@@ -113,17 +147,20 @@ export const Sidebar: React.FC = () => {
                 width: 38,
                 height: 38,
                 borderRadius: '10px',
-                background: '#EFF6FF',
-                border: '1.5px solid #BFDBFE',
+                background: 'linear-gradient(135deg, #1E40AF 0%, #2563EB 100%)',
+                border: '1.5px solid #2563EB',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#2563EB',
-                boxShadow: '0 2px 8px rgba(37, 99, 235, 0.1)',
-                flexShrink: 0
+                color: '#FFFFFF',
+                fontWeight: 800,
+                fontSize: '0.85rem',
+                boxShadow: '0 2px 8px rgba(37, 99, 235, 0.15)',
+                flexShrink: 0,
+                textTransform: 'uppercase'
               }}
             >
-              <User size={18} strokeWidth={2.4} />
+              {getInitials(user.name, user.email)}
             </div>
           )}
           <div className="desktop-user-info">

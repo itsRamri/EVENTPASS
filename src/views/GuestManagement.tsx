@@ -44,6 +44,7 @@ export const GuestManagement: React.FC = () => {
     user,
     guests, 
     events, 
+    staff,
     selectedEventId, 
     setSelectedEventId, 
     updateGuestStatus, 
@@ -768,21 +769,6 @@ export const GuestManagement: React.FC = () => {
                     </>
                   )}
 
-                  {/* If Approved: Manager/Staff can directly Check In Guest */}
-                  {isApproved && (
-                    <button 
-                      className="btn btn-primary btn-sm" 
-                      onClick={() => {
-                        updateGuestStatus(g.id, 'checkedin');
-                        showToast(`✓ ${g.name} checked in successfully!`, 'success');
-                      }}
-                      style={{ fontWeight: 800, background: '#10B981', borderColor: '#059669', color: '#FFFFFF', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
-                      title="Check in this guest directly"
-                    >
-                      <CheckCircle2 size={14} /> Check In Guest
-                    </button>
-                  )}
-
                   {/* View Full Dossier */}
                   <button 
                     className="btn btn-secondary btn-sm" 
@@ -948,6 +934,7 @@ export const GuestManagement: React.FC = () => {
                       placeholder="e.g. shubham.k@gmail.com"
                       value={quickEmailInput}
                       onChange={e => setQuickEmailInput(e.target.value)}
+                      onFocus={e => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' })}
                       style={{ color: '#0F172A', fontWeight: 600, fontSize: '0.875rem', border: '1.5px solid #94A3B8', borderRadius: 'var(--radius-sm)', padding: '0.6rem 0.75rem', width: '100%', background: '#FFFFFF' }}
                       required
                     />
@@ -962,6 +949,7 @@ export const GuestManagement: React.FC = () => {
                       placeholder="e.g. You are cordially invited to our campus event!"
                       value={quickInviteNote}
                       onChange={e => setQuickInviteNote(e.target.value)}
+                      onFocus={e => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' })}
                       style={{ color: '#0F172A', fontWeight: 600, fontSize: '0.875rem', border: '1.5px solid #94A3B8', borderRadius: 'var(--radius-sm)', padding: '0.55rem 0.75rem', width: '100%', background: '#FFFFFF' }}
                     />
                   </div>
@@ -991,6 +979,7 @@ export const GuestManagement: React.FC = () => {
                       placeholder="e.g. +91 98765 XXXXX"
                       value={quickMobileInput}
                       onChange={e => setQuickMobileInput(e.target.value)}
+                      onFocus={e => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' })}
                       style={{ color: '#0F172A', fontWeight: 600, fontSize: '0.875rem', border: '1.5px solid #94A3B8', borderRadius: 'var(--radius-sm)', padding: '0.6rem 0.75rem', width: '100%', background: '#FFFFFF' }}
                       required
                     />
@@ -1107,12 +1096,55 @@ export const GuestManagement: React.FC = () => {
         // Non-duplicate documents
         const nonDuplicateDocs = selectedGuestDossier.documents?.filter(d => !primaryPhoto || d.url !== primaryPhoto) || [];
 
+        // Resolver for staff who verified/checked in this attendee
+        const rawScannedBy = selectedGuestDossier.scannedBy || selectedGuestDossier.tokenList?.find(t => t.scannedBy)?.scannedBy;
+        const matchedStaffMember = staff?.find(s => 
+          (selectedGuestDossier.scannedByEmail && s.email && s.email.toLowerCase() === selectedGuestDossier.scannedByEmail.toLowerCase()) ||
+          (rawScannedBy && s.name && rawScannedBy.toLowerCase().includes(s.name.toLowerCase()))
+        );
+        const verifierName = rawScannedBy 
+          ? rawScannedBy.replace(/\s*\(.*?\)\s*/g, '').trim() || rawScannedBy 
+          : (matchedStaffMember?.name || user.name || 'Event Staff');
+        const verifierEmail = selectedGuestDossier.scannedByEmail 
+          || matchedStaffMember?.email 
+          || (user.role === 'manager' || !matchedStaffMember ? user.email : 'staff@eventpass.app') 
+          || 'staff@eventpass.app';
+        const verifierCheckInTime = selectedGuestDossier.checkInTime || selectedGuestDossier.scanTimestamp || 'N/A';
+
         return (
-          <div className="modal-overlay active" onClick={() => setSelectedGuestDossier(null)}>
-            <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 420, width: '100%', background: '#FFFFFF', maxHeight: '88vh', overflowY: 'auto', borderRadius: 'var(--radius-lg)', padding: '1.15rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
-              
-              {/* Header */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.65rem' }}>
+          <div 
+            className="modal-overlay active" 
+            style={{ 
+              zIndex: 99999, 
+              position: 'fixed', 
+              inset: 0, 
+              background: 'rgba(15, 23, 42, 0.7)', 
+              backdropFilter: 'blur(8px)', 
+              WebkitBackdropFilter: 'blur(8px)', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              padding: 'max(0.75rem, env(safe-area-inset-top, 0.75rem)) max(0.75rem, env(safe-area-inset-right, 0.75rem)) max(1rem, env(safe-area-inset-bottom, 1rem)) max(0.75rem, env(safe-area-inset-left, 0.75rem))' 
+            }}
+            onClick={() => setSelectedGuestDossier(null)}
+          >
+            <div 
+              className="modal-content" 
+              onClick={e => e.stopPropagation()} 
+              style={{ 
+                maxWidth: 440, 
+                width: '100%', 
+                background: '#FFFFFF', 
+                maxHeight: 'min(86dvh, 720px)', 
+                display: 'flex', 
+                flexDirection: 'column', 
+                borderRadius: 'var(--radius-xl)', 
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)', 
+                overflow: 'hidden' 
+              }}
+            >
+              {/* Fixed Header */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.15rem 0.75rem', borderBottom: '1px solid #E2E8F0', flexShrink: 0, background: '#FFFFFF' }}>
                 <div>
                   <h2 style={{ color: '#0F172A', fontWeight: 800, margin: 0, fontSize: '1.15rem' }}>Attendee Details</h2>
                   <div style={{ fontSize: '0.725rem', color: '#64748B', fontWeight: 600, marginTop: '0.1rem' }}>
@@ -1126,8 +1158,8 @@ export const GuestManagement: React.FC = () => {
                     background: '#F1F5F9',
                     border: 'none',
                     borderRadius: '50%',
-                    width: 30,
-                    height: 30,
+                    width: 32,
+                    height: 32,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -1140,232 +1172,238 @@ export const GuestManagement: React.FC = () => {
                 </button>
               </div>
 
-              {/* Single Prominent Photo Section */}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1rem', textAlign: 'center' }}>
-                <div style={{ position: 'relative', marginBottom: '0.6rem' }}>
-                  {primaryPhoto ? (
-                    <div style={{ position: 'relative', display: 'inline-block' }}>
-                      <img 
-                        src={primaryPhoto} 
-                        style={{ 
-                          width: 'clamp(120px, 32vw, 160px)', 
-                          height: 'clamp(140px, 38vw, 190px)', 
-                          borderRadius: 'var(--radius-lg)', 
-                          objectFit: 'cover', 
-                          border: '3px solid #E2E8F0', 
-                          boxShadow: '0 6px 20px rgba(15, 23, 42, 0.12)', 
-                          cursor: 'pointer' 
-                        }} 
-                        alt={selectedGuestDossier.name}
-                        onClick={() => setPreviewPhotoModal({ url: primaryPhoto, title: `${selectedGuestDossier.name}'s Photo` })}
-                        title="Click to view full photo"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setPreviewPhotoModal({ url: primaryPhoto, title: `${selectedGuestDossier.name}'s Photo` })}
+              {/* Scrollable Body */}
+              <div style={{ padding: '1rem 1.15rem 1.25rem', overflowY: 'auto', WebkitOverflowScrolling: 'touch', flex: '1 1 auto', display: 'flex', flexDirection: 'column' }}>
+                {/* Single Prominent Photo Section */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1rem', textAlign: 'center' }}>
+                  <div style={{ position: 'relative', marginBottom: '0.6rem' }}>
+                    {primaryPhoto ? (
+                      <div style={{ position: 'relative', display: 'inline-block' }}>
+                        <img 
+                          src={primaryPhoto} 
+                          style={{ 
+                            width: 'clamp(120px, 32vw, 150px)', 
+                            height: 'clamp(140px, 38vw, 180px)', 
+                            borderRadius: 'var(--radius-lg)', 
+                            objectFit: 'cover', 
+                            border: '3px solid #E2E8F0', 
+                            boxShadow: '0 6px 20px rgba(15, 23, 42, 0.12)', 
+                            cursor: 'pointer' 
+                          }} 
+                          alt={selectedGuestDossier.name}
+                          onClick={() => setPreviewPhotoModal({ url: primaryPhoto, title: `${selectedGuestDossier.name}'s Photo` })}
+                          title="Click to view full photo"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setPreviewPhotoModal({ url: primaryPhoto, title: `${selectedGuestDossier.name}'s Photo` })}
+                          style={{
+                            position: 'absolute',
+                            bottom: 6,
+                            right: 6,
+                            background: 'rgba(15, 23, 42, 0.8)',
+                            color: '#FFFFFF',
+                            border: 'none',
+                            borderRadius: '999px',
+                            padding: '5px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: '0 2px 6px rgba(0,0,0,0.3)'
+                          }}
+                          title="Zoom Photo"
+                        >
+                          <Eye size={12} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div
                         style={{
-                          position: 'absolute',
-                          bottom: 6,
-                          right: 6,
-                          background: 'rgba(15, 23, 42, 0.8)',
-                          color: '#FFFFFF',
-                          border: 'none',
-                          borderRadius: '999px',
-                          padding: '5px',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          boxShadow: '0 2px 6px rgba(0,0,0,0.3)'
+                          width: 'clamp(110px, 30vw, 140px)', 
+                          height: 'clamp(130px, 35vw, 165px)', 
+                          borderRadius: 'var(--radius-lg)', 
+                          background: 'linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 100%)', 
+                          border: '2px dashed #CBD5E1', 
+                          display: 'flex', 
+                          flexDirection: 'column', 
+                          alignItems: 'center', 
+                          justifyContent: 'center', 
+                          gap: '0.35rem', 
+                          color: '#94A3B8' 
                         }}
-                        title="Zoom Photo"
                       >
-                        <Eye size={12} />
-                      </button>
+                        <User size={38} strokeWidth={1.8} color="#94A3B8" />
+                        <span style={{ fontSize: '0.725rem', fontWeight: 700, color: '#64748B' }}>No Photo Uploaded</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <h3 style={{ fontSize: '1.2rem', color: '#0F172A', margin: 0, fontWeight: 800, wordBreak: 'break-word' }}>
+                    {selectedGuestDossier.name}
+                  </h3>
+                  {selectedGuestDossier.email && (
+                    <div style={{ fontSize: '0.825rem', color: '#334155', fontWeight: 600, wordBreak: 'break-all', marginTop: 2 }}>
+                      {selectedGuestDossier.email}
                     </div>
-                  ) : (
-                    <div
-                      style={{
-                        width: 'clamp(110px, 30vw, 140px)', 
-                        height: 'clamp(130px, 35vw, 165px)', 
-                        borderRadius: 'var(--radius-lg)', 
-                        background: 'linear-gradient(135deg, #F8FAFC 0%, #EFF6FF 100%)',
-                        border: '2px dashed #CBD5E1',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.35rem',
-                        color: '#94A3B8'
-                      }}
-                    >
-                      <User size={38} strokeWidth={1.8} color="#94A3B8" />
-                      <span style={{ fontSize: '0.725rem', fontWeight: 700, color: '#64748B' }}>No Photo Uploaded</span>
+                  )}
+                  {selectedGuestDossier.mobile && (
+                    <div style={{ fontSize: '0.8rem', color: '#64748B', fontWeight: 600, marginTop: 2 }}>
+                      📱 {selectedGuestDossier.mobile}
                     </div>
                   )}
                 </div>
 
-                <h3 style={{ fontSize: '1.2rem', color: '#0F172A', margin: 0, fontWeight: 800, wordBreak: 'break-word' }}>
-                  {selectedGuestDossier.name}
-                </h3>
-                {selectedGuestDossier.email && (
-                  <div style={{ fontSize: '0.825rem', color: '#334155', fontWeight: 600, wordBreak: 'break-all', marginTop: 2 }}>
-                    {selectedGuestDossier.email}
-                  </div>
-                )}
-                {selectedGuestDossier.mobile && (
-                  <div style={{ fontSize: '0.8rem', color: '#64748B', fontWeight: 600, marginTop: 2 }}>
-                    📱 {selectedGuestDossier.mobile}
-                  </div>
-                )}
-              </div>
+                {/* Information / Submitted Details Grid */}
+                <div style={{ background: '#F8FAFC', padding: '0.75rem 0.85rem', borderRadius: 'var(--radius-md)', border: '1px solid #E2E8F0', fontSize: '0.8rem', display: 'grid', gap: '0.45rem', marginBottom: '0.85rem' }}>
+                  {selectedGuestDossier.status !== 'checkedin' && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ color: '#64748B', fontWeight: 700 }}>Status:</span>
+                      <span className={`badge badge-${selectedGuestDossier.status}`}>
+                        {selectedGuestDossier.status.toUpperCase()}
+                      </span>
+                    </div>
+                  )}
 
-              {/* Information / Submitted Details Grid */}
-              <div style={{ background: '#F8FAFC', padding: '0.75rem 0.85rem', borderRadius: 'var(--radius-md)', border: '1px solid #E2E8F0', fontSize: '0.8rem', display: 'grid', gap: '0.45rem', marginBottom: '0.85rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: '#64748B', fontWeight: 700 }}>Status:</span>
-                  <span className={`badge badge-${selectedGuestDossier.status === 'checkedin' ? 'checkedin' : selectedGuestDossier.status}`}>
-                    {selectedGuestDossier.status.toUpperCase()}
-                  </span>
+                  {selectedGuestDossier.college && selectedGuestDossier.college !== 'Awaiting Submission' && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ color: '#64748B', fontWeight: 700 }}>College / Inst:</span>
+                      <span style={{ fontWeight: 700, color: '#0F172A', textAlign: 'right' }}>{selectedGuestDossier.college}</span>
+                    </div>
+                  )}
+
+                  {selectedGuestDossier.branch && selectedGuestDossier.branch !== 'Pending Acceptance' && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ color: '#64748B', fontWeight: 700 }}>Department / Branch:</span>
+                      <span style={{ fontWeight: 700, color: '#0F172A', textAlign: 'right' }}>{selectedGuestDossier.branch}</span>
+                    </div>
+                  )}
+
+                  {selectedGuestDossier.rollNo && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ color: '#64748B', fontWeight: 700 }}>Roll / Reg No:</span>
+                      <span style={{ fontWeight: 700, color: '#0F172A', textAlign: 'right' }}>{selectedGuestDossier.rollNo}</span>
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: '#64748B', fontWeight: 700 }}>Allocated Passes:</span>
+                    <span style={{ fontWeight: 800, color: '#2563EB' }}>
+                      🎟️ {selectedGuestDossier.tokenCount || selectedGuestDossier.tokens?.length || 1} Token{(selectedGuestDossier.tokenCount || selectedGuestDossier.tokens?.length || 1) > 1 ? 's' : ''}
+                    </span>
+                  </div>
+
+                  {selectedGuestDossier.registrationDate && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ color: '#64748B', fontWeight: 700 }}>Registered On:</span>
+                      <span style={{ fontWeight: 700, color: '#475569' }}>{formatRegistrationDateOnly(selectedGuestDossier.registrationDate)}</span>
+                    </div>
+                  )}
                 </div>
 
-                {selectedGuestDossier.college && selectedGuestDossier.college !== 'Awaiting Submission' && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: '#64748B', fontWeight: 700 }}>College / Inst:</span>
-                    <span style={{ fontWeight: 700, color: '#0F172A', textAlign: 'right' }}>{selectedGuestDossier.college}</span>
+                {/* Form Answers (Only if present and has filled non-empty values) */}
+                {selectedGuestDossier.answers && Object.entries(selectedGuestDossier.answers).filter(([_, v]) => v !== undefined && v !== '' && v !== null).length > 0 && (
+                  <div style={{ marginBottom: '1rem' }}>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <Sparkles size={13} color="#2563EB" /> Submitted Details:
+                    </div>
+                    <div style={{ background: '#F8FAFC', padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid #E2E8F0', display: 'grid', gap: '0.4rem' }}>
+                      {Object.entries(selectedGuestDossier.answers)
+                        .filter(([_, val]) => val !== undefined && val !== '' && val !== null)
+                        .map(([key, val]) => (
+                          <div key={key} style={{ fontSize: '0.78rem', display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #E2E8F0', paddingBottom: '0.25rem' }}>
+                            <span style={{ color: '#64748B', fontWeight: 700 }}>{key}:</span>
+                            <span style={{ fontWeight: 700, color: '#0F172A', textAlign: 'right', maxWidth: '60%', wordBreak: 'break-word' }}>{String(val)}</span>
+                          </div>
+                        ))}
+                    </div>
                   </div>
                 )}
 
-                {selectedGuestDossier.branch && selectedGuestDossier.branch !== 'Pending Acceptance' && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: '#64748B', fontWeight: 700 }}>Department / Branch:</span>
-                    <span style={{ fontWeight: 700, color: '#0F172A', textAlign: 'right' }}>{selectedGuestDossier.branch}</span>
+                {/* Verified by Staff Section - Placed directly below Submitted Details */}
+                {(selectedGuestDossier.status === 'checkedin' || selectedGuestDossier.checkInTime) && (
+                  <div style={{ marginBottom: '1rem' }}>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <ShieldCheck size={14} color="#2563EB" /> Verified by (Staff Details):
+                    </div>
+                    <div style={{ background: '#F8FAFC', padding: '0.75rem 0.85rem', borderRadius: 'var(--radius-md)', border: '1px solid #E2E8F0', display: 'grid', gap: '0.45rem', fontSize: '0.8rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ color: '#64748B', fontWeight: 700 }}>Name:</span>
+                        <span style={{ fontWeight: 800, color: '#0F172A', textAlign: 'right' }}>{verifierName}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ color: '#64748B', fontWeight: 700 }}>Email:</span>
+                        <span style={{ fontWeight: 700, color: '#2563EB', textAlign: 'right', wordBreak: 'break-all' }}>{verifierEmail}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ color: '#64748B', fontWeight: 700 }}>Check-in Time:</span>
+                        <span style={{ fontWeight: 700, color: '#059669', textAlign: 'right' }}>{verifierCheckInTime}</span>
+                      </div>
+                    </div>
                   </div>
                 )}
 
-                {selectedGuestDossier.rollNo && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: '#64748B', fontWeight: 700 }}>Roll / Reg No:</span>
-                    <span style={{ fontWeight: 700, color: '#0F172A', textAlign: 'right' }}>{selectedGuestDossier.rollNo}</span>
-                  </div>
-                )}
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: '#64748B', fontWeight: 700 }}>Allocated Passes:</span>
-                  <span style={{ fontWeight: 800, color: '#2563EB' }}>
-                    🎟️ {selectedGuestDossier.tokenCount || selectedGuestDossier.tokens?.length || 1} Token{(selectedGuestDossier.tokenCount || selectedGuestDossier.tokens?.length || 1) > 1 ? 's' : ''}
-                  </span>
-                </div>
-
-                {selectedGuestDossier.registrationDate && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: '#64748B', fontWeight: 700 }}>Registered On:</span>
-                    <span style={{ fontWeight: 700, color: '#475569' }}>{formatRegistrationDateOnly(selectedGuestDossier.registrationDate)}</span>
-                  </div>
-                )}
-
-                {selectedGuestDossier.checkInTime && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#047857', fontWeight: 800 }}>
-                    <span>Check-in Time:</span>
-                    <span>{selectedGuestDossier.checkInTime}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Form Answers (Only if present and has filled non-empty values) */}
-              {selectedGuestDossier.answers && Object.entries(selectedGuestDossier.answers).filter(([_, v]) => v !== undefined && v !== '' && v !== null).length > 0 && (
-                <div style={{ marginBottom: '1rem' }}>
-                  <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <Sparkles size={13} color="#2563EB" /> Submitted Details:
-                  </div>
-                  <div style={{ background: '#F8FAFC', padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid #E2E8F0', display: 'grid', gap: '0.4rem' }}>
-                    {Object.entries(selectedGuestDossier.answers)
-                      .filter(([_, val]) => val !== undefined && val !== '' && val !== null)
-                      .map(([key, val]) => (
-                        <div key={key} style={{ fontSize: '0.78rem', display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #E2E8F0', paddingBottom: '0.25rem' }}>
-                          <span style={{ color: '#64748B', fontWeight: 700 }}>{key}:</span>
-                          <span style={{ fontWeight: 700, color: '#0F172A', textAlign: 'right', maxWidth: '60%', wordBreak: 'break-word' }}>{String(val)}</span>
+                {/* Uploaded Documents (if any non-duplicate document exists) */}
+                {nonDuplicateDocs.length > 0 && (
+                  <div style={{ marginBottom: '0.5rem' }}>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <FileText size={14} color="#2563EB" /> Uploaded Documents ({nonDuplicateDocs.length}):
+                    </div>
+                    <div style={{ display: 'grid', gap: '0.5rem' }}>
+                      {nonDuplicateDocs.map((doc, idx) => (
+                        <div 
+                          key={idx} 
+                          style={{ 
+                            background: '#F8FAFC', 
+                            borderRadius: 'var(--radius-md)', 
+                            border: '1px solid #CBD5E1', 
+                            padding: '0.65rem 0.85rem', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'space-between', 
+                            gap: '0.5rem' 
+                          }}
+                        >
+                          <div style={{ minWidth: 0, flex: 1 }}>
+                            <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0F172A', wordBreak: 'break-word' }}>
+                              {doc.name}
+                            </div>
+                            {doc.size && <div style={{ fontSize: '0.7rem', color: '#64748B' }}>{doc.size}</div>}
+                          </div>
+                          {doc.url && (
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-sm"
+                              onClick={() => {
+                                if (doc.type === 'image') {
+                                  setPreviewPhotoModal({ url: doc.url!, title: `${selectedGuestDossier.name} - ${doc.name}` });
+                                } else {
+                                  const win = window.open();
+                                  win?.document.write(`<iframe src="${doc.url}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
+                                }
+                              }}
+                              style={{ fontSize: '0.75rem', fontWeight: 700, padding: '0.25rem 0.6rem' }}
+                            >
+                              <ExternalLink size={12} /> View
+                            </button>
+                          )}
                         </div>
                       ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
 
-              {/* Uploaded Documents (if any non-duplicate document exists) */}
-              {nonDuplicateDocs.length > 0 && (
-                <div style={{ marginBottom: '1rem' }}>
-                  <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <FileText size={14} color="#2563EB" /> Uploaded Documents ({nonDuplicateDocs.length}):
-                  </div>
-                  <div style={{ display: 'grid', gap: '0.5rem' }}>
-                    {nonDuplicateDocs.map((doc, idx) => (
-                      <div 
-                        key={idx} 
-                        style={{ 
-                          background: '#F8FAFC', 
-                          borderRadius: 'var(--radius-md)', 
-                          border: '1px solid #CBD5E1',
-                          padding: '0.65rem 0.85rem',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: '0.5rem'
-                        }}
-                      >
-                        <div style={{ minWidth: 0, flex: 1 }}>
-                          <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0F172A', wordBreak: 'break-word' }}>
-                            {doc.name}
-                          </div>
-                          {doc.size && <div style={{ fontSize: '0.7rem', color: '#64748B' }}>{doc.size}</div>}
-                        </div>
-                        {doc.url && (
-                          <button
-                            type="button"
-                            className="btn btn-secondary btn-sm"
-                            onClick={() => {
-                              if (doc.type === 'image') {
-                                setPreviewPhotoModal({ url: doc.url!, title: `${selectedGuestDossier.name} - ${doc.name}` });
-                              } else {
-                                const win = window.open();
-                                win?.document.write(`<iframe src="${doc.url}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
-                              }
-                            }}
-                            style={{ fontSize: '0.75rem', fontWeight: 700, padding: '0.25rem 0.6rem' }}
-                          >
-                            <ExternalLink size={12} /> View
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Modal Footer */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', paddingTop: '0.75rem', borderTop: '1px solid #E2E8F0', marginTop: '0.5rem' }}>
+              {/* Fixed Sticky Footer */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.15rem max(0.75rem, env(safe-area-inset-bottom, 0.75rem))', borderTop: '1px solid #E2E8F0', flexShrink: 0, background: '#FFFFFF' }}>
                 <button 
                   type="button" 
                   className="btn btn-secondary btn-sm"
                   onClick={() => setSelectedGuestDossier(null)}
-                  style={{ fontWeight: 700, width: (selectedGuestDossier.status === 'pending' || selectedGuestDossier.status === 'approved') ? 'auto' : '100%' }}
+                  style={{ fontWeight: 700, width: selectedGuestDossier.status === 'pending' ? 'auto' : '100%', padding: '0.65rem 1rem' }}
                 >
                   Close
                 </button>
-
-                {selectedGuestDossier.status === 'approved' && (
-                  <button 
-                    type="button" 
-                    className="btn btn-primary btn-sm"
-                    onClick={() => {
-                      updateGuestStatus(selectedGuestDossier.id, 'checkedin');
-                      setSelectedGuestDossier(null);
-                      showToast(`✓ ${selectedGuestDossier.name} checked in successfully!`, 'success');
-                    }}
-                    style={{ background: '#10B981', borderColor: '#059669', fontWeight: 800, color: '#FFFFFF', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
-                  >
-                    <CheckCircle2 size={14} /> Check In Guest
-                  </button>
-                )}
 
                 {selectedGuestDossier.status === 'pending' && (
                   <div style={{ display: 'flex', gap: '0.4rem' }}>
@@ -1394,7 +1432,6 @@ export const GuestManagement: React.FC = () => {
                   </div>
                 )}
               </div>
-
             </div>
           </div>
         );
@@ -1415,19 +1452,12 @@ export const GuestManagement: React.FC = () => {
                 style={{ maxWidth: '100%', maxHeight: '78vh', borderRadius: 'var(--radius-md)', objectFit: 'contain' }} 
               />
             </div>
-            <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center', gap: '0.75rem' }}>
-              <a 
-                href={previewPhotoModal.url} 
-                download="attendee_verification_photo.jpg"
-                className="btn btn-primary btn-sm"
-                style={{ fontWeight: 800, padding: '0.5rem 1.25rem' }}
-              >
-                ⬇️ Download Full Photo
-              </a>
+            <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center' }}>
               <button 
+                type="button"
                 className="btn btn-secondary btn-sm" 
                 onClick={() => setPreviewPhotoModal(null)}
-                style={{ fontWeight: 700, padding: '0.5rem 1.25rem' }}
+                style={{ fontWeight: 700, padding: '0.55rem 1.75rem', background: '#334155', color: '#FFFFFF', border: '1px solid #475569', borderRadius: 'var(--radius-md)' }}
               >
                 Close Preview
               </button>

@@ -64,6 +64,7 @@ interface AppContextType {
   editingEvent: EventItem | null;
   isRoleModalOpen: boolean;
   toasts: Toast[];
+  dismissToast: (id: string) => void;
   isAuthenticated: boolean;
   
   // Actions
@@ -455,7 +456,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           passId: uniquePassId,
           checkInTime: status === 'checkedin' ? (g.checkInTime || formattedTime) : g.checkInTime,
           scanTimestamp: formattedTime,
-          scannedBy: status === 'checkedin' ? activeStaff : g.scannedBy
+          scannedBy: status === 'checkedin' ? activeStaff : g.scannedBy,
+          scannedByEmail: status === 'checkedin' ? (user.email || null) : g.scannedByEmail
         };
 
         targetGuest = updatedGuest;
@@ -583,7 +585,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           status: isComplete ? 'checkedin' : 'approved',
           checkInTime: formattedTime,
           scanTimestamp: formattedTime,
-          scannedBy: activeStaff
+          scannedBy: activeStaff,
+          scannedByEmail: user.email || null
         };
 
         syncGuestToDb(updatedGuest);
@@ -735,10 +738,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const showToast = (message: string, type: 'success' | 'info' | 'warning' | 'error' = 'info', title?: string) => {
     const id = 'toast_' + Date.now() + Math.random();
-    setToasts(prev => [...prev, { id, message, type, title }]);
+    setToasts(prev => [...prev.slice(-4), { id, message, type, title }]);
     setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id));
-    }, 3800);
+    }, 4200);
+  };
+
+  const dismissToast = (id: string) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
   };
 
   const openDigitalPass = (guestId: string) => {
@@ -846,6 +853,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       deleteScanLog,
       clearScanLogs,
       showToast,
+      dismissToast,
       openDigitalPass,
       closeDigitalPass,
       setRoleModalOpen,

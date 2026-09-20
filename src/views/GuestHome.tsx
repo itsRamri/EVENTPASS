@@ -16,7 +16,8 @@ import {
   KeyRound,
   Send,
   Camera,
-  User
+  User,
+  Loader2
 } from 'lucide-react';
 
 import { compressImageFile, readFileAsDataUrl } from '../utils/image';
@@ -28,6 +29,8 @@ export const GuestHome: React.FC = () => {
   const [registeringEvent, setRegisteringEvent] = useState<EventItem | null>(null);
   const [targetInvitedGuestId, setTargetInvitedGuestId] = useState<string | null>(null);
   const [formData, setFormData] = useState<Record<string, any>>({});
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<GuestDocument[]>([]);
   const [submissionSuccessGuest, setSubmissionSuccessGuest] = useState<GuestRegistration | null>(null);
 
@@ -109,6 +112,8 @@ export const GuestHome: React.FC = () => {
     setRegisteringEvent(evt);
     setTargetInvitedGuestId(existingInviteId || null);
     setCapturedAvatar(null);
+    setFormErrors({});
+    setIsSubmitting(false);
 
     const initialFormData: Record<string, any> = {};
     const reqs = evt.requirements || [];
@@ -270,11 +275,12 @@ export const GuestHome: React.FC = () => {
     showToast('✓ Live camera photo captured, cropped and attached successfully!', 'success');
   };
 
-  const handleDynamicSubmit = (e: React.FormEvent) => {
+  const handleDynamicSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!registeringEvent) return;
+    if (!registeringEvent || isSubmitting) return;
 
     const existingGuest = targetInvitedGuestId ? guests.find(g => g.id === targetInvitedGuestId) : null;
+    const errors: Record<string, string> = {};
 
     // Validate only requirements that are actually marked as required by the event creator
     for (const req of (registeringEvent.requirements || [])) {
@@ -288,81 +294,93 @@ export const GuestHome: React.FC = () => {
         
         if (isDocType) {
           if (!hasDoc) {
-            showToast(`⚠️ Please upload or capture required document: "${req.label}"`, 'error');
-            return;
+            errors[req.label] = `Please attach or take photo for "${req.label}"`;
           }
         } else {
           if (!val || String(val).trim().length === 0) {
-            showToast(`⚠️ Please fill in required field: "${req.label}"`, 'error');
-            return;
+            errors[req.label] = `${req.label} is required`;
           }
         }
       }
     }
 
-    const guestId = targetInvitedGuestId || ('gst_' + Date.now());
-    const passId = 'PASS-' + Math.floor(100000 + Math.random() * 900000);
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      const firstErr = Object.values(errors)[0];
+      showToast(`⚠️ ${firstErr}`, 'error');
+      return;
+    }
 
-    const reqs = registeringEvent.requirements || [];
+    setFormErrors({});
+    setIsSubmitting(true);
 
-    const nameEntry = Object.entries(formData).find(([k]) => k.toLowerCase().includes('name'));
-    const resolvedName = nameEntry && String(nameEntry[1]).trim() ? String(nameEntry[1]).trim() : (user.name && user.name !== 'Pending Guest Submission' ? user.name : 'Guest');
+    try {
+      const guestId = targetInvitedGuestId || ('gst_' + Date.now());
+      const passId = 'PASS-' + Math.floor(100000 + Math.random() * 900000);
 
-    const emailEntry = Object.entries(formData).find(([k]) => k.toLowerCase().includes('email')) || 
-                       reqs.find(r => r.type === 'email');
-    const resolvedEmail = (emailEntry ? (formData[emailEntry[0] || (emailEntry as any).label] || '') : (existingGuest?.email || user.email || '')).toLowerCase().trim();
+      const reqs = registeringEvent.requirements || [];
 
-    const mobileEntry = Object.entries(formData).find(([k]) => k.toLowerCase().includes('mobile') || k.toLowerCase().includes('phone')) || 
-                       reqs.find(r => r.type === 'mobile');
-    const resolvedMobile = (mobileEntry ? (formData[mobileEntry[0] || (mobileEntry as any).label] || '') : (existingGuest?.mobile || user.mobile || '')).replace(/\D/g, '');
+      const nameEntry = Object.entries(formData).find(([k]) => k.toLowerCase().includes('name'));
+      const resolvedName = nameEntry && String(nameEntry[1]).trim() ? String(nameEntry[1]).trim() : (user.name && user.name !== 'Pending Guest Submission' ? user.name : 'Guest');
 
-    const collegeEntry = Object.entries(formData).find(([k]) => k.toLowerCase().includes('college') || k.toLowerCase().includes('institute') || k.toLowerCase().includes('university'));
-    const resolvedCollege = collegeEntry ? String(collegeEntry[1]).trim() : '';
+      const emailEntry = Object.entries(formData).find(([k]) => k.toLowerCase().includes('email')) || 
+                         reqs.find(r => r.type === 'email');
+      const resolvedEmail = (emailEntry ? (formData[emailEntry[0] || (emailEntry as any).label] || '') : (existingGuest?.email || user.email || '')).toLowerCase().trim();
 
-    const branchEntry = Object.entries(formData).find(([k]) => k.toLowerCase().includes('branch') || k.toLowerCase().includes('department'));
-    const resolvedBranch = branchEntry ? String(branchEntry[1]).trim() : '';
+      const mobileEntry = Object.entries(formData).find(([k]) => k.toLowerCase().includes('mobile') || k.toLowerCase().includes('phone')) || 
+                         reqs.find(r => r.type === 'mobile');
+      const resolvedMobile = (mobileEntry ? (formData[mobileEntry[0] || (mobileEntry as any).label] || '') : (existingGuest?.mobile || user.mobile || '')).replace(/\D/g, '');
 
-    const rollEntry = Object.entries(formData).find(([k]) => k.toLowerCase().includes('roll') || k.toLowerCase().includes('reg no') || k.toLowerCase().includes('student id'));
-    const resolvedRollNo = rollEntry ? String(rollEntry[1]).trim() : '';
+      const collegeEntry = Object.entries(formData).find(([k]) => k.toLowerCase().includes('college') || k.toLowerCase().includes('institute') || k.toLowerCase().includes('university'));
+      const resolvedCollege = collegeEntry ? String(collegeEntry[1]).trim() : '';
 
-    const updatedGuest: GuestRegistration = {
-      id: guestId,
-      userId: user.id || existingGuest?.userId || undefined,
-      eventId: registeringEvent.id,
-      name: resolvedName,
-      email: resolvedEmail || existingGuest?.email || user.email,
-      mobile: resolvedMobile || existingGuest?.mobile || user.mobile,
-      avatar: capturedAvatar || existingGuest?.avatar || user.avatar,
-      college: resolvedCollege,
-      branch: resolvedBranch,
-      rollNo: resolvedRollNo,
-      status: 'pending', // Sent to manager for review/approval
-      token: existingGuest?.token || '', // Token will be issued upon manager approval
-      tokenCount: existingGuest?.tokenCount || registeringEvent.tokenSettings?.tokensPerUser || 1,
-      usedTokens: existingGuest?.usedTokens || 0,
-      passId: existingGuest?.passId || passId,
-      registrationDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ', ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }),
-      checkInTime: null,
-      scanTimestamp: null,
-      answers: { ...existingGuest?.answers, ...formData },
-      documents: uploadedFiles.length > 0 ? uploadedFiles : (existingGuest?.documents || [])
-    };
+      const branchEntry = Object.entries(formData).find(([k]) => k.toLowerCase().includes('branch') || k.toLowerCase().includes('department'));
+      const resolvedBranch = branchEntry ? String(branchEntry[1]).trim() : '';
 
-    saveGuest(updatedGuest);
-    setRegisteringEvent(null);
-    setTargetInvitedGuestId(null);
-    setSubmissionSuccessGuest(updatedGuest);
+      const rollEntry = Object.entries(formData).find(([k]) => k.toLowerCase().includes('roll') || k.toLowerCase().includes('reg no') || k.toLowerCase().includes('student id'));
+      const resolvedRollNo = rollEntry ? String(rollEntry[1]).trim() : '';
 
-    addNotification({
-      title: 'New Registration Submitted',
-      message: `${updatedGuest.name} submitted registration for "${registeringEvent.name}". Awaiting manager approval.`,
-      type: 'info',
-      recipientUserId: registeringEvent.creatorId,
-      recipientEmail: (registeringEvent.creatorEmail || '').toLowerCase().trim(),
-      recipientPhone: (registeringEvent.creatorMobile || '').replace(/\D/g, ''),
-      recipientRole: 'manager'
-    });
-    showToast(`✓ Details submitted! Awaiting Manager approval for "${registeringEvent.name}".`, 'success');
+      const updatedGuest: GuestRegistration = {
+        id: guestId,
+        userId: user.id || existingGuest?.userId || undefined,
+        eventId: registeringEvent.id,
+        name: resolvedName,
+        email: resolvedEmail || existingGuest?.email || user.email,
+        mobile: resolvedMobile || existingGuest?.mobile || user.mobile,
+        avatar: capturedAvatar || existingGuest?.avatar || user.avatar,
+        college: resolvedCollege,
+        branch: resolvedBranch,
+        rollNo: resolvedRollNo,
+        status: 'pending', // Sent to manager for review/approval
+        token: existingGuest?.token || '', // Token will be issued upon manager approval
+        tokenCount: existingGuest?.tokenCount || registeringEvent.tokenSettings?.tokensPerUser || 1,
+        usedTokens: existingGuest?.usedTokens || 0,
+        passId: existingGuest?.passId || passId,
+        registrationDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ', ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }),
+        checkInTime: null,
+        scanTimestamp: null,
+        answers: { ...existingGuest?.answers, ...formData },
+        documents: uploadedFiles.length > 0 ? uploadedFiles : (existingGuest?.documents || [])
+      };
+
+      saveGuest(updatedGuest);
+      setRegisteringEvent(null);
+      setTargetInvitedGuestId(null);
+      setSubmissionSuccessGuest(updatedGuest);
+
+      addNotification({
+        title: 'New Registration Submitted',
+        message: `${updatedGuest.name} submitted registration for "${registeringEvent.name}". Awaiting manager approval.`,
+        type: 'info',
+        recipientUserId: registeringEvent.creatorId,
+        recipientEmail: (registeringEvent.creatorEmail || '').toLowerCase().trim(),
+        recipientPhone: (registeringEvent.creatorMobile || '').replace(/\D/g, ''),
+        recipientRole: 'manager'
+      });
+      showToast(`✓ Details submitted! Awaiting Manager approval for "${registeringEvent.name}".`, 'success');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -754,75 +772,110 @@ export const GuestHome: React.FC = () => {
 
       {/* Dynamic Registration Modal */}
       {registeringEvent && (
-        <div className="modal-overlay active" onClick={() => setRegisteringEvent(null)}>
+        <div className="modal-overlay active" onClick={() => { if (!isSubmitting) setRegisteringEvent(null); }}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <div>
-                <h3>Register: {registeringEvent.name}</h3>
-                <span style={{ fontSize: '0.75rem', color: 'var(--accent-secondary)' }}>
+                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800 }}>Register: {registeringEvent.name}</h3>
+                <span style={{ fontSize: '0.75rem', color: 'var(--accent-secondary)', fontWeight: 600 }}>
                   Event ID: {registeringEvent.id}
                 </span>
               </div>
-              <button className="icon-btn" onClick={() => setRegisteringEvent(null)}>✕</button>
+              <button 
+                type="button" 
+                className="icon-btn" 
+                onClick={() => { if (!isSubmitting) setRegisteringEvent(null); }}
+                disabled={isSubmitting}
+              >
+                ✕
+              </button>
             </div>
 
-            <div className="modal-body">
-              {/* Event Guidelines & Rules from Vault */}
-              {registeringEvent.documents && registeringEvent.documents.length > 0 && (
-                <div className="glass-panel" style={{ padding: '0.85rem 1rem', background: 'var(--bg-tertiary)', marginBottom: '1.25rem', border: '1px solid var(--border-subtle)' }}>
-                  <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    📜 Official Guidelines & Rules ({registeringEvent.documents.length} Files Attached)
+            <form 
+              onSubmit={handleDynamicSubmit}
+              style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', minHeight: 0, overflow: 'hidden' }}
+            >
+              <div className="modal-body" style={{ overflowY: 'auto', flex: '1 1 auto', paddingBottom: '2.5rem' }}>
+                {/* Event Guidelines & Rules from Vault */}
+                {registeringEvent.documents && registeringEvent.documents.length > 0 && (
+                  <div className="glass-panel" style={{ padding: '0.85rem 1rem', background: '#F8FAFC', marginBottom: '1.25rem', border: '1px solid #E2E8F0', borderRadius: 'var(--radius-md)' }}>
+                    <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#0F172A', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      📜 Official Guidelines & Rules ({registeringEvent.documents.length} Files Attached)
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                      {registeringEvent.documents.map(d => (
+                        <div key={d.id} style={{ fontSize: '0.775rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ color: '#475569' }}>• {d.name} ({d.size})</span>
+                          <span style={{ color: '#2563EB', fontWeight: 600 }}>Guidelines Document</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                    {registeringEvent.documents.map(d => (
-                      <div key={d.id} style={{ fontSize: '0.775rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <span style={{ color: 'var(--text-secondary)' }}>• {d.name} ({d.size})</span>
-                        <span style={{ color: 'var(--accent-primary)', fontWeight: 600 }}>Guidelines Document</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+                )}
 
-              <form onSubmit={handleDynamicSubmit}>
                 {/* Event Custom Requirements (Strictly configured by organizer) */}
                 {(registeringEvent.requirements || []).map(req => {
+                  const hasError = Boolean(formErrors[req.label]);
+
                   if (req.type === 'dropdown' && req.options) {
                     return (
-                      <div key={req.id} className="form-group">
-                        <label className="form-label">
+                      <div key={req.id} className="form-group" style={{ marginBottom: '1.15rem' }}>
+                        <label className="form-label" style={{ fontWeight: 700, fontSize: '0.875rem', color: '#0F172A', marginBottom: '0.35rem' }}>
                           {req.label} {req.required && <span className="required-star">*</span>}
                         </label>
                         <select 
                           value={formData[req.label] || ''} 
-                          onChange={e => setFormData({ ...formData, [req.label]: e.target.value })}
+                          onChange={e => {
+                            setFormData({ ...formData, [req.label]: e.target.value });
+                            if (formErrors[req.label]) {
+                              setFormErrors(prev => { const n = { ...prev }; delete n[req.label]; return n; });
+                            }
+                          }}
+                          onFocus={e => {
+                            e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                          }}
                           required={req.required}
+                          style={{
+                            borderColor: hasError ? '#DC2626' : undefined,
+                            boxShadow: hasError ? '0 0 0 2px rgba(220, 38, 38, 0.2)' : undefined
+                          }}
                         >
                           <option value="">Select option...</option>
                           {req.options.map(opt => (
                             <option key={opt} value={opt}>{opt}</option>
                           ))}
                         </select>
-                        {req.description && <div className="form-hint">{req.description}</div>}
+                        {hasError ? (
+                          <div className="form-hint" style={{ color: '#DC2626', fontWeight: 700, marginTop: 4 }}>
+                            ⚠️ {formErrors[req.label]}
+                          </div>
+                        ) : req.description ? (
+                          <div className="form-hint">{req.description}</div>
+                        ) : null}
                       </div>
                     );
                   }
 
                   if (req.type === 'radio' && req.options) {
                     return (
-                      <div key={req.id} className="form-group">
-                        <label className="form-label">
+                      <div key={req.id} className="form-group" style={{ marginBottom: '1.15rem' }}>
+                        <label className="form-label" style={{ fontWeight: 700, fontSize: '0.875rem', color: '#0F172A', marginBottom: '0.35rem' }}>
                           {req.label} {req.required && <span className="required-star">*</span>}
                         </label>
                         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '0.35rem' }}>
                           {req.options.map(opt => (
-                            <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.875rem', cursor: 'pointer' }}>
+                            <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.875rem', cursor: 'pointer', fontWeight: 600 }}>
                               <input 
                                 type="radio" 
                                 name={req.label} 
                                 value={opt} 
-                                checked={formData[req.label] === opt}
-                                onChange={e => setFormData({ ...formData, [req.label]: e.target.value })}
+                                checked={formData[req.label] === opt} 
+                                onChange={e => {
+                                  setFormData({ ...formData, [req.label]: e.target.value });
+                                  if (formErrors[req.label]) {
+                                    setFormErrors(prev => { const n = { ...prev }; delete n[req.label]; return n; });
+                                  }
+                                }}
                                 required={req.required}
                                 style={{ width: 'auto' }}
                               />
@@ -830,7 +883,13 @@ export const GuestHome: React.FC = () => {
                             </label>
                           ))}
                         </div>
-                        {req.description && <div className="form-hint">{req.description}</div>}
+                        {hasError ? (
+                          <div className="form-hint" style={{ color: '#DC2626', fontWeight: 700, marginTop: 4 }}>
+                            ⚠️ {formErrors[req.label]}
+                          </div>
+                        ) : req.description ? (
+                          <div className="form-hint">{req.description}</div>
+                        ) : null}
                       </div>
                     );
                   }
@@ -846,8 +905,8 @@ export const GuestHome: React.FC = () => {
                         : 'Click to upload document photo';
 
                     return (
-                      <div key={req.id} className="form-group">
-                        <label className="form-label">
+                      <div key={req.id} className="form-group" style={{ marginBottom: '1.25rem' }}>
+                        <label className="form-label" style={{ fontWeight: 700, fontSize: '0.875rem', color: '#0F172A', marginBottom: '0.35rem' }}>
                           {req.label} {req.required && <span className="required-star">*</span>}
                         </label>
                         
@@ -855,10 +914,10 @@ export const GuestHome: React.FC = () => {
                           <div 
                             className="glass-panel" 
                             style={{ 
-                              padding: '1.5rem 1rem', 
+                              padding: '1.35rem 1rem', 
                               textAlign: 'center', 
-                              border: capturedAvatar ? '2.5px solid #10B981' : '2px dashed #2563EB', 
-                              background: capturedAvatar ? 'rgba(16, 185, 129, 0.05)' : '#EFF6FF',
+                              border: hasError ? '2px dashed #DC2626' : capturedAvatar ? '2.5px solid #10B981' : '2px dashed #2563EB', 
+                              background: hasError ? '#FEF2F2' : capturedAvatar ? 'rgba(16, 185, 129, 0.05)' : '#EFF6FF',
                               cursor: 'pointer',
                               borderRadius: 'var(--radius-lg)',
                               transition: 'all 0.2s ease'
@@ -866,6 +925,9 @@ export const GuestHome: React.FC = () => {
                             onClick={() => {
                               setCameraFieldLabel(req.label);
                               setIsCameraModalOpen(true);
+                              if (formErrors[req.label]) {
+                                setFormErrors(prev => { const n = { ...prev }; delete n[req.label]; return n; });
+                              }
                             }}
                           >
                             {capturedAvatar ? (
@@ -873,7 +935,7 @@ export const GuestHome: React.FC = () => {
                                 <img 
                                   src={capturedAvatar} 
                                   alt="Captured Live Photo" 
-                                  style={{ width: 190, height: 190, borderRadius: 'var(--radius-xl)', objectFit: 'cover', border: '4px solid #10B981', boxShadow: '0 8px 24px rgba(16, 185, 129, 0.35)' }} 
+                                  style={{ width: 170, height: 170, borderRadius: 'var(--radius-xl)', objectFit: 'cover', border: '4px solid #10B981', boxShadow: '0 8px 24px rgba(16, 185, 129, 0.35)' }} 
                                 />
                                 <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#047857' }}>
                                   ✓ Live Photo Captured & Attached (High-Res)
@@ -893,11 +955,11 @@ export const GuestHome: React.FC = () => {
                               </div>
                             ) : (
                               <div>
-                                <div style={{ fontSize: '2.8rem', marginBottom: '0.5rem' }}>📸</div>
-                                <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#1E40AF' }}>
+                                <div style={{ fontSize: '2.5rem', marginBottom: '0.35rem' }}>📸</div>
+                                <div style={{ fontSize: '1.05rem', fontWeight: 800, color: hasError ? '#DC2626' : '#1E40AF' }}>
                                   {actionLabel}
                                 </div>
-                                <div className="form-hint" style={{ marginTop: '0.35rem', color: '#1D4ED8', fontWeight: 600 }}>
+                                <div className="form-hint" style={{ marginTop: '0.35rem', color: hasError ? '#B91C1C' : '#1D4ED8', fontWeight: 600 }}>
                                   * Opens live camera with auto-crop & adjust tool
                                 </div>
                               </div>
@@ -913,13 +975,18 @@ export const GuestHome: React.FC = () => {
                               style={{ 
                                 padding: isAttachedImg ? '1rem' : '1.25rem', 
                                 textAlign: 'center', 
-                                border: formData[req.label] ? '2px solid #10B981' : '1.5px dashed rgba(74, 123, 247, 0.4)', 
-                                background: formData[req.label] ? 'rgba(16, 185, 129, 0.04)' : 'var(--bg-card)',
+                                border: hasError ? '2px dashed #DC2626' : formData[req.label] ? '2px solid #10B981' : '1.5px dashed rgba(74, 123, 247, 0.4)', 
+                                background: hasError ? '#FEF2F2' : formData[req.label] ? 'rgba(16, 185, 129, 0.04)' : '#F8FAFC',
                                 cursor: 'pointer',
                                 borderRadius: 'var(--radius-lg)',
                                 transition: 'all 0.2s ease'
                               }}
-                              onClick={() => document.getElementById(`upload-${req.id}`)?.click()}
+                              onClick={() => {
+                                document.getElementById(`upload-${req.id}`)?.click();
+                                if (formErrors[req.label]) {
+                                  setFormErrors(prev => { const n = { ...prev }; delete n[req.label]; return n; });
+                                }
+                              }}
                             >
                               {isAttachedImg ? (
                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
@@ -928,7 +995,7 @@ export const GuestHome: React.FC = () => {
                                     alt={attachedDoc.name} 
                                     style={{ 
                                       width: '100%', 
-                                      maxHeight: 220, 
+                                      maxHeight: 200, 
                                       borderRadius: 'var(--radius-md)', 
                                       objectFit: 'contain', 
                                       border: '2px solid #10B981', 
@@ -954,14 +1021,14 @@ export const GuestHome: React.FC = () => {
                               ) : (
                                 <div>
                                   <div style={{ fontSize: '2rem', marginBottom: '0.35rem' }}>{uploadIcon}</div>
-                                  <div style={{ fontSize: '0.95rem', fontWeight: 700, color: formData[req.label] ? '#10B981' : 'var(--text-primary)' }}>
+                                  <div style={{ fontSize: '0.95rem', fontWeight: 700, color: hasError ? '#DC2626' : formData[req.label] ? '#10B981' : '#0F172A' }}>
                                     {formData[req.label] ? (
                                       <span>✓ Attached: {formData[req.label]}</span>
                                     ) : (
                                       actionLabel
                                     )}
                                   </div>
-                                  <div className="form-hint" style={{ marginTop: '0.25rem' }}>
+                                  <div className="form-hint" style={{ marginTop: '0.25rem', color: hasError ? '#B91C1C' : undefined }}>
                                     {req.description || (isPdf ? 'Supports official .PDF files up to 10MB' : 'Supports JPG, PNG, WEBP files')}
                                   </div>
                                 </div>
@@ -971,11 +1038,22 @@ export const GuestHome: React.FC = () => {
                                 id={`upload-${req.id}`} 
                                 accept={isPdf ? '.pdf' : 'image/*,.pdf'} 
                                 style={{ display: 'none' }} 
-                                onChange={e => handleFileUpload(e, req.label)} 
+                                onChange={e => {
+                                  handleFileUpload(e, req.label);
+                                  if (formErrors[req.label]) {
+                                    setFormErrors(prev => { const n = { ...prev }; delete n[req.label]; return n; });
+                                  }
+                                }} 
                               />
                             </div>
                           );
                         })()}
+
+                        {hasError && (
+                          <div className="form-hint" style={{ color: '#DC2626', fontWeight: 700, marginTop: 4 }}>
+                            ⚠️ {formErrors[req.label]}
+                          </div>
+                        )}
                       </div>
                     );
                   }
@@ -990,50 +1068,108 @@ export const GuestHome: React.FC = () => {
 
                   if (req.type === 'checkbox') {
                     return (
-                      <div key={req.id} className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.75rem 0' }}>
-                        <input 
-                          type="checkbox" 
-                          id={`chk-${req.id}`}
-                          checked={Boolean(formData[req.label])}
-                          onChange={e => setFormData({ ...formData, [req.label]: e.target.checked })}
-                          required={req.required}
-                          style={{ width: 'auto', cursor: 'pointer' }}
-                        />
-                        <label htmlFor={`chk-${req.id}`} style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', cursor: 'pointer' }}>
-                          {req.label} {req.required && <span className="required-star">*</span>}
-                        </label>
-                        {req.description && <div className="form-hint" style={{ width: '100%' }}>{req.description}</div>}
+                      <div key={req.id} className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', margin: '0.85rem 0' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <input 
+                            type="checkbox" 
+                            id={`chk-${req.id}`}
+                            checked={Boolean(formData[req.label])}
+                            onChange={e => {
+                              setFormData({ ...formData, [req.label]: e.target.checked });
+                              if (formErrors[req.label]) {
+                                setFormErrors(prev => { const n = { ...prev }; delete n[req.label]; return n; });
+                              }
+                            }}
+                            required={req.required}
+                            style={{ width: 'auto', cursor: 'pointer' }}
+                          />
+                          <label htmlFor={`chk-${req.id}`} style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: '#0F172A', cursor: 'pointer' }}>
+                            {req.label} {req.required && <span className="required-star">*</span>}
+                          </label>
+                        </div>
+                        {hasError ? (
+                          <div className="form-hint" style={{ color: '#DC2626', fontWeight: 700 }}>
+                            ⚠️ {formErrors[req.label]}
+                          </div>
+                        ) : req.description ? (
+                          <div className="form-hint">{req.description}</div>
+                        ) : null}
                       </div>
                     );
                   }
 
                   return (
-                    <div key={req.id} className="form-group">
-                      <label className="form-label">
+                    <div key={req.id} className="form-group" style={{ marginBottom: '1.15rem' }}>
+                      <label className="form-label" style={{ fontWeight: 700, fontSize: '0.875rem', color: '#0F172A', marginBottom: '0.35rem' }}>
                         {req.label} {req.required && <span className="required-star">*</span>}
                       </label>
                       <input 
                         type={getInputType()} 
                         placeholder={`Enter ${req.label}...`}
                         value={formData[req.label] || ''}
-                        onChange={e => setFormData({ ...formData, [req.label]: e.target.value })}
+                        onChange={e => {
+                          setFormData({ ...formData, [req.label]: e.target.value });
+                          if (formErrors[req.label]) {
+                            setFormErrors(prev => { const n = { ...prev }; delete n[req.label]; return n; });
+                          }
+                        }}
+                        onFocus={e => {
+                          e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }}
                         required={req.required}
+                        style={{
+                          borderColor: hasError ? '#DC2626' : undefined,
+                          boxShadow: hasError ? '0 0 0 2px rgba(220, 38, 38, 0.2)' : undefined
+                        }}
                       />
-                      {req.description && <div className="form-hint">{req.description}</div>}
+                      {hasError ? (
+                        <div className="form-hint" style={{ color: '#DC2626', fontWeight: 700, marginTop: 4 }}>
+                          ⚠️ {formErrors[req.label]}
+                        </div>
+                      ) : req.description ? (
+                        <div className="form-hint">{req.description}</div>
+                      ) : null}
                     </div>
                   );
                 })}
+              </div>
 
-                <div className="modal-footer" style={{ padding: '1.25rem 0 0', background: 'transparent' }}>
-                  <button type="button" className="btn btn-secondary" onClick={() => setRegisteringEvent(null)}>
-                    Cancel
-                  </button>
-                  <button type="submit" className="btn btn-primary">
-                    Submit Registration Request
-                  </button>
-                </div>
-              </form>
-            </div>
+              {/* Dedicated Non-Overlapping Modal Footer */}
+              <div className="modal-footer" style={{ flexShrink: 0 }}>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  onClick={() => setRegisteringEvent(null)}
+                  disabled={isSubmitting}
+                  style={{ fontWeight: 700 }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn btn-primary"
+                  disabled={isSubmitting}
+                  style={{ 
+                    fontWeight: 800, 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    gap: '0.5rem',
+                    background: 'linear-gradient(135deg, #2563EB, #1D4ED8)',
+                    boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)'
+                  }}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" />
+                      <span>Submitting Request...</span>
+                    </>
+                  ) : (
+                    <span>Submit Registration Request</span>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

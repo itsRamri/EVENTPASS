@@ -879,7 +879,7 @@ input[type="tel"] {
   background: rgba(15, 23, 42, 0.65);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  z-index: 2000;
+  z-index: 99999;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -926,11 +926,12 @@ input[type="tel"] {
 }
 
 .modal-body {
-  padding: 1.25rem 1.4rem;
+  padding: 1.25rem 1.4rem 2.25rem;
   overflow-y: auto;
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 .modal-footer {
@@ -942,8 +943,7 @@ input[type="tel"] {
   gap: 0.75rem;
   background: #F8FAFC;
   flex-shrink: 0;
-  position: sticky;
-  bottom: 0;
+  position: relative;
   z-index: 10;
 }
 

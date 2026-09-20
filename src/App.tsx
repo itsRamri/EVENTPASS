@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useApp } from './context/AppContext';
 import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
@@ -21,6 +21,48 @@ import { AuthView } from './views/AuthView';
 
 export const App: React.FC = () => {
   const { currentView, user, isAuthenticated } = useApp();
+
+  // Global mobile keyboard & input focus handler
+  useEffect(() => {
+    const isInputElement = (el: Element | null): boolean => {
+      if (!el) return false;
+      const tag = el.tagName;
+      return (
+        tag === 'INPUT' ||
+        tag === 'TEXTAREA' ||
+        tag === 'SELECT' ||
+        (el as HTMLElement).isContentEditable
+      );
+    };
+
+    const handleFocusIn = (e: FocusEvent) => {
+      const target = e.target as HTMLElement;
+      if (isInputElement(target)) {
+        document.body.classList.add('keyboard-open');
+        setTimeout(() => {
+          target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+        }, 120);
+      }
+    };
+
+    const handleFocusOut = () => {
+      setTimeout(() => {
+        const active = document.activeElement;
+        if (!isInputElement(active)) {
+          document.body.classList.remove('keyboard-open');
+        }
+      }, 150);
+    };
+
+    document.addEventListener('focusin', handleFocusIn);
+    document.addEventListener('focusout', handleFocusOut);
+
+    return () => {
+      document.removeEventListener('focusin', handleFocusIn);
+      document.removeEventListener('focusout', handleFocusOut);
+      document.body.classList.remove('keyboard-open');
+    };
+  }, []);
 
   if (!isAuthenticated) {
     return (

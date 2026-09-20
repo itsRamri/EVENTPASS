@@ -2,6 +2,22 @@ import React from 'react';
 import { useApp } from '../context/AppContext';
 import { Bell, ChevronLeft } from 'lucide-react';
 
+// Helper to get initials from user name or email
+const getInitials = (name?: string, email?: string): string => {
+  if (name && name.trim().length > 0) {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 1) {
+      return parts[0].slice(0, 2).toUpperCase();
+    }
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  if (email && email.trim().length > 0) {
+    const clean = email.trim().split('@')[0];
+    return clean.slice(0, 2).toUpperCase();
+  }
+  return 'EP';
+};
+
 export const Navbar: React.FC = () => {
   const { 
     user, 
@@ -288,6 +304,55 @@ export const Navbar: React.FC = () => {
                 border: '2px solid #FFFFFF' 
               }} 
             />
+          )}
+        </button>
+
+        {/* Profile Avatar Button */}
+        <button
+          type="button"
+          onClick={() => navigate('profile')}
+          title="Profile"
+          aria-label="View Profile"
+          style={{
+            width: '42px',
+            height: '42px',
+            borderRadius: '50%',
+            padding: 0,
+            border: '1.5px solid #2563EB',
+            background: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(37, 99, 235, 0.15)',
+            overflow: 'hidden',
+            flexShrink: 0,
+            transition: 'all 0.2s ease'
+          }}
+        >
+          {user.avatar && !user.avatar.includes('unsplash.com') ? (
+            <img
+              src={user.avatar}
+              alt={user.name || 'User'}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          ) : (
+            <div
+              style={{
+                width: '100%',
+                height: '100%',
+                background: 'linear-gradient(135deg, #1E40AF 0%, #2563EB 100%)',
+                color: '#FFFFFF',
+                fontWeight: 800,
+                fontSize: '0.9rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textTransform: 'uppercase'
+              }}
+            >
+              {getInitials(user.name, user.email)}
+            </div>
           )}
         </button>
       </div>

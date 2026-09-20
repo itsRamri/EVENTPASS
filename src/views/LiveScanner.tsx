@@ -19,7 +19,12 @@ import {
   Camera,
   Sparkles,
   X,
-  User
+  User,
+  Mail,
+  Phone,
+  Calendar,
+  MapPin,
+  FileText
 } from 'lucide-react';
 
 export const LiveScanner: React.FC = () => {
@@ -59,6 +64,12 @@ export const LiveScanner: React.FC = () => {
     scannedTokenCode?: string;
   } | null>(null);
 
+  const [viewDetailsGuest, setViewDetailsGuest] = useState<{ 
+    guest: GuestRegistration; 
+    time?: string; 
+    tokenCode?: string;
+  } | null>(null);
+
   const [cameraActive, setCameraActive] = useState(false);
   const [scanCooldown, setScanCooldown] = useState(false);
 
@@ -79,7 +90,11 @@ export const LiveScanner: React.FC = () => {
   });
 
   const isManager = user.role === 'manager';
-  const isStaffScanner = user.role === 'scanner' || (!!matchedStaff && matchedStaff.status === 'active' && matchedStaff.permissions?.canScan !== false);
+  const isStaffScanner = Boolean(
+    matchedStaff && 
+    matchedStaff.status === 'active' && 
+    matchedStaff.permissions?.canScan === true
+  );
   const isAuthorizedScanner = isManager || isStaffScanner;
 
   const canCheckIn = true; // Always allow check in
@@ -184,7 +199,6 @@ export const LiveScanner: React.FC = () => {
     );
 
     const isAuthorizedForThisEvent = 
-      isManager || 
       isCreator || 
       (matchedStaff && matchedStaff.status === 'active' && matchedStaff.permissions?.canScan !== false && (!matchedStaff.assignedEventId || matchedStaff.assignedEventId === 'all' || matchedStaff.assignedEventId === guest.eventId));
 
@@ -320,6 +334,8 @@ export const LiveScanner: React.FC = () => {
 
   // Real-time Camera Feed & QR Frame Decoder
   useEffect(() => {
+    if (!isAuthorizedScanner) return;
+
     let isMounted = true;
     let animId: number;
 
@@ -361,7 +377,7 @@ export const LiveScanner: React.FC = () => {
       const scanLoop = () => {
         if (!isMounted) return;
 
-        if (videoRef.current && videoRef.current.readyState >= 2 && !scanResult && !checkInSuccessGuest) {
+        if (videoRef.current && videoRef.current.readyState >= 2 && !scanResult && !checkInSuccessGuest && !viewDetailsGuest) {
           const video = videoRef.current;
           if (video.videoWidth > 0 && video.videoHeight > 0) {
             canvas.width = video.videoWidth;
@@ -397,7 +413,7 @@ export const LiveScanner: React.FC = () => {
         streamRef.current = null;
       }
     };
-  }, [verifyToken, scanResult, checkInSuccessGuest]);
+  }, [verifyToken, scanResult, checkInSuccessGuest, viewDetailsGuest]);
 
   // Perform Check-In
   const handleCheckIn = (g: GuestRegistration, tokenCode?: string) => {
@@ -805,7 +821,7 @@ export const LiveScanner: React.FC = () => {
               }}
             />
 
-            <div style={{ padding: '1.25rem 1.25rem 1.5rem' }}>
+            <div style={{ padding: '1rem 1.15rem 1.25rem' }}>
               {scanResult.guest ? (() => {
                 const guest = scanResult.guest;
                 const matchedEvt = events.find(e => e.id === guest.eventId) || assignedEvent;
@@ -817,8 +833,59 @@ export const LiveScanner: React.FC = () => {
                   (guest.avatar ? guest.avatar : '');
 
                 const isAlreadyCheckedIn = scanResult.type === 'already_checkedin' || guest.status === 'checkedin';
-                const tokenNo = scanResult.scannedTokenCode || guest.token || 'N/A';
-                const passIdVal = guest.passId ? (guest.passId.startsWith('#') ? guest.passId : `#${guest.passId}`) : '#EP20251234';
+
+                // Collect all details filled in the guest event registration form
+                const detailsList: { label: string; value: string }[] = [];
+
+                if (guest.email) {
+                  detailsList.push({ label: 'Email', value: guest.email });
+                }
+                if (guest.mobile || (guest as any).phone) {
+                  detailsList.push({ label: 'Mobile', value: guest.mobile || (guest as any).phone });
+                }
+                if (guest.college) {
+                  detailsList.push({ label: 'College', value: guest.college });
+                }
+                if (guest.branch) {
+                  detailsList.push({ label: 'Branch', value: guest.branch });
+                }
+                if (guest.rollNo) {
+                  detailsList.push({ label: 'Roll No', value: guest.rollNo });
+                }
+                if ((guest as any).category) {
+                  detailsList.push({ label: 'Category', value: (guest as any).category });
+                }
+
+                if (guest.answers && typeof guest.answers === 'object') {
+                  Object.entries(guest.answers).forEach(([key, val]) => {
+                    if (val === undefined || val === null || val === '') return;
+                    const strVal = String(val).trim();
+                    if (!strVal) return;
+
+                    const lowerKey = key.toLowerCase();
+                    // Skip base64 images, photos, avatars
+                    if (
+                      strVal.startsWith('data:image') || 
+                      strVal.includes('firebasestorage') || 
+                      lowerKey.includes('photo') || 
+                      lowerKey.includes('image') || 
+                      lowerKey.includes('avatar')
+                    ) {
+                      return;
+                    }
+
+                    // Skip duplicate standard fields if already added
+                    if (lowerKey === 'name' || lowerKey === 'full name' || lowerKey === 'guest name') return;
+                    if ((lowerKey === 'email' || lowerKey === 'invited email') && guest.email) return;
+                    if ((lowerKey === 'mobile' || lowerKey === 'mobile contact' || lowerKey === 'phone') && (guest.mobile || (guest as any).phone)) return;
+                    if (lowerKey === 'college' && guest.college) return;
+                    if ((lowerKey === 'branch' || lowerKey === 'department') && guest.branch) return;
+                    if ((lowerKey === 'roll no' || lowerKey === 'roll number' || lowerKey === 'reg no') && guest.rollNo) return;
+                    if (lowerKey === 'category' && (guest as any).category) return;
+
+                    detailsList.push({ label: key, value: strVal });
+                  });
+                }
 
                 return (
                   <>
@@ -826,31 +893,16 @@ export const LiveScanner: React.FC = () => {
                     <div 
                       style={{
                         border: isAlreadyCheckedIn ? '1.5px solid #FCA5A5' : '1.5px solid #86EFAC',
-                        borderRadius: 22,
-                        padding: '1.25rem 1.15rem 1.15rem',
+                        borderRadius: 20,
+                        padding: '1rem 1rem 0.9rem',
                         background: '#FFFFFF',
-                        marginBottom: '1.25rem',
+                        marginBottom: '0.95rem',
                         boxShadow: isAlreadyCheckedIn ? '0 2px 8px rgba(239, 68, 68, 0.04)' : '0 2px 8px rgba(16, 185, 129, 0.04)'
                       }}
                     >
-                      {/* Top Center Badge */}
-                      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '0.85rem' }}>
-                        {isAlreadyCheckedIn ? (
-                          <div 
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '0.45rem',
-                              color: '#DC2626',
-                              fontWeight: 800,
-                              fontSize: '1.1rem',
-                              letterSpacing: '-0.01em'
-                            }}
-                          >
-                            <AlertTriangle size={22} color="#DC2626" strokeWidth={2.8} />
-                            <span>Aapka QR Expire Ho Chuka Hai</span>
-                          </div>
-                        ) : (
+                      {/* Top Center Badge (Only for verified passes) */}
+                      {!isAlreadyCheckedIn && (
+                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '0.65rem' }}>
                           <div 
                             style={{
                               display: 'inline-flex',
@@ -858,38 +910,38 @@ export const LiveScanner: React.FC = () => {
                               gap: '0.45rem',
                               color: '#10B981',
                               fontWeight: 800,
-                              fontSize: '1.15rem',
+                              fontSize: '1.1rem',
                               letterSpacing: '-0.01em'
                             }}
                           >
-                            <CheckCircle2 size={22} color="#10B981" strokeWidth={2.8} />
+                            <CheckCircle2 size={20} color="#10B981" strokeWidth={2.8} />
                             <span>Verified</span>
                           </div>
-                        )}
-                      </div>
+                        </div>
+                      )}
 
                       {/* Centered Rectangular Photo */}
-                      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.85rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.65rem' }}>
                         {guestPhoto ? (
                           <img 
                             src={guestPhoto} 
                             alt={guest.name} 
                             style={{
-                              width: 105,
-                              height: 125,
-                              borderRadius: 18,
+                              width: 92,
+                              height: 110,
+                              borderRadius: 16,
                               objectFit: 'cover',
                               border: isAlreadyCheckedIn ? '2.5px solid #FEE2E2' : '2.5px solid #FFFFFF',
-                              boxShadow: '0 6px 18px rgba(15, 23, 42, 0.1)',
+                              boxShadow: '0 4px 14px rgba(15, 23, 42, 0.1)',
                               background: '#F1F5F9'
                             }}
                           />
                         ) : (
                           <div
                             style={{
-                              width: 105,
-                              height: 125,
-                              borderRadius: 18,
+                              width: 92,
+                              height: 110,
+                              borderRadius: 16,
                               background: 'linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%)',
                               border: '2px dashed #CBD5E1',
                               display: 'flex',
@@ -899,82 +951,62 @@ export const LiveScanner: React.FC = () => {
                               color: '#64748B'
                             }}
                           >
-                            <User size={42} strokeWidth={1.8} color="#64748B" />
+                            <User size={38} strokeWidth={1.8} color="#64748B" />
                             <span style={{ fontSize: '0.65rem', fontWeight: 700, marginTop: 4, color: '#94A3B8' }}>No Photo</span>
                           </div>
                         )}
                       </div>
 
                       {/* Guest Name & Event Name */}
-                      <div style={{ textAlign: 'center', marginBottom: '1.1rem' }}>
-                        <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.2rem', letterSpacing: '-0.01em' }}>
+                      <div style={{ textAlign: 'center', marginBottom: detailsList.length > 0 ? '0.75rem' : '0.2rem' }}>
+                        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.15rem', letterSpacing: '-0.01em', wordBreak: 'break-word' }}>
                           {guest.name}
                         </h2>
-                        <div style={{ fontSize: '0.925rem', color: '#64748B', fontWeight: 600 }}>
-                          {matchedEvt?.name || 'Music Fest 2025'}
+                        <div style={{ fontSize: '0.875rem', color: '#64748B', fontWeight: 600 }}>
+                          {matchedEvt?.name || 'Event Pass'}
                         </div>
                       </div>
 
-                      {/* 2-Column Grid: Token No & Pass ID */}
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', paddingTop: '0.85rem', borderTop: '1px solid #F1F5F9' }}>
-                        {/* Left: Token No. */}
-                        <div>
-                          <div style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600, marginBottom: 2 }}>Token No.</div>
-                          <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0F172A', marginBottom: 6, wordBreak: 'break-all' }}>
-                            {tokenNo}
-                          </div>
-                          <span 
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: 4,
-                              background: isAlreadyCheckedIn ? '#FEE2E2' : '#DCFCE7',
-                              color: isAlreadyCheckedIn ? '#DC2626' : '#16A34A',
-                              fontSize: '0.725rem',
-                              fontWeight: 700,
-                              padding: '2px 8px',
-                              borderRadius: 100,
-                              border: isAlreadyCheckedIn ? '1px solid #FCA5A5' : '1px solid #BBF7D0'
-                            }}
-                          >
-                            {isAlreadyCheckedIn ? '✕ Expired' : '✿ Approved'}
-                          </span>
-                        </div>
-
-                        {/* Right: Pass ID */}
-                        <div>
-                          <div style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600, marginBottom: 2 }}>Pass ID</div>
-                          <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0F172A', marginBottom: 6, wordBreak: 'break-all' }}>
-                            {passIdVal}
-                          </div>
-                          <span 
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: 4,
-                              background: isAlreadyCheckedIn ? '#FEE2E2' : '#EFF6FF',
-                              color: isAlreadyCheckedIn ? '#DC2626' : '#2563EB',
-                              fontSize: '0.725rem',
-                              fontWeight: 700,
-                              padding: '2px 8px',
-                              borderRadius: 100,
-                              border: isAlreadyCheckedIn ? '1px solid #FCA5A5' : '1px solid #BFDBFE'
-                            }}
-                          >
-                            ❖ {isAlreadyCheckedIn ? 'Already Checked In' : 'Not Checked In'}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Expired Re-entry Warning Notice */}
-                      {isAlreadyCheckedIn && (
-                        <div style={{ marginTop: '0.85rem', padding: '0.65rem 0.85rem', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 12, color: '#991B1B', fontSize: '0.8rem', fontWeight: 700, textAlign: 'center' }}>
-                          ⚠️ Yeh QR Code already check-in ho chuka hai at {guest.checkInTime || 'earlier'}. Re-entry allow nahi hai.
+                      {/* Guest Submitted Form Details */}
+                      {detailsList.length > 0 && (
+                        <div 
+                          style={{
+                            background: '#F8FAFC',
+                            border: '1px solid #E2E8F0',
+                            borderRadius: 14,
+                            padding: '0.75rem 0.85rem',
+                            display: 'grid',
+                            gap: '0.45rem',
+                            textAlign: 'left',
+                            maxHeight: '160px',
+                            overflowY: 'auto',
+                            WebkitOverflowScrolling: 'touch'
+                          }}
+                        >
+                          {detailsList.map((item, idx) => (
+                            <div 
+                              key={idx}
+                              style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                fontSize: '0.825rem',
+                                borderBottom: idx < detailsList.length - 1 ? '1px dashed #E2E8F0' : 'none',
+                                paddingBottom: idx < detailsList.length - 1 ? '0.35rem' : '0',
+                                gap: '0.65rem'
+                              }}
+                            >
+                              <span style={{ color: '#64748B', fontWeight: 600, flexShrink: 0 }}>{item.label}:</span>
+                              <span style={{ color: '#0F172A', fontWeight: 700, textAlign: 'right', wordBreak: 'break-word', maxWidth: '65%' }}>
+                                {item.value}
+                              </span>
+                            </div>
+                          ))}
                         </div>
                       )}
                     </div>
 
-                    {/* Primary Button: Check In Guest OR Expired Dismiss Button */}
+                    {/* Primary Button: Check In Guest OR Scan Next Guest Button */}
                     {!isAlreadyCheckedIn ? (
                       <>
                         <button 
@@ -982,7 +1014,7 @@ export const LiveScanner: React.FC = () => {
                           onClick={() => handleCheckIn(guest)}
                           style={{
                             width: '100%',
-                            padding: '0.95rem 1.5rem',
+                            padding: '0.9rem 1.25rem',
                             background: '#2563EB',
                             color: '#FFFFFF',
                             fontSize: '1.05rem',
@@ -1001,7 +1033,7 @@ export const LiveScanner: React.FC = () => {
                           Check In Guest
                         </button>
 
-                        <div style={{ textAlign: 'center', fontSize: '0.785rem', color: '#64748B', marginTop: '0.85rem', fontWeight: 500 }}>
+                        <div style={{ textAlign: 'center', fontSize: '0.75rem', color: '#64748B', marginTop: '0.6rem', fontWeight: 500 }}>
                           Make sure the guest is present at the venue.
                         </div>
                       </>
@@ -1012,28 +1044,19 @@ export const LiveScanner: React.FC = () => {
                           onClick={() => setScanResult(null)}
                           style={{
                             width: '100%',
-                            padding: '0.95rem 1.5rem',
+                            padding: '0.9rem 1.25rem',
                             background: '#DC2626',
                             color: '#FFFFFF',
-                            fontSize: '1.025rem',
+                            fontSize: '1rem',
                             fontWeight: 800,
                             borderRadius: 100,
                             border: 'none',
                             cursor: 'pointer',
-                            boxShadow: '0 6px 18px rgba(220, 38, 38, 0.35)',
-                            transition: 'all 0.2s ease',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            letterSpacing: '0.01em'
+                            boxShadow: '0 4px 14px rgba(220, 38, 38, 0.35)'
                           }}
                         >
-                          QR Expired — Scan Next Guest
+                          Dismiss / Scan Next
                         </button>
-
-                        <div style={{ textAlign: 'center', fontSize: '0.785rem', color: '#DC2626', marginTop: '0.85rem', fontWeight: 600 }}>
-                          Duplicate entry strictly blocked.
-                        </div>
                       </>
                     )}
                   </>
@@ -1191,9 +1214,11 @@ export const LiveScanner: React.FC = () => {
                 <button 
                   type="button"
                   onClick={() => {
-                    const gid = checkInSuccessGuest.guest.id;
+                    const g = checkInSuccessGuest.guest;
+                    const t = checkInSuccessGuest.time;
+                    const c = checkInSuccessGuest.scannedTokenCode;
                     setCheckInSuccessGuest(null);
-                    openDigitalPass(gid);
+                    setViewDetailsGuest({ guest: g, time: t, tokenCode: c });
                   }}
                   style={{
                     width: '100%',
@@ -1237,6 +1262,242 @@ export const LiveScanner: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* ========================================================
+          3. ATTENDEE REGISTRATION DETAILS MODAL (VIEW DETAILS)
+          ======================================================== */}
+      {viewDetailsGuest && (() => {
+        const guest = viewDetailsGuest.guest;
+        const matchedEvt = events.find(e => e.id === guest.eventId) || assignedEvent;
+
+        // Guest photo lookup (profile photo / live photo / document)
+        const guestPhoto = (guest.avatar && !guest.avatar.includes('unsplash.com') ? guest.avatar : '') ||
+          (guest.answers?.['Live Photo'] || guest.answers?.['Profile Photo'] || guest.answers?.['Photo'] || guest.answers?.['live_photo'] || guest.answers?.['profile_photo'] || guest.answers?.['Student Photo'] || '') ||
+          (guest.documents?.find(d => d.type === 'image' || (d.url && (d.url.startsWith('data:image') || d.url.includes('firebasestorage'))))?.url || '') ||
+          (guest.avatar ? guest.avatar : '');
+
+        // Collect all details filled in the registration form
+        const detailsList: { label: string; value: string }[] = [];
+
+        if (guest.email) {
+          detailsList.push({ label: 'Email Address', value: guest.email });
+        }
+        if (guest.mobile || (guest as any).phone) {
+          detailsList.push({ label: 'Mobile Number', value: guest.mobile || (guest as any).phone });
+        }
+        if (guest.college && guest.college !== 'Awaiting Submission') {
+          detailsList.push({ label: 'College / Institute', value: guest.college });
+        }
+        if (guest.branch && guest.branch !== 'Pending Acceptance') {
+          detailsList.push({ label: 'Branch / Department', value: guest.branch });
+        }
+        if (guest.rollNo) {
+          detailsList.push({ label: 'Roll / Reg No', value: guest.rollNo });
+        }
+        if ((guest as any).category) {
+          detailsList.push({ label: 'Category / Pass Type', value: (guest as any).category });
+        }
+
+        if (guest.answers && typeof guest.answers === 'object') {
+          Object.entries(guest.answers).forEach(([key, val]) => {
+            if (val === undefined || val === null || val === '') return;
+            const strVal = String(val).trim();
+            if (!strVal) return;
+
+            const lowerKey = key.toLowerCase();
+            if (
+              strVal.startsWith('data:image') || 
+              strVal.includes('firebasestorage') || 
+              lowerKey.includes('photo') || 
+              lowerKey.includes('image') || 
+              lowerKey.includes('avatar')
+            ) {
+              return;
+            }
+
+            if (lowerKey === 'name' || lowerKey === 'full name' || lowerKey === 'guest name') return;
+            if ((lowerKey === 'email' || lowerKey === 'invited email') && guest.email) return;
+            if ((lowerKey === 'mobile' || lowerKey === 'mobile contact' || lowerKey === 'phone') && (guest.mobile || (guest as any).phone)) return;
+            if (lowerKey === 'college' && guest.college) return;
+            if ((lowerKey === 'branch' || lowerKey === 'department') && guest.branch) return;
+            if ((lowerKey === 'roll no' || lowerKey === 'roll number' || lowerKey === 'reg no') && guest.rollNo) return;
+            if (lowerKey === 'category' && (guest as any).category) return;
+
+            detailsList.push({ label: key, value: strVal });
+          });
+        }
+
+        return (
+          <div 
+            style={modalBackdropStyle}
+            onClick={() => setViewDetailsGuest(null)}
+          >
+            {/* Top Navigation Bar */}
+            <div style={{ width: '100%', maxWidth: 440, display: 'flex', alignItems: 'center', justifyContent: 'flex-start', marginBottom: '0.75rem', paddingTop: '0.25rem' }}>
+              <button 
+                type="button"
+                onClick={() => setViewDetailsGuest(null)}
+                style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid #E2E8F0', color: '#0F172A', padding: '0.45rem 0.95rem', borderRadius: 100, fontSize: '0.85rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, boxShadow: '0 2px 6px rgba(0,0,0,0.05)' }}
+              >
+                ← Back to Scanner
+              </button>
+            </div>
+
+            {/* Main Details Card */}
+            <div 
+              style={{
+                ...modalCardStyle,
+                maxWidth: 440,
+                width: '100%',
+                background: '#FFFFFF',
+                borderRadius: 24,
+                boxShadow: '0 15px 40px rgba(15, 23, 42, 0.08)',
+                border: '1.5px solid #E2E8F0',
+                padding: '1.25rem 1.25rem 1.5rem',
+                overflow: 'hidden'
+              }}
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Event Name Header Banner */}
+              <div 
+                style={{
+                  background: 'linear-gradient(135deg, #1E40AF 0%, #2563EB 100%)',
+                  borderRadius: 16,
+                  padding: '1rem 1.15rem',
+                  color: '#FFFFFF',
+                  marginBottom: '1rem',
+                  boxShadow: '0 4px 14px rgba(37, 99, 235, 0.2)'
+                }}
+              >
+                <div style={{ fontSize: '0.725rem', fontWeight: 700, textTransform: 'uppercase', color: '#93C5FD', letterSpacing: '0.04em', marginBottom: 2 }}>
+                  EVENT INFORMATION
+                </div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '0 0 0.35rem', color: '#FFFFFF', wordBreak: 'break-word' }}>
+                  {matchedEvt?.name || 'Exclusive Event'}
+                </h3>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', fontSize: '0.78rem', color: '#DBEAFE' }}>
+                  {matchedEvt?.date && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                      <Calendar size={13} color="#93C5FD" /> {matchedEvt.date}
+                    </span>
+                  )}
+                  {matchedEvt?.venue && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                      <MapPin size={13} color="#93C5FD" /> {matchedEvt.venue}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Attendee Profile Section */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', marginBottom: '1rem', paddingBottom: '0.85rem', borderBottom: '1px solid #F1F5F9' }}>
+                <div style={{ flexShrink: 0 }}>
+                  {guestPhoto ? (
+                    <img 
+                      src={guestPhoto} 
+                      alt={guest.name} 
+                      style={{
+                        width: 68,
+                        height: 80,
+                        borderRadius: 14,
+                        objectFit: 'cover',
+                        border: '2px solid #2563EB',
+                        boxShadow: '0 4px 12px rgba(37, 99, 235, 0.15)',
+                        background: '#F8FAFC'
+                      }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: 68,
+                        height: 80,
+                        borderRadius: 14,
+                        background: 'linear-gradient(135deg, #1E40AF 0%, #2563EB 100%)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#FFFFFF',
+                        fontWeight: 800,
+                        fontSize: '1.3rem'
+                      }}
+                    >
+                      {guest.name ? guest.name.slice(0, 2).toUpperCase() : 'G'}
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#DCFCE7', color: '#15803D', border: '1px solid #BBF7D0', padding: '0.15rem 0.5rem', borderRadius: 6, fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: 4 }}>
+                    <CheckCircle2 size={12} color="#15803D" /> CHECKED IN
+                  </div>
+                  <h4 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0F172A', margin: '0 0 2px', wordBreak: 'break-word' }}>
+                    {guest.name}
+                  </h4>
+                  <div style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 600 }}>
+                    Token: <span style={{ color: '#2563EB', fontFamily: 'var(--font-mono)', fontWeight: 700 }}>{viewDetailsGuest.tokenCode || guest.token || 'N/A'}</span>
+                  </div>
+                  {viewDetailsGuest.time && (
+                    <div style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 600, marginTop: 2 }}>
+                      Time: {viewDetailsGuest.time}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Form Details Section */}
+              <div style={{ marginBottom: '1.25rem' }}>
+                <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0F172A', marginBottom: '0.55rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <Sparkles size={15} color="#2563EB" /> Submitted Registration Details
+                </div>
+
+                <div style={{ background: '#F8FAFC', borderRadius: 16, border: '1px solid #E2E8F0', padding: '0.75rem 0.9rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.825rem', maxHeight: '170px', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                  {detailsList.map((item, idx) => (
+                    <div 
+                      key={idx} 
+                      style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'flex-start', 
+                        gap: '0.75rem',
+                        borderBottom: idx < detailsList.length - 1 ? '1px dashed #E2E8F0' : 'none',
+                        paddingBottom: idx < detailsList.length - 1 ? '0.4rem' : 0
+                      }}
+                    >
+                      <span style={{ color: '#64748B', fontWeight: 700, flexShrink: 0 }}>{item.label}:</span>
+                      <span style={{ color: '#0F172A', fontWeight: 700, textAlign: 'right', wordBreak: 'break-word' }}>{item.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Done Button */}
+              <button 
+                type="button"
+                onClick={() => setViewDetailsGuest(null)}
+                style={{
+                  width: '100%',
+                  padding: '0.9rem 1.5rem',
+                  background: '#2563EB',
+                  color: '#FFFFFF',
+                  fontSize: '1rem',
+                  fontWeight: 800,
+                  borderRadius: 100,
+                  border: 'none',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)',
+                  transition: 'all 0.2s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  letterSpacing: '0.01em'
+                }}
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        );
+      })()}
 
     </div>
   );
