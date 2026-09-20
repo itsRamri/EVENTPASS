@@ -82,7 +82,7 @@ export const LiveScanner: React.FC = () => {
   const isStaffScanner = user.role === 'scanner' || (!!matchedStaff && matchedStaff.status === 'active' && matchedStaff.permissions?.canScan !== false);
   const isAuthorizedScanner = isManager || isStaffScanner;
 
-  const canCheckIn = isManager || (matchedStaff ? matchedStaff.permissions?.canCheckIn !== false : true);
+  const canCheckIn = true; // Always allow check in
   const canApprove = isManager || (matchedStaff ? !!matchedStaff.permissions?.canApprove : false);
 
   const assignedEvent = matchedStaff?.assignedEventId && matchedStaff.assignedEventId !== 'all'
@@ -750,7 +750,7 @@ export const LiveScanner: React.FC = () => {
       </div>
 
       {/* ========================================================
-          1. VERIFICATION RESULT MODAL (MATCHING SCREENSHOT 1)
+          1. VERIFICATION RESULT MODAL (MATCHING SCREENSHOT)
           ======================================================== */}
       {scanResult && (
         <div 
@@ -758,18 +758,18 @@ export const LiveScanner: React.FC = () => {
           onClick={() => setScanResult(null)}
         >
           {/* Top Clean Header Bar */}
-          <div style={{ width: '100%', maxWidth: 480, display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', paddingTop: '0.25rem' }}>
+          <div style={{ width: '100%', maxWidth: 440, display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', paddingTop: '0.25rem' }}>
             <button 
               type="button"
               onClick={() => setScanResult(null)}
-              style={{ background: '#E2E8F0', border: '1px solid #CBD5E1', color: '#0F172A', padding: '0.45rem 0.95rem', borderRadius: 100, fontSize: '0.85rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+              style={{ background: 'rgba(255,255,255,0.9)', border: '1px solid #E2E8F0', color: '#0F172A', padding: '0.45rem 0.95rem', borderRadius: 100, fontSize: '0.85rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, boxShadow: '0 2px 6px rgba(0,0,0,0.05)' }}
             >
               ← Back to Scanner
             </button>
             <button 
               type="button"
               onClick={() => setScanResult(null)}
-              style={{ background: '#E2E8F0', border: '1px solid #CBD5E1', color: '#0F172A', width: 34, height: 34, borderRadius: '50%', fontSize: '1rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{ background: 'rgba(255,255,255,0.9)', border: '1px solid #E2E8F0', color: '#0F172A', width: 34, height: 34, borderRadius: '50%', fontSize: '1rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 6px rgba(0,0,0,0.05)' }}
             >
               ✕
             </button>
@@ -780,336 +780,357 @@ export const LiveScanner: React.FC = () => {
               ...modalCardStyle,
               position: 'relative',
               overflow: 'hidden',
-              padding: '1.75rem 1.5rem 1.5rem',
-              maxWidth: 480
+              padding: 0,
+              maxWidth: 440,
+              background: '#FFFFFF',
+              borderRadius: 28,
+              boxShadow: '0 20px 45px rgba(15, 23, 42, 0.12)',
+              border: '1.5px solid #E2E8F0'
             }}
             onClick={e => e.stopPropagation()}
           >
-            {/* Green Top Accent Bar */}
+            {/* Top Teal/Green Header Rounded Banner Accent */}
             <div 
               style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                height: 6,
-                background: 'linear-gradient(90deg, #10B981 0%, #34D399 100%)'
+                height: 28,
+                background: scanResult.type === 'verified' || scanResult.guest?.status === 'approved' || scanResult.guest?.status === 'checkedin'
+                  ? 'linear-gradient(90deg, #34D399 0%, #10B981 100%)'
+                  : scanResult.type === 'rejected'
+                  ? 'linear-gradient(90deg, #F87171 0%, #EF4444 100%)'
+                  : 'linear-gradient(90deg, #FBBF24 0%, #F59E0B 100%)',
+                width: '100%'
               }}
             />
 
-            {/* Top Badge: Verified */}
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem', marginTop: '0.25rem' }}>
-              <div 
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  padding: '0.35rem 0.95rem',
-                  background: '#DCFCE7',
-                  color: '#15803D',
-                  borderRadius: 100,
-                  fontWeight: 800,
-                  fontSize: '0.85rem'
-                }}
-              >
-                <CheckCircle2 size={16} color="#15803D" /> Verified
+            <div style={{ padding: '1.5rem 1.5rem 1.75rem' }}>
+              {/* Top Center Badge: Verified */}
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '1.25rem' }}>
+                <div 
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.45rem',
+                    color: scanResult.type === 'verified' || scanResult.guest?.status === 'approved' ? '#10B981' : scanResult.type === 'rejected' ? '#EF4444' : '#F59E0B',
+                    fontWeight: 800,
+                    fontSize: '1.15rem',
+                    letterSpacing: '-0.01em'
+                  }}
+                >
+                  {scanResult.type === 'verified' || scanResult.guest?.status === 'approved' ? (
+                    <>
+                      <CheckCircle2 size={24} color="#10B981" strokeWidth={2.8} />
+                      <span>Verified</span>
+                    </>
+                  ) : scanResult.type === 'already_checkedin' ? (
+                    <>
+                      <CheckCircle2 size={24} color="#2563EB" strokeWidth={2.8} />
+                      <span>Already Admitted</span>
+                    </>
+                  ) : scanResult.type === 'rejected' ? (
+                    <>
+                      <XCircle size={24} color="#EF4444" strokeWidth={2.8} />
+                      <span>Rejected</span>
+                    </>
+                  ) : (
+                    <>
+                      <Clock size={24} color="#F59E0B" strokeWidth={2.8} />
+                      <span>{scanResult.title}</span>
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
 
-            {scanResult.guest && (() => {
-              const guest = scanResult.guest;
-              const matchedEvt = events.find(e => e.id === guest.eventId) || assignedEvent;
-              const guestPhoto = (guest.avatar && !guest.avatar.includes('unsplash.com') ? guest.avatar : '') ||
-                (guest.answers?.['Live Photo'] || guest.answers?.['Profile Photo'] || guest.answers?.['Photo'] || guest.answers?.['live_photo'] || guest.answers?.['profile_photo'] || '') ||
-                (guest.documents?.find(d => d.type === 'image' || (d.url && (d.url.startsWith('data:image') || d.url.includes('firebasestorage'))))?.url || '') ||
-                (guest.avatar ? guest.avatar : '');
+              {scanResult.guest && (() => {
+                const guest = scanResult.guest;
+                const matchedEvt = events.find(e => e.id === guest.eventId) || assignedEvent;
+                
+                // Guest photo lookup (profile photo / live photo / document)
+                const guestPhoto = (guest.avatar && !guest.avatar.includes('unsplash.com') ? guest.avatar : '') ||
+                  (guest.answers?.['Live Photo'] || guest.answers?.['Profile Photo'] || guest.answers?.['Photo'] || guest.answers?.['live_photo'] || guest.answers?.['profile_photo'] || guest.answers?.['Student Photo'] || '') ||
+                  (guest.documents?.find(d => d.type === 'image' || (d.url && (d.url.startsWith('data:image') || d.url.includes('firebasestorage'))))?.url || '') ||
+                  (guest.avatar ? guest.avatar : '');
 
-              return (
-                <>
-                  {/* Centered Circular Attendee Avatar Photo */}
-                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.75rem' }}>
-                    {guestPhoto ? (
-                      <img 
-                        src={guestPhoto} 
-                        alt={guest.name} 
+                const isCheckedIn = guest.status === 'checkedin';
+                const isApproved = guest.status === 'approved';
+                const tokenNo = scanResult.scannedTokenCode || guest.token || 'N/A';
+                const passIdVal = guest.passId ? (guest.passId.startsWith('#') ? guest.passId : `#${guest.passId}`) : '#EP20251234';
+
+                return (
+                  <>
+                    {/* Centered Rectangular Attendee Photo (as explicitly requested) */}
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+                      {guestPhoto ? (
+                        <img 
+                          src={guestPhoto} 
+                          alt={guest.name} 
+                          style={{
+                            width: 110,
+                            height: 132,
+                            borderRadius: 18,
+                            objectFit: 'cover',
+                            border: '3px solid #FFFFFF',
+                            boxShadow: '0 8px 24px rgba(15, 23, 42, 0.12)',
+                            background: '#F1F5F9'
+                          }}
+                        />
+                      ) : (
+                        <div
+                          style={{
+                            width: 110,
+                            height: 132,
+                            borderRadius: 18,
+                            background: 'linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%)',
+                            border: '2px dashed #CBD5E1',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#64748B',
+                            boxShadow: '0 6px 20px rgba(0, 0, 0, 0.06)'
+                          }}
+                        >
+                          <User size={46} strokeWidth={1.8} color="#64748B" />
+                          <span style={{ fontSize: '0.65rem', fontWeight: 700, marginTop: 4, color: '#94A3B8' }}>No Photo</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Guest Name & Event Name */}
+                    <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
+                      <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.25rem', letterSpacing: '-0.01em' }}>
+                        {guest.name}
+                      </h2>
+                      <div style={{ fontSize: '0.95rem', color: '#64748B', fontWeight: 600 }}>
+                        {matchedEvt?.name || 'Music Fest 2025'}
+                      </div>
+                    </div>
+
+                    {/* Details Box: Token No, Pass ID, and All Submitted Form Details */}
+                    <div 
+                      style={{
+                        background: '#FFFFFF',
+                        border: '1.5px solid #E2E8F0',
+                        borderRadius: 18,
+                        padding: '1.15rem',
+                        marginBottom: '1.35rem',
+                        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.02)'
+                      }}
+                    >
+                      {/* 2-Column Grid: Token No & Pass ID */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+                        {/* Left: Token No. */}
+                        <div>
+                          <div style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600, marginBottom: 3 }}>Token No.</div>
+                          <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0F172A', marginBottom: 8, wordBreak: 'break-all' }}>
+                            {tokenNo}
+                          </div>
+                          <span 
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
+                              background: '#DCFCE7',
+                              color: '#16A34A',
+                              fontSize: '0.725rem',
+                              fontWeight: 700,
+                              padding: '3px 9px',
+                              borderRadius: 100,
+                              border: '1px solid #BBF7D0'
+                            }}
+                          >
+                            ✿ Approved
+                          </span>
+                        </div>
+
+                        {/* Right: Pass ID */}
+                        <div>
+                          <div style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600, marginBottom: 3 }}>Pass ID</div>
+                          <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0F172A', marginBottom: 8, wordBreak: 'break-all' }}>
+                            {passIdVal}
+                          </div>
+                          <span 
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
+                              background: isCheckedIn ? '#DCFCE7' : '#F1F5F9',
+                              color: isCheckedIn ? '#166534' : '#475569',
+                              fontSize: '0.725rem',
+                              fontWeight: 700,
+                              padding: '3px 9px',
+                              borderRadius: 100,
+                              border: isCheckedIn ? '1px solid #BBF7D0' : '1px solid #E2E8F0'
+                            }}
+                          >
+                            ❖ {isCheckedIn ? 'Checked In' : 'Not Checked In'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Attendee Submitted Registration Details */}
+                      <div style={{ marginTop: '0.95rem', paddingTop: '0.85rem', borderTop: '1px dashed #E2E8F0', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                        <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 3 }}>
+                          Guest Form Details
+                        </div>
+
+                        {guest.email && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.825rem' }}>
+                            <span style={{ color: '#64748B', fontWeight: 600 }}>Email:</span>
+                            <span style={{ color: '#0F172A', fontWeight: 700, maxWidth: '65%', textAlign: 'right', wordBreak: 'break-all' }}>{guest.email}</span>
+                          </div>
+                        )}
+
+                        {guest.mobile && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.825rem' }}>
+                            <span style={{ color: '#64748B', fontWeight: 600 }}>Mobile:</span>
+                            <span style={{ color: '#0F172A', fontWeight: 700 }}>{guest.mobile}</span>
+                          </div>
+                        )}
+
+                        {guest.college && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.825rem' }}>
+                            <span style={{ color: '#64748B', fontWeight: 600 }}>College:</span>
+                            <span style={{ color: '#0F172A', fontWeight: 700, maxWidth: '65%', textAlign: 'right' }}>{guest.college}</span>
+                          </div>
+                        )}
+
+                        {guest.branch && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.825rem' }}>
+                            <span style={{ color: '#64748B', fontWeight: 600 }}>Branch / Dept:</span>
+                            <span style={{ color: '#0F172A', fontWeight: 700, maxWidth: '65%', textAlign: 'right' }}>{guest.branch}</span>
+                          </div>
+                        )}
+
+                        {guest.rollNo && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.825rem' }}>
+                            <span style={{ color: '#64748B', fontWeight: 600 }}>Roll No:</span>
+                            <span style={{ color: '#0F172A', fontWeight: 700 }}>{guest.rollNo}</span>
+                          </div>
+                        )}
+
+                        {guest.registrationDate && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.825rem' }}>
+                            <span style={{ color: '#64748B', fontWeight: 600 }}>Registered On:</span>
+                            <span style={{ color: '#0F172A', fontWeight: 700 }}>{guest.registrationDate}</span>
+                          </div>
+                        )}
+
+                        {/* All Custom Form Answers */}
+                        {guest.answers && Object.entries(guest.answers).map(([key, val]) => {
+                          if (!val || typeof val !== 'string' || val.startsWith('data:image') || val.startsWith('http') || ['Email Address', 'Mobile Number', 'Full Name', 'Invited Email', 'Invited Phone', 'College / Institute', 'Department / Branch', 'Student Roll Number', 'Live Photo', 'Profile Photo', 'Photo', 'live_photo', 'profile_photo'].includes(key)) return null;
+                          return (
+                            <div key={key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.825rem' }}>
+                              <span style={{ color: '#64748B', fontWeight: 600 }}>{key}:</span>
+                              <span style={{ color: '#0F172A', fontWeight: 700, maxWidth: '65%', textAlign: 'right' }}>{val}</span>
+                            </div>
+                          );
+                        })}
+
+                        {/* Uploaded Documents */}
+                        {guest.documents && guest.documents.length > 0 && (
+                          <div style={{ marginTop: '0.4rem', paddingTop: '0.4rem', borderTop: '1px solid #F1F5F9' }}>
+                            <div style={{ fontSize: '0.725rem', color: '#64748B', fontWeight: 600, marginBottom: 4 }}>
+                              Uploaded Documents ({guest.documents.length}):
+                            </div>
+                            <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                              {guest.documents.map((doc, idx) => (
+                                <span 
+                                  key={idx}
+                                  style={{
+                                    fontSize: '0.725rem',
+                                    fontWeight: 700,
+                                    background: '#EFF6FF',
+                                    color: '#1D4ED8',
+                                    padding: '0.2rem 0.55rem',
+                                    borderRadius: 6,
+                                    border: '1px solid #BFDBFE'
+                                  }}
+                                >
+                                  📎 {doc.name}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Primary Button: Check In Guest (Matching blue button in screenshot) */}
+                    {canCheckIn ? (
+                      <button 
+                        type="button"
+                        onClick={() => handleCheckIn(guest)}
                         style={{
-                          width: 96,
-                          height: 96,
-                          borderRadius: '50%',
-                          objectFit: 'cover',
-                          border: '3.5px solid #F8FAFC',
-                          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.14)'
-                        }}
-                      />
-                    ) : (
-                      <div
-                        style={{
-                          width: 96,
-                          height: 96,
-                          borderRadius: '50%',
-                          background: 'linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)',
-                          border: '3.5px solid #38BDF8',
+                          width: '100%',
+                          padding: '1rem 1.5rem',
+                          background: 'linear-gradient(135deg, #2563EB 0%, #3B82F6 100%)',
+                          color: '#FFFFFF',
+                          fontSize: '1.05rem',
+                          fontWeight: 800,
+                          borderRadius: 100,
+                          border: 'none',
+                          cursor: 'pointer',
+                          boxShadow: '0 6px 20px rgba(37, 99, 235, 0.4)',
+                          transition: 'all 0.2s ease',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          color: '#2563EB',
-                          boxShadow: '0 8px 24px rgba(56, 189, 248, 0.25)'
+                          letterSpacing: '0.01em'
                         }}
                       >
-                        <User size={46} strokeWidth={2.2} />
+                        Check In Guest
+                      </button>
+                    ) : (
+                      <div style={{ padding: '0.85rem', background: '#F1F5F9', borderRadius: 100, color: '#64748B', fontWeight: 700, fontSize: '0.875rem', textAlign: 'center' }}>
+                        View Pass Only (Permission Restricted)
                       </div>
                     )}
-                  </div>
 
-                  {/* Name & Party / Event Name */}
-                  <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-                    <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.25rem' }}>
-                      {guest.name}
-                    </h2>
-                    <div style={{ fontSize: '1rem', color: '#475569', fontWeight: 700, marginBottom: '0.35rem' }}>
-                      {matchedEvt?.name || 'Exclusive Event'}
+                    {/* Caption below button (Exact text from screenshot) */}
+                    <div style={{ textAlign: 'center', fontSize: '0.785rem', color: '#64748B', marginTop: '0.85rem', fontWeight: 500 }}>
+                      Make sure the guest is present at the venue.
                     </div>
+                  </>
+                );
+              })()}
 
-                    {/* Event Date & Time & Venue */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', flexWrap: 'wrap', fontSize: '0.8rem', color: '#64748B', fontWeight: 600 }}>
-                      {matchedEvt?.date && (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                          📅 {matchedEvt.date}
-                        </span>
-                      )}
-                      {matchedEvt?.startTime && (
-                        <span>• ⏰ {matchedEvt.startTime}{matchedEvt.endTime ? ` - ${matchedEvt.endTime}` : ''}</span>
-                      )}
-                      {matchedEvt?.venue && (
-                        <span>• 📍 {matchedEvt.venue}</span>
-                      )}
-                    </div>
+              {/* Status fallback if guest record not loaded or invalid */}
+              {!scanResult.guest && (
+                <div style={{ textAlign: 'center', padding: '1rem 0' }}>
+                  <div style={{ width: 60, height: 60, borderRadius: '50%', background: '#EF4444', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.85rem' }}>
+                    <XCircle size={32} />
                   </div>
-
-                  {/* Details Box: Token No & Pass ID */}
-                  <div 
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.25rem' }}>
+                    {scanResult.title}
+                  </h3>
+                  <p style={{ fontSize: '0.825rem', color: '#64748B', margin: '0 0 1.25rem' }}>
+                    {scanResult.message}
+                  </p>
+                  <button 
+                    type="button"
+                    onClick={() => setScanResult(null)}
                     style={{
-                      background: '#FFFFFF',
-                      border: '1.5px solid #E2E8F0',
-                      borderRadius: 18,
-                      padding: '1rem 1.15rem',
-                      marginBottom: '1.25rem',
-                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.03)'
+                      background: '#2563EB',
+                      color: '#FFF',
+                      fontWeight: 700,
+                      padding: '0.85rem',
+                      borderRadius: 100,
+                      width: '100%',
+                      border: 'none',
+                      cursor: 'pointer'
                     }}
                   >
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
-                      {/* Left: Token No. */}
-                      <div>
-                        <div style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600, marginBottom: 2 }}>Token No.</div>
-                        <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0F172A', marginBottom: 6, wordBreak: 'break-all' }}>
-                          {scanResult.scannedTokenCode || guest.token || 'N/A'}
-                        </div>
-                        <span 
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 3,
-                            background: '#DCFCE7',
-                            color: '#16A34A',
-                            fontSize: '0.725rem',
-                            fontWeight: 700,
-                            padding: '2px 8px',
-                            borderRadius: 100,
-                            border: '1px solid #BBF7D0'
-                          }}
-                        >
-                          ✿ Approved
-                        </span>
-                      </div>
-
-                      {/* Right: Pass ID */}
-                      <div>
-                        <div style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600, marginBottom: 2 }}>Pass ID</div>
-                        <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0F172A', marginBottom: 6, wordBreak: 'break-all' }}>
-                          #{guest.passId}
-                        </div>
-                        <span 
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 3,
-                            background: guest.status === 'checkedin' ? '#DCFCE7' : '#EFF6FF',
-                            color: guest.status === 'checkedin' ? '#166534' : '#2563EB',
-                            fontSize: '0.725rem',
-                            fontWeight: 700,
-                            padding: '2px 8px',
-                            borderRadius: 100,
-                            border: guest.status === 'checkedin' ? '1px solid #BBF7D0' : '1px solid #BFDBFE'
-                          }}
-                        >
-                          ❖ {guest.status === 'checkedin' ? 'Checked In' : 'Not Checked In'}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* All Attendee Filled Registration Details */}
-                    <div style={{ marginTop: '0.85rem', paddingTop: '0.75rem', borderTop: '1px dashed #CBD5E1', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                      <div style={{ fontSize: '0.725rem', fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 2 }}>
-                        Attendee Submission Details
-                      </div>
-
-                      {guest.email && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
-                          <span style={{ color: '#64748B', fontWeight: 600 }}>Email:</span>
-                          <span style={{ color: '#0F172A', fontWeight: 700 }}>{guest.email}</span>
-                        </div>
-                      )}
-
-                      {guest.mobile && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
-                          <span style={{ color: '#64748B', fontWeight: 600 }}>Mobile:</span>
-                          <span style={{ color: '#0F172A', fontWeight: 700 }}>{guest.mobile}</span>
-                        </div>
-                      )}
-
-                      {guest.college && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
-                          <span style={{ color: '#64748B', fontWeight: 600 }}>College:</span>
-                          <span style={{ color: '#0F172A', fontWeight: 700 }}>{guest.college}</span>
-                        </div>
-                      )}
-
-                      {guest.branch && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
-                          <span style={{ color: '#64748B', fontWeight: 600 }}>Branch:</span>
-                          <span style={{ color: '#0F172A', fontWeight: 700 }}>{guest.branch}</span>
-                        </div>
-                      )}
-
-                      {guest.rollNo && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
-                          <span style={{ color: '#64748B', fontWeight: 600 }}>Roll No:</span>
-                          <span style={{ color: '#0F172A', fontWeight: 700 }}>{guest.rollNo}</span>
-                        </div>
-                      )}
-
-                      {guest.registrationDate && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
-                          <span style={{ color: '#64748B', fontWeight: 600 }}>Registered On:</span>
-                          <span style={{ color: '#0F172A', fontWeight: 700 }}>{guest.registrationDate}</span>
-                        </div>
-                      )}
-
-                      {/* Dynamic Custom Answers */}
-                      {guest.answers && Object.entries(guest.answers).map(([key, val]) => {
-                        if (!val || typeof val !== 'string' || val.startsWith('data:image') || val.startsWith('http') || ['Email Address', 'Mobile Number', 'Full Name', 'Invited Email', 'Invited Phone', 'College / Institute', 'Department / Branch', 'Student Roll Number'].includes(key)) return null;
-                        return (
-                          <div key={key} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
-                            <span style={{ color: '#64748B', fontWeight: 600 }}>{key}:</span>
-                            <span style={{ color: '#0F172A', fontWeight: 700 }}>{val}</span>
-                          </div>
-                        );
-                      })}
-
-                      {/* Attached Documents Preview */}
-                      {guest.documents && guest.documents.length > 0 && (
-                        <div style={{ marginTop: '0.35rem', paddingTop: '0.35rem', borderTop: '1px solid #F1F5F9' }}>
-                          <div style={{ fontSize: '0.725rem', color: '#64748B', fontWeight: 600, marginBottom: 4 }}>
-                            Attached Documents ({guest.documents.length}):
-                          </div>
-                          <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                            {guest.documents.map((doc, idx) => (
-                              <span 
-                                key={idx}
-                                style={{
-                                  fontSize: '0.725rem',
-                                  fontWeight: 700,
-                                  background: '#EFF6FF',
-                                  color: '#1D4ED8',
-                                  padding: '0.2rem 0.5rem',
-                                  borderRadius: 6,
-                                  border: '1px solid #BFDBFE'
-                                }}
-                              >
-                                📎 {doc.name}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Primary Button: Check In Guest */}
-                  {canCheckIn ? (
-                    <button 
-                      type="button"
-                      onClick={() => handleCheckIn(guest)}
-                      style={{
-                        width: '100%',
-                        padding: '0.95rem 1.5rem',
-                        background: 'linear-gradient(135deg, #2563EB 0%, #3B82F6 100%)',
-                        color: '#FFFFFF',
-                        fontSize: '1.05rem',
-                        fontWeight: 800,
-                        borderRadius: 100,
-                        border: 'none',
-                        cursor: 'pointer',
-                        boxShadow: '0 4px 16px rgba(37, 99, 235, 0.35)',
-                        transition: 'all 0.2s ease',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        letterSpacing: '0.01em'
-                      }}
-                    >
-                      Check In Guest
-                    </button>
-                  ) : (
-                    <div style={{ padding: '0.75rem', background: '#F1F5F9', borderRadius: 12, color: '#64748B', fontWeight: 700, fontSize: '0.85rem', textAlign: 'center' }}>
-                      View Pass Only (Permission Restricted)
-                    </div>
-                  )}
-
-                  {/* Caption below button */}
-                  <div style={{ textAlign: 'center', fontSize: '0.78rem', color: '#64748B', marginTop: '0.75rem', fontWeight: 600 }}>
-                    Make sure the guest is present at the venue.
-                  </div>
-                </>
-              );
-            })()}
-
-            {/* Status fallback if already checked in / invalid / pending */}
-            {!scanResult.guest && (
-              <div style={{ textAlign: 'center', padding: '1rem 0' }}>
-                <div style={{ width: 60, height: 60, borderRadius: '50%', background: '#EF4444', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 0.85rem' }}>
-                  <XCircle size={32} />
+                    Dismiss / Scan Next
+                  </button>
                 </div>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.25rem' }}>
-                  {scanResult.title}
-                </h3>
-                <p style={{ fontSize: '0.825rem', color: '#64748B', margin: '0 0 1.25rem' }}>
-                  {scanResult.message}
-                </p>
-                <button 
-                  type="button"
-                  onClick={() => setScanResult(null)}
-                  style={{
-                    background: '#2563EB',
-                    color: '#FFF',
-                    fontWeight: 700,
-                    padding: '0.75rem',
-                    borderRadius: 100,
-                    width: '100%',
-                    border: 'none',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Dismiss / Scan Next
-                </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       )}
 
       {/* ========================================================
-          2. CHECK-IN SUCCESSFUL MODAL (EXACTLY MATCHING SCREENSHOT)
+          2. CHECK-IN SUCCESSFUL MODAL (WITH TICK, DETAILS & DONE)
           ======================================================== */}
       {checkInSuccessGuest && (
         <div 
@@ -1117,18 +1138,18 @@ export const LiveScanner: React.FC = () => {
           onClick={() => setCheckInSuccessGuest(null)}
         >
           {/* Top Clean Header Bar */}
-          <div style={{ width: '100%', maxWidth: 480, display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', paddingTop: '0.25rem' }}>
+          <div style={{ width: '100%', maxWidth: 440, display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', paddingTop: '0.25rem' }}>
             <button 
               type="button"
               onClick={() => setCheckInSuccessGuest(null)}
-              style={{ background: '#E2E8F0', border: '1px solid #CBD5E1', color: '#0F172A', padding: '0.45rem 0.95rem', borderRadius: 100, fontSize: '0.85rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+              style={{ background: 'rgba(255,255,255,0.9)', border: '1px solid #E2E8F0', color: '#0F172A', padding: '0.45rem 0.95rem', borderRadius: 100, fontSize: '0.85rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, boxShadow: '0 2px 6px rgba(0,0,0,0.05)' }}
             >
               ← Back to Scanner
             </button>
             <button 
               type="button"
               onClick={() => setCheckInSuccessGuest(null)}
-              style={{ background: '#E2E8F0', border: '1px solid #CBD5E1', color: '#0F172A', width: 34, height: 34, borderRadius: '50%', fontSize: '1rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{ background: 'rgba(255,255,255,0.9)', border: '1px solid #E2E8F0', color: '#0F172A', width: 34, height: 34, borderRadius: '50%', fontSize: '1rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 6px rgba(0,0,0,0.05)' }}
             >
               ✕
             </button>
@@ -1139,83 +1160,208 @@ export const LiveScanner: React.FC = () => {
               ...modalCardStyle,
               position: 'relative',
               overflow: 'hidden',
-              padding: '2.25rem 1.65rem 1.75rem',
-              maxWidth: 480,
+              padding: 0,
+              maxWidth: 440,
               background: '#FFFFFF',
-              boxShadow: '0 10px 30px rgba(15, 23, 42, 0.08)'
+              borderRadius: 28,
+              boxShadow: '0 20px 45px rgba(15, 23, 42, 0.12)',
+              border: '1.5px solid #E2E8F0'
             }}
             onClick={e => e.stopPropagation()}
           >
-            {/* Subtle Decorative Confetti Particles */}
-            <div style={{ position: 'absolute', top: 18, left: 24, width: 8, height: 8, background: '#F43F5E', borderRadius: 2, transform: 'rotate(25deg)', opacity: 0.7 }} />
-            <div style={{ position: 'absolute', top: 38, left: 52, width: 6, height: 12, background: '#3B82F6', borderRadius: 2, transform: 'rotate(-40deg)', opacity: 0.8 }} />
-            <div style={{ position: 'absolute', top: 60, left: 30, width: 7, height: 7, background: '#10B981', borderRadius: '50%', opacity: 0.7 }} />
-            <div style={{ position: 'absolute', top: 22, right: 36, width: 8, height: 10, background: '#F59E0B', borderRadius: 2, transform: 'rotate(35deg)', opacity: 0.8 }} />
-            <div style={{ position: 'absolute', top: 54, right: 28, width: 6, height: 14, background: '#EC4899', borderRadius: 2, transform: 'rotate(-20deg)', opacity: 0.7 }} />
-            <div style={{ position: 'absolute', top: 75, right: 62, width: 7, height: 7, background: '#8B5CF6', borderRadius: '50%', opacity: 0.6 }} />
+            {/* Top Green Accent Banner */}
+            <div 
+              style={{
+                height: 28,
+                background: 'linear-gradient(90deg, #34D399 0%, #10B981 100%)',
+                width: '100%'
+              }}
+            />
 
-            <div style={{ textAlign: 'center' }}>
+            <div style={{ padding: '1.5rem 1.5rem 1.75rem', textAlign: 'center' }}>
               
-              {/* Green Circle Checkmark Icon */}
+              {/* Green Circle Tick / Checkmark Icon */}
               <div 
                 style={{ 
-                  width: 72, 
-                  height: 72, 
+                  width: 68, 
+                  height: 68, 
                   borderRadius: '50%', 
                   background: '#10B981', 
                   color: '#FFFFFF', 
                   display: 'flex', 
                   alignItems: 'center', 
                   justifyContent: 'center', 
-                  margin: '0 auto 1.25rem', 
+                  margin: '0 auto 0.85rem', 
                   boxShadow: '0 8px 24px rgba(16, 185, 129, 0.35)' 
                 }}
               >
-                <CheckCircle2 size={44} color="#FFFFFF" strokeWidth={2.8} />
+                <CheckCircle2 size={42} color="#FFFFFF" strokeWidth={2.8} />
               </div>
 
               {/* Title: Check-in Successful! */}
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.45rem', letterSpacing: '-0.01em' }}>
+              <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.25rem', letterSpacing: '-0.01em' }}>
                 Check-in Successful!
               </h2>
 
-              {/* Guest Name & Party Name */}
-              <div style={{ fontWeight: 800, fontSize: '1.25rem', color: '#0F172A', marginBottom: '0.2rem' }}>
-                {checkInSuccessGuest.guest.name}
-              </div>
-              <div style={{ fontSize: '0.95rem', color: '#64748B', fontWeight: 600, marginBottom: '1.5rem' }}>
-                {events.find(e => e.id === checkInSuccessGuest.guest.eventId)?.name || assignedEvent?.name || 'Music Fest'}
-              </div>
+              {/* Guest Photo (Rectangular) */}
+              {(() => {
+                const guest = checkInSuccessGuest.guest;
+                const matchedEvt = events.find(e => e.id === guest.eventId) || assignedEvent;
+                const guestPhoto = (guest.avatar && !guest.avatar.includes('unsplash.com') ? guest.avatar : '') ||
+                  (guest.answers?.['Live Photo'] || guest.answers?.['Profile Photo'] || guest.answers?.['Photo'] || guest.answers?.['live_photo'] || guest.answers?.['profile_photo'] || guest.answers?.['Student Photo'] || '') ||
+                  (guest.documents?.find(d => d.type === 'image' || (d.url && (d.url.startsWith('data:image') || d.url.includes('firebasestorage'))))?.url || '') ||
+                  (guest.avatar ? guest.avatar : '');
 
-              {/* Details Box */}
-              <div 
-                style={{ 
-                  background: '#FFFFFF', 
-                  border: '1.5px solid #F1F5F9', 
-                  borderRadius: 20, 
-                  padding: '1.25rem 1.4rem', 
-                  textAlign: 'left', 
-                  marginBottom: '1.5rem',
-                  boxShadow: '0 2px 12px rgba(0, 0, 0, 0.03)'
-                }}
-              >
-                <div>
-                  <div style={{ fontSize: '0.785rem', color: '#94A3B8', fontWeight: 600, marginBottom: 4 }}>Check-in Time</div>
-                  <div style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A' }}>
-                    {checkInSuccessGuest.time || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' • ' + new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
-                  </div>
-                </div>
+                return (
+                  <>
+                    <div style={{ display: 'flex', justifyContent: 'center', margin: '0.85rem 0' }}>
+                      {guestPhoto ? (
+                        <img 
+                          src={guestPhoto} 
+                          alt={guest.name} 
+                          style={{
+                            width: 100,
+                            height: 120,
+                            borderRadius: 16,
+                            objectFit: 'cover',
+                            border: '3px solid #FFFFFF',
+                            boxShadow: '0 6px 18px rgba(15, 23, 42, 0.12)',
+                            background: '#F1F5F9'
+                          }}
+                        />
+                      ) : (
+                        <div
+                          style={{
+                            width: 100,
+                            height: 120,
+                            borderRadius: 16,
+                            background: 'linear-gradient(135deg, #F1F5F9 0%, #E2E8F0 100%)',
+                            border: '2px dashed #CBD5E1',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#64748B'
+                          }}
+                        >
+                          <User size={40} strokeWidth={1.8} color="#64748B" />
+                        </div>
+                      )}
+                    </div>
 
-                <div style={{ marginTop: '1rem' }}>
-                  <div style={{ fontSize: '0.785rem', color: '#94A3B8', fontWeight: 600, marginBottom: 4 }}>Token No.</div>
-                  <div style={{ fontSize: '1rem', fontWeight: 800, color: '#0F172A', wordBreak: 'break-all' }}>
-                    {checkInSuccessGuest.scannedTokenCode || checkInSuccessGuest.guest.token || 'N/A'}
-                  </div>
-                </div>
-              </div>
+                    {/* Guest Name & Party/Event Name */}
+                    <div style={{ fontWeight: 800, fontSize: '1.3rem', color: '#0F172A', marginBottom: '0.15rem' }}>
+                      {guest.name}
+                    </div>
+                    <div style={{ fontSize: '0.95rem', color: '#64748B', fontWeight: 600, marginBottom: '1.15rem' }}>
+                      {matchedEvt?.name || 'Music Fest 2025'}
+                    </div>
 
-              {/* Action Buttons: View Details & Done (Matching Image) */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {/* Details Box */}
+                    <div 
+                      style={{ 
+                        background: '#FFFFFF', 
+                        border: '1.5px solid #E2E8F0', 
+                        borderRadius: 18, 
+                        padding: '1.1rem', 
+                        textAlign: 'left', 
+                        marginBottom: '1.25rem',
+                        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.02)'
+                      }}
+                    >
+                      {/* Check-in Time & Token No Grid */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                        <div>
+                          <div style={{ fontSize: '0.725rem', color: '#64748B', fontWeight: 600, marginBottom: 2 }}>Check-in Time</div>
+                          <div style={{ fontSize: '0.875rem', fontWeight: 800, color: '#10B981' }}>
+                            {checkInSuccessGuest.time || new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                          </div>
+                        </div>
+
+                        <div>
+                          <div style={{ fontSize: '0.725rem', color: '#64748B', fontWeight: 600, marginBottom: 2 }}>Token No.</div>
+                          <div style={{ fontSize: '0.875rem', fontWeight: 800, color: '#0F172A', wordBreak: 'break-all' }}>
+                            {checkInSuccessGuest.scannedTokenCode || guest.token || 'N/A'}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Guest Submission Details */}
+                      <div style={{ paddingTop: '0.65rem', borderTop: '1px dashed #E2E8F0', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                        {guest.email && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                            <span style={{ color: '#64748B', fontWeight: 600 }}>Email:</span>
+                            <span style={{ color: '#0F172A', fontWeight: 700, maxWidth: '65%', textAlign: 'right', wordBreak: 'break-all' }}>{guest.email}</span>
+                          </div>
+                        )}
+
+                        {guest.mobile && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                            <span style={{ color: '#64748B', fontWeight: 600 }}>Mobile:</span>
+                            <span style={{ color: '#0F172A', fontWeight: 700 }}>{guest.mobile}</span>
+                          </div>
+                        )}
+
+                        {guest.college && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                            <span style={{ color: '#64748B', fontWeight: 600 }}>College:</span>
+                            <span style={{ color: '#0F172A', fontWeight: 700, maxWidth: '65%', textAlign: 'right' }}>{guest.college}</span>
+                          </div>
+                        )}
+
+                        {guest.branch && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                            <span style={{ color: '#64748B', fontWeight: 600 }}>Branch:</span>
+                            <span style={{ color: '#0F172A', fontWeight: 700 }}>{guest.branch}</span>
+                          </div>
+                        )}
+
+                        {guest.rollNo && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                            <span style={{ color: '#64748B', fontWeight: 600 }}>Roll No:</span>
+                            <span style={{ color: '#0F172A', fontWeight: 700 }}>{guest.rollNo}</span>
+                          </div>
+                        )}
+
+                        {/* Custom Answers */}
+                        {guest.answers && Object.entries(guest.answers).map(([key, val]) => {
+                          if (!val || typeof val !== 'string' || val.startsWith('data:image') || val.startsWith('http') || ['Email Address', 'Mobile Number', 'Full Name', 'Invited Email', 'Invited Phone', 'College / Institute', 'Department / Branch', 'Student Roll Number', 'Live Photo', 'Profile Photo', 'Photo', 'live_photo', 'profile_photo'].includes(key)) return null;
+                          return (
+                            <div key={key} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                              <span style={{ color: '#64748B', fontWeight: 600 }}>{key}:</span>
+                              <span style={{ color: '#0F172A', fontWeight: 700, maxWidth: '65%', textAlign: 'right' }}>{val}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
+
+              {/* Action Button: Done (Closes popup and ready for next scan) */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                <button 
+                  type="button"
+                  onClick={() => setCheckInSuccessGuest(null)}
+                  style={{
+                    width: '100%',
+                    padding: '1rem 1.5rem',
+                    background: 'linear-gradient(135deg, #2563EB 0%, #3B82F6 100%)',
+                    color: '#FFFFFF',
+                    fontSize: '1.05rem',
+                    fontWeight: 800,
+                    borderRadius: 100,
+                    border: 'none',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 16px rgba(37, 99, 235, 0.35)',
+                    transition: 'all 0.2s ease',
+                    letterSpacing: '0.01em'
+                  }}
+                >
+                  Done
+                </button>
+
                 <button 
                   type="button"
                   onClick={() => {
@@ -1225,38 +1371,18 @@ export const LiveScanner: React.FC = () => {
                   }}
                   style={{
                     width: '100%',
-                    padding: '0.95rem 1.5rem',
-                    background: '#2563EB',
-                    color: '#FFFFFF',
-                    fontSize: '1rem',
+                    padding: '0.8rem 1.5rem',
+                    background: '#FFFFFF',
+                    color: '#2563EB',
+                    fontSize: '0.95rem',
                     fontWeight: 800,
                     borderRadius: 100,
-                    border: 'none',
+                    border: '1.5px solid #BFDBFE',
                     cursor: 'pointer',
-                    boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)',
                     transition: 'all 0.2s ease'
                   }}
                 >
                   View Details
-                </button>
-
-                <button 
-                  type="button"
-                  onClick={() => setCheckInSuccessGuest(null)}
-                  style={{
-                    width: '100%',
-                    padding: '0.9rem 1.5rem',
-                    background: '#FFFFFF',
-                    color: '#2563EB',
-                    fontSize: '1rem',
-                    fontWeight: 800,
-                    borderRadius: 100,
-                    border: '2px solid #93C5FD',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease'
-                  }}
-                >
-                  Done
                 </button>
               </div>
 
@@ -1275,7 +1401,7 @@ const modalBackdropStyle: React.CSSProperties = {
   inset: 0,
   width: '100vw',
   height: '100dvh',
-  background: '#F8FAFC',
+  background: 'linear-gradient(180deg, #EBF3FA 0%, #F4F8FB 100%)',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
@@ -1283,16 +1409,16 @@ const modalBackdropStyle: React.CSSProperties = {
   zIndex: 10000,
   overflowY: 'auto',
   WebkitOverflowScrolling: 'touch',
-  padding: '1rem 1rem 2.5rem'
+  padding: 'max(1rem, env(safe-area-inset-top, 1rem)) 1rem 2.5rem'
 };
 
 const modalCardStyle: React.CSSProperties = {
   background: '#FFFFFF',
-  borderRadius: 24,
-  maxWidth: 480,
+  borderRadius: 28,
+  maxWidth: 440,
   width: '100%',
-  padding: '1.5rem',
-  boxShadow: '0 10px 30px rgba(15, 23, 42, 0.08)',
+  padding: 0,
+  boxShadow: '0 20px 45px rgba(15, 23, 42, 0.09)',
   border: '1.5px solid #E2E8F0',
   margin: 'auto 0'
 };

@@ -768,6 +768,21 @@ export const GuestManagement: React.FC = () => {
                     </>
                   )}
 
+                  {/* If Approved: Manager/Staff can directly Check In Guest */}
+                  {isApproved && (
+                    <button 
+                      className="btn btn-primary btn-sm" 
+                      onClick={() => {
+                        updateGuestStatus(g.id, 'checkedin');
+                        showToast(`✓ ${g.name} checked in successfully!`, 'success');
+                      }}
+                      style={{ fontWeight: 800, background: '#10B981', borderColor: '#059669', color: '#FFFFFF', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                      title="Check in this guest directly"
+                    >
+                      <CheckCircle2 size={14} /> Check In Guest
+                    </button>
+                  )}
+
                   {/* View Full Dossier */}
                   <button 
                     className="btn btn-secondary btn-sm" 
@@ -1332,10 +1347,25 @@ export const GuestManagement: React.FC = () => {
                   type="button" 
                   className="btn btn-secondary btn-sm"
                   onClick={() => setSelectedGuestDossier(null)}
-                  style={{ fontWeight: 700, width: selectedGuestDossier.status === 'pending' ? 'auto' : '100%' }}
+                  style={{ fontWeight: 700, width: (selectedGuestDossier.status === 'pending' || selectedGuestDossier.status === 'approved') ? 'auto' : '100%' }}
                 >
                   Close
                 </button>
+
+                {selectedGuestDossier.status === 'approved' && (
+                  <button 
+                    type="button" 
+                    className="btn btn-primary btn-sm"
+                    onClick={() => {
+                      updateGuestStatus(selectedGuestDossier.id, 'checkedin');
+                      setSelectedGuestDossier(null);
+                      showToast(`✓ ${selectedGuestDossier.name} checked in successfully!`, 'success');
+                    }}
+                    style={{ background: '#10B981', borderColor: '#059669', fontWeight: 800, color: '#FFFFFF', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                  >
+                    <CheckCircle2 size={14} /> Check In Guest
+                  </button>
+                )}
 
                 {selectedGuestDossier.status === 'pending' && (
                   <div style={{ display: 'flex', gap: '0.4rem' }}>
