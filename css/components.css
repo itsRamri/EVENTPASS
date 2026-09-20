@@ -914,6 +914,14 @@ input[type="tel"] {
   transform: translateY(0) scale(1);
 }
 
+.modal-content form {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .modal-header {
   padding: 1.15rem 1.4rem;
   border-bottom: 1px solid #E2E8F0;

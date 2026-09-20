@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useApp } from '../context/AppContext';
 import { StaffMember, StaffPermissions, NotificationItem } from '../types';
 import { syncNotificationToDb } from '../services/dbService';
@@ -517,10 +518,43 @@ export const StaffManagement: React.FC = () => {
       )}
 
       {/* Add Staff / Direct Scanner Access Modal */}
-      {isAddStaffModalOpen && (
-        <div className="modal-overlay active" onClick={() => setIsAddStaffModalOpen(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 'min(500px, calc(100vw - 1.5rem))', width: '100%', boxSizing: 'border-box' }}>
-            <div className="modal-header">
+      {isAddStaffModalOpen && createPortal(
+        <div 
+          className="modal-overlay active" 
+          onClick={() => setIsAddStaffModalOpen(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999999,
+            background: 'rgba(15, 23, 42, 0.72)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 'max(16px, env(safe-area-inset-top, 16px)) 12px max(24px, env(safe-area-inset-bottom, 24px)) 12px',
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch'
+          }}
+        >
+          <div 
+            className="modal-content" 
+            onClick={e => e.stopPropagation()} 
+            style={{ 
+              maxWidth: 480, 
+              width: '100%', 
+              maxHeight: 'min(90dvh, calc(var(--visual-viewport-height, 90dvh) - env(safe-area-inset-top, 16px) - 16px))',
+              display: 'flex',
+              flexDirection: 'column',
+              background: '#FFFFFF',
+              boxShadow: '0 25px 50px rgba(0, 0, 0, 0.3)',
+              borderRadius: 'var(--radius-xl)',
+              overflow: 'hidden',
+              boxSizing: 'border-box',
+              margin: 'auto'
+            }}
+          >
+            <div className="modal-header" style={{ borderBottom: '1px solid #E2E8F0', padding: '1rem 1.25rem', flexShrink: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                 <div style={{ width: 38, height: 38, borderRadius: 'var(--radius-sm)', background: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563EB', border: '1px solid #BFDBFE', flexShrink: 0 }}>
                   <ShieldCheck size={22} />
@@ -532,8 +566,26 @@ export const StaffManagement: React.FC = () => {
               <button type="button" className="icon-btn" onClick={() => setIsAddStaffModalOpen(false)}>✕</button>
             </div>
 
-            <form onSubmit={handleGrantAccess}>
-              <div className="modal-body">
+            <form 
+              onSubmit={handleGrantAccess}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                flex: '1 1 auto',
+                minHeight: 0,
+                overflow: 'hidden'
+              }}
+            >
+              <div 
+                className="modal-body"
+                style={{
+                  padding: '1.15rem 1.25rem 1.5rem',
+                  overflowY: 'auto',
+                  flex: '1 1 auto',
+                  minHeight: 0,
+                  WebkitOverflowScrolling: 'touch'
+                }}
+              >
                 {/* Channel Selector Tabs */}
                 <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.15rem' }}>
                   <button
@@ -678,7 +730,19 @@ export const StaffManagement: React.FC = () => {
                 </div>
               </div>
 
-              <div className="modal-footer flex-between">
+              <div 
+                className="modal-footer flex-between"
+                style={{
+                  borderTop: '1px solid #E2E8F0',
+                  padding: '0.85rem 1.25rem',
+                  background: '#FFFFFF',
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '0.75rem'
+                }}
+              >
                 <button type="button" className="btn btn-secondary btn-sm" onClick={() => setIsAddStaffModalOpen(false)} style={{ fontWeight: 700 }}>
                   Cancel
                 </button>
@@ -688,7 +752,8 @@ export const StaffManagement: React.FC = () => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

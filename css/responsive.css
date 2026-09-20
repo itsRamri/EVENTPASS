@@ -274,6 +274,14 @@
     transform: none !important;
   }
 
+  .modal-content form {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
   .modal-header {
     padding: 0.95rem 1.15rem !important;
     flex-shrink: 0 !important;
