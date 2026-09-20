@@ -175,14 +175,36 @@ export const LiveScanner: React.FC = () => {
       return;
     }
 
-    // Check event gate restrictions (Manager has access to all; Staff restricted if specifically assigned)
-    if (!isManager && assignedEvent && guest.eventId !== assignedEvent.id) {
+    // Check scanner authorization for this specific event and user role
+    const evtObj = events.find(e => e.id === guest.eventId);
+    const isCreator = Boolean(
+      (user.id && evtObj?.creatorId && user.id === evtObj.creatorId) ||
+      (userCleanEmail && evtObj?.creatorEmail && userCleanEmail === evtObj.creatorEmail.toLowerCase().trim()) ||
+      (userCleanMobile && evtObj?.creatorMobile && userCleanMobile === evtObj.creatorMobile.replace(/\D/g, ''))
+    );
+
+    const isAuthorizedForThisEvent = 
+      isManager || 
+      isCreator || 
+      (matchedStaff && matchedStaff.status === 'active' && matchedStaff.permissions?.canScan !== false && (!matchedStaff.assignedEventId || matchedStaff.assignedEventId === 'all' || matchedStaff.assignedEventId === guest.eventId));
+
+    if (!isAuthorizedForThisEvent) {
       sound.play('error');
+      addScanLog({
+        guestName: 'Protected / Restricted Scan',
+        token: extractedCode,
+        passId: 'N/A',
+        eventName: eventName,
+        status: 'invalid',
+        scannerStaff: activeStaffName
+      });
+
       setScanResult({
         type: 'invalid',
-        title: 'Unauthorized Event Gate ⚠️',
-        message: `You are authorized to scan passes for "${assignedEvent.name}", but this guest's pass is for "${eventName}".`,
-        guest,
+        title: user.role === 'guest' ? 'Guest Access Restricted 🔒' : 'Unauthorized Event Gate ⚠️',
+        message: user.role === 'guest'
+          ? 'Guests cannot scan or view other attendees\' passes. Only authorized gate staff and organizers can scan.'
+          : `You do not have scan authorization for "${eventName}". Guest details and photo are protected.`,
         scannedTokenCode: extractedCode,
         scanTime: currentTimestamp
       });
@@ -735,13 +757,31 @@ export const LiveScanner: React.FC = () => {
           style={modalBackdropStyle}
           onClick={() => setScanResult(null)}
         >
+          {/* Top Clean Header Bar */}
+          <div style={{ width: '100%', maxWidth: 480, display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', paddingTop: '0.25rem' }}>
+            <button 
+              type="button"
+              onClick={() => setScanResult(null)}
+              style={{ background: '#E2E8F0', border: '1px solid #CBD5E1', color: '#0F172A', padding: '0.45rem 0.95rem', borderRadius: 100, fontSize: '0.85rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+            >
+              ← Back to Scanner
+            </button>
+            <button 
+              type="button"
+              onClick={() => setScanResult(null)}
+              style={{ background: '#E2E8F0', border: '1px solid #CBD5E1', color: '#0F172A', width: 34, height: 34, borderRadius: '50%', fontSize: '1rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              ✕
+            </button>
+          </div>
+
           <div 
             style={{
               ...modalCardStyle,
               position: 'relative',
               overflow: 'hidden',
               padding: '1.75rem 1.5rem 1.5rem',
-              maxWidth: 400
+              maxWidth: 480
             }}
             onClick={e => e.stopPropagation()}
           >
@@ -991,7 +1031,7 @@ export const LiveScanner: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Primary Button: Check In Guest */}
+                  {/* Primary Button: Check In Inside Gate */}
                   {canCheckIn ? (
                     <button 
                       type="button"
@@ -1007,10 +1047,14 @@ export const LiveScanner: React.FC = () => {
                         border: 'none',
                         cursor: 'pointer',
                         boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)',
-                        transition: 'all 0.2s ease'
+                        transition: 'all 0.2s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.5rem'
                       }}
                     >
-                      Check In Guest
+                      <CheckCircle2 size={20} /> Check In Inside Gate
                     </button>
                   ) : (
                     <div style={{ padding: '0.75rem', background: '#F1F5F9', borderRadius: 12, color: '#64748B', fontWeight: 700, fontSize: '0.85rem', textAlign: 'center' }}>
@@ -1068,15 +1112,33 @@ export const LiveScanner: React.FC = () => {
           style={modalBackdropStyle}
           onClick={() => setCheckInSuccessGuest(null)}
         >
+          {/* Top Clean Header Bar */}
+          <div style={{ width: '100%', maxWidth: 480, display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', paddingTop: '0.25rem' }}>
+            <button 
+              type="button"
+              onClick={() => setCheckInSuccessGuest(null)}
+              style={{ background: '#E2E8F0', border: '1px solid #CBD5E1', color: '#0F172A', padding: '0.45rem 0.95rem', borderRadius: 100, fontSize: '0.85rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+            >
+              ← Back to Scanner
+            </button>
+            <button 
+              type="button"
+              onClick={() => setCheckInSuccessGuest(null)}
+              style={{ background: '#E2E8F0', border: '1px solid #CBD5E1', color: '#0F172A', width: 34, height: 34, borderRadius: '50%', fontSize: '1rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              ✕
+            </button>
+          </div>
+
           <div 
             style={{
               ...modalCardStyle,
               position: 'relative',
               overflow: 'hidden',
-              padding: '2.5rem 1.65rem 1.75rem',
-              maxWidth: 380,
+              padding: '2.25rem 1.65rem 1.75rem',
+              maxWidth: 480,
               background: '#FFFFFF',
-              boxShadow: '0 24px 64px rgba(0, 0, 0, 0.24)'
+              boxShadow: '0 10px 30px rgba(15, 23, 42, 0.08)'
             }}
             onClick={e => e.stopPropagation()}
           >
@@ -1207,22 +1269,27 @@ export const LiveScanner: React.FC = () => {
 const modalBackdropStyle: React.CSSProperties = {
   position: 'fixed',
   inset: 0,
-  background: 'rgba(15, 23, 42, 0.75)',
-  backdropFilter: 'blur(8px)',
+  width: '100vw',
+  height: '100dvh',
+  background: '#F8FAFC',
   display: 'flex',
+  flexDirection: 'column',
   alignItems: 'center',
-  justifyContent: 'center',
+  justifyContent: 'flex-start',
   zIndex: 10000,
-  padding: '1rem'
+  overflowY: 'auto',
+  WebkitOverflowScrolling: 'touch',
+  padding: '1rem 1rem 2.5rem'
 };
 
 const modalCardStyle: React.CSSProperties = {
   background: '#FFFFFF',
   borderRadius: 24,
-  maxWidth: 420,
+  maxWidth: 480,
   width: '100%',
   padding: '1.5rem',
-  boxShadow: '0 20px 48px rgba(0, 0, 0, 0.28)',
-  animation: 'scaleIn 0.2s ease-out'
+  boxShadow: '0 10px 30px rgba(15, 23, 42, 0.08)',
+  border: '1.5px solid #E2E8F0',
+  margin: 'auto 0'
 };
 

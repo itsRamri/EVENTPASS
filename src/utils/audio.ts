@@ -36,7 +36,23 @@ class SoundEffects {
         gain.gain.exponentialRampToValueAtTime(0.01, now + 0.04);
         osc.start(now);
         osc.stop(now + 0.04);
-      } else if (type === 'success' || type === 'checkin') {
+      } else if (type === 'checkin') {
+        // Rich PhonePe / PayTM style payment success chime (C5 -> E5 -> G5 -> C6 arpeggio)
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+        notes.forEach((freq, idx) => {
+          const noteOsc = ctx.createOscillator();
+          const noteGain = ctx.createGain();
+          noteOsc.type = 'sine';
+          noteOsc.frequency.setValueAtTime(freq, now + idx * 0.075);
+          noteGain.gain.setValueAtTime(0, now + idx * 0.075);
+          noteGain.gain.linearRampToValueAtTime(0.35, now + idx * 0.075 + 0.02);
+          noteGain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.075 + 0.45);
+          noteOsc.connect(noteGain);
+          noteGain.connect(ctx.destination);
+          noteOsc.start(now + idx * 0.075);
+          noteOsc.stop(now + idx * 0.075 + 0.45);
+        });
+      } else if (type === 'success') {
         // High pleasant chime
         osc.type = 'sine';
         osc.frequency.setValueAtTime(587.33, now); // D5
