@@ -286,10 +286,10 @@ export const LiveScanner: React.FC = () => {
       sound.play('duplicate');
       setScanResult({
         type: 'already_checkedin',
-        title: totalTokens > 1 ? `TOKEN #${tokenIdx} ALREADY USED ⚠️` : 'PASS EXPIRED / ENTRY ALREADY USED ⚠️',
+        title: 'Aapka QR Expire Ho Chuka Hai ⚠️',
         message: totalTokens > 1
-          ? `Pass Token #${tokenIdx} of ${totalTokens} (${code}) was already checked in. Remaining unused passes for this guest: ${remainingCount} of ${totalTokens}.`
-          : `This single-entry VIP pass was already used to check in at ${guest.checkInTime || 'earlier'}. Re-entry with this QR code is strictly blocked.`,
+          ? `Pass Token #${tokenIdx} of ${totalTokens} (${code}) already check-in ho chuka hai aur expire ho gaya hai. Remaining passes: ${remainingCount} of ${totalTokens}.`
+          : `Yeh VIP Pass already ${guest.checkInTime || 'pehle'} check-in ho chuka hai aur expire ho gaya hai. Dobara entry block hai.`,
         guest,
         scannedTokenCode: code,
         tokenIndex: tokenIdx,
